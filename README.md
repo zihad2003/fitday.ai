@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # FitDay AI
 
 A modern web app for daily fitness and lifestyle tracking, built with Next.js, TypeScript, Tailwind CSS, and Cloudflare D1.
@@ -138,3 +139,7 @@ The app can be deployed to any platform that supports Next.js:
 ## License
 
 This project is licensed under the MIT License.
+=======
+# fitday.ai
+  Smart Fitness. Balanced Life.
+>>>>>>> debc21fca4e2e8f940a169d787c42c4f717ce1ea
