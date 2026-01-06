@@ -1,0 +1,8 @@
+name = "fitday-ai"
+main = "app/api/index.ts"
+account_id = "42dfee08-f14f-4e08-938d-6fdebab4700e"
+compatibility_date = "2026-01-06"
+
+[[d1_databases]]
+binding = "FITNESS_DB"
+database_name = "42dfee08-f14f-4e08-938d-6fdebab4700e"
