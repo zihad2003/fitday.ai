@@ -1,99 +1,120 @@
+// app/page.tsx - Professional Landing Page
+'use client'
+
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { getUserSession } from '@/lib/auth'
+import { useRouter } from 'next/navigation'
 
 export default function Home() {
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    // চেক করা ইউজার লগইন আছে কিনা
+    const session = getUserSession()
+    if (session) {
+      setUser(session)
+    }
+  }, [])
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="relative z-10 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <h1 className="text-2xl font-bold text-gray-900">FitDay AI</h1>
+    <div className="min-h-screen bg-white">
+      
+      {/* Navbar */}
+      <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+            FitDay.ai
           </div>
-          <div className="flex items-center space-x-4">
-            <Link
-              href="/dashboard"
-              className="text-gray-700 hover:text-gray-900 font-medium"
-            >
-              Dashboard
-            </Link>
+          <div className="flex gap-4">
+            {user ? (
+              <Link href="/dashboard" className="px-5 py-2 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+                Go to Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="px-5 py-2 text-gray-600 hover:text-blue-600 font-medium transition">
+                  Login
+                </Link>
+                <Link href="/register" className="px-5 py-2 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
-      </header>
+      </nav>
 
       {/* Hero Section */}
-      <main className="relative z-10 px-4 py-12 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-6xl font-bold text-gray-900 mb-6">
-            Your Personal
-            <span className="block text-indigo-600">Fitness Assistant</span>
+      <section className="relative pt-20 pb-32 overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-blue-50 rounded-full blur-3xl -z-10 opacity-50"></div>
+        
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <div className="inline-block px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold mb-6 border border-blue-100">
+            🇧🇩 The First AI Health App for Bangladesh
+          </div>
+          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 leading-tight mb-6">
+            Your Personal <br/>
+            <span className="text-blue-600">AI Nutritionist</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Get daily workout plans, personalized diet recommendations, and track your progress
-            with AI-powered guidance. Achieve your fitness goals safely and sustainably.
+          <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
+            No more guessing calories. Get a medical-grade diet plan customized for 
+            <strong> Bengali food habits</strong>, body type, and fitness goals.
           </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-full text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
-            >
-              Get Started
+          
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Link href="/register" className="px-8 py-4 bg-blue-600 text-white rounded-xl font-bold text-lg hover:bg-blue-700 transition shadow-xl shadow-blue-200 hover:-translate-y-1">
+              Create Free Plan
             </Link>
-            <button className="inline-flex items-center justify-center px-8 py-3 border border-gray-300 text-base font-medium rounded-full text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-              Learn More
-            </button>
+            <Link href="#features" className="px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-xl font-bold text-lg hover:bg-gray-50 transition hover:-translate-y-1">
+              How it Works
+            </Link>
+          </div>
+
+          <div className="mt-12 flex justify-center gap-8 text-gray-400 grayscale opacity-60">
+            <span className="font-semibold">Scientifically Verified</span> • 
+            <span className="font-semibold">Local Food Database</span> • 
+            <span className="font-semibold">Privacy Focused</span>
           </div>
         </div>
+      </section>
 
-        {/* Features Grid */}
-        <div className="max-w-6xl mx-auto mt-16">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-              <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Daily Workouts</h3>
+      {/* Features Grid */}
+      <section id="features" className="py-20 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-2xl mb-6">🥗</div>
+              <h3 className="text-xl font-bold text-gray-800 mb-3">Bangladeshi Diet</h3>
               <p className="text-gray-600">
-                Get personalized workout plans for gym and home, with guided exercises and progress tracking.
+                We don't suggest avocado or salmon. Our AI builds plans with Rice, Dal, Fish, and Ruti that you eat every day.
               </p>
             </div>
-
-            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Smart Diet Plans</h3>
+            {/* Feature 2 */}
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-2xl mb-6">🩺</div>
+              <h3 className="text-xl font-bold text-gray-800 mb-3">Medical Logic</h3>
               <p className="text-gray-600">
-                Receive balanced meal recommendations with calorie tracking and nutritional guidance.
+                Calculations based on the Mifflin-St Jeor equation tailored for South Asian metabolism and genetics.
               </p>
             </div>
-
-            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Progress Tracking</h3>
+            {/* Feature 3 */}
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-2xl mb-6">💪</div>
+              <h3 className="text-xl font-bold text-gray-800 mb-3">Dynamic Workouts</h3>
               <p className="text-gray-600">
-                Monitor your journey with detailed analytics, achievements, and motivational insights.
+                Whether you want to lose belly fat or gain muscle, get a home-workout plan that adapts to your progress.
               </p>
             </div>
           </div>
         </div>
-      </main>
+      </section>
 
       {/* Footer */}
-      <footer className="relative z-10 px-4 py-8 sm:px-6 lg:px-8 mt-16">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-gray-500 text-sm">
-            © 2024 FitDay AI. General fitness guidance only. Consult healthcare professionals for medical advice.
-          </p>
-        </div>
+      <footer className="bg-white border-t border-gray-100 py-12 text-center">
+        <p className="text-gray-500">© 2026 FitDay AI. Built for a healthier Bangladesh.</p>
       </footer>
     </div>
   )
