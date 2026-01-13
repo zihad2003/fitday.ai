@@ -1,56 +1,60 @@
-// lib/auth.ts - Robust Session Management
+// lib/auth.ts - Security & Session Utils
+export const runtime = 'edge';
 
 /**
- * ইউজার সেশন লোকাল স্টোরেজে সেভ করে
- * @param user - ইউজার অবজেক্ট
+ * SECURITY: Hash password with salt using Web Crypto API
+ */
+export async function hashPassword(password: string, salt: string) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw", 
+    enc.encode(password + salt), 
+    { name: "PBKDF2" }, 
+    false, 
+    ["deriveBits", "deriveKey"]
+  );
+  
+  // Using a fixed application salt for PBKDF2 + user specific salt
+  const hashBuffer = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: enc.encode("fitday_secure_app_salt"), 
+      iterations: 100000,
+      hash: "SHA-256"
+    },
+    keyMaterial,
+    256
+  );
+
+  return Buffer.from(hashBuffer).toString('hex');
+}
+
+export function generateSalt() {
+  return crypto.randomUUID();
+}
+
+/**
+ * Session Management
  */
 export function saveUserSession(user: any) {
   if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem('fitday_user', JSON.stringify(user))
-    } catch (error) {
-      console.warn('Error saving session:', error)
-    }
+    localStorage.setItem('fitday_user', JSON.stringify(user));
   }
 }
 
-/**
- * সেভ করা সেশন ডাটা নিয়ে আসে (Error Handling সহ)
- * @returns ইউজার অবজেক্ট অথবা null
- */
 export function getUserSession() {
   if (typeof window !== 'undefined') {
     try {
-      const data = localStorage.getItem('fitday_user')
-      
-      // ডাটা না থাকলে বা "undefined" স্ট্রিং থাকলে null রিটার্ন করবে
-      if (!data || data === 'undefined') return null
-
-      // JSON পার্স করার চেষ্টা করবে
-      return JSON.parse(data)
-    } catch (error) {
-      // ডাটা ভুল থাকলে এখানে ধরবে এবং লাল স্ক্রিন এড়াতে console.warn ব্যবহার করা হলো
-      console.warn('Session data corrupted. Clearing storage.')
-      
-      // ভুল ডাটা মুছে ফেলবে
-      localStorage.removeItem('fitday_user')
-      return null
+      const data = localStorage.getItem('fitday_user');
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
     }
   }
-  return null
+  return null;
 }
 
-/**
- * ইউজারকে লগআউট করে এবং লগিন পেজে পাঠায়
- */
 export function logoutUser() {
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.removeItem('fitday_user')
-    } catch (error) {
-      console.warn('Error clearing session:', error)
-    }
-    // লগআউট হওয়ার পর লগিন পেজে রিডাইরেক্ট
-    window.location.href = '/login'
-  }
+  if (typeof window !== 'undefined') localStorage.removeItem('fitday_user');
+  window.location.href = '/login';
 }

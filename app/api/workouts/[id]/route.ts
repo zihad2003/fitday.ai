@@ -1,132 +1,137 @@
-// app/api/workouts/[id]/route.ts - API routes for individual workout CRUD operations
 import { NextRequest, NextResponse } from 'next/server'
 import { selectQuery, executeMutation } from '@/lib/d1'
+import { z } from 'zod'
 
-// GET /api/workouts/[id] - Get a specific workout by ID
+export const runtime = 'edge'
+
+// --- 1. Validation Schema ---
+// .partial() allows updating just "completed" without sending the whole object
+const updateWorkoutSchema = z.object({
+  type: z.string().min(2, "Workout type is too short").optional(),
+  completed: z.boolean().optional(),
+  duration: z.number().min(1).optional(), // Optional fields for future proofing
+  calories: z.number().min(1).optional()
+}).partial()
+
+// ==================================================================
+// GET: Fetch Single Workout
+// ==================================================================
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const workoutId = parseInt(params.id)
+    const { id } = await params
+    const workoutId = parseInt(id)
+
     if (isNaN(workoutId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid workout ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: 'Invalid ID format' }, { status: 400 })
     }
 
     const workouts = await selectQuery('SELECT * FROM workouts WHERE id = ?', [workoutId])
+    
     if (workouts.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Workout not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ success: false, error: 'Workout not found' }, { status: 404 })
     }
 
     return NextResponse.json({ success: true, data: workouts[0] })
+
   } catch (error) {
-    console.error('Error fetching workout:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch workout' },
-      { status: 500 }
-    )
+    console.error('API Error [GET /workouts/:id]:', error)
+    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 })
   }
 }
 
-// PUT /api/workouts/[id] - Update a specific workout
+// ==================================================================
+// PUT: Update Workout (Partial Updates Supported)
+// ==================================================================
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const workoutId = parseInt(params.id)
+    const { id } = await params
+    const workoutId = parseInt(id)
+
     if (isNaN(workoutId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid workout ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: 'Invalid ID' }, { status: 400 })
     }
 
+    // A. Validate Request Body
     const body = await request.json()
-    const { type, completed } = body
+    const validation = updateWorkoutSchema.safeParse(body)
 
-    // Check if workout exists
-    const existingWorkouts = await selectQuery('SELECT id FROM workouts WHERE id = ?', [workoutId])
-    if (existingWorkouts.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Workout not found' },
-        { status: 404 }
-      )
+    if (!validation.success) {
+      return NextResponse.json({ 
+        success: false, 
+        error: validation.error.issues[0].message 
+      }, { status: 400 })
     }
 
-    // Update workout
+    const updates = validation.data
+
+    // B. Fetch Current Data (Required to merge partial updates)
+    const existing = await selectQuery('SELECT * FROM workouts WHERE id = ?', [workoutId])
+    if (existing.length === 0) {
+      return NextResponse.json({ success: false, error: 'Workout not found' }, { status: 404 })
+    }
+    const currentWorkout = existing[0]
+
+    // C. Merge Logic (New >> Old)
+    const type = updates.type ?? currentWorkout.type
+    // Handle boolean logic carefully (completed might be false)
+    const completed = updates.completed !== undefined ? (updates.completed ? 1 : 0) : currentWorkout.completed
+    
+    // D. Update Database
     const sql = `
       UPDATE workouts
       SET type = ?, completed = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `
-    const queryParams = [type, completed ? 1 : 0, workoutId]
-    const changes = await executeMutation(sql, queryParams)
+    const changes = await executeMutation(sql, [type, completed, workoutId])
 
     if (changes > 0) {
-      // Get the updated workout
-      const updatedWorkouts = await selectQuery('SELECT * FROM workouts WHERE id = ?', [workoutId])
-      return NextResponse.json({ success: true, data: updatedWorkouts[0] })
+      // Optimistic return: construct the object without a second DB read
+      const updatedData = { ...currentWorkout, type, completed, updated_at: new Date().toISOString() }
+      
+      return NextResponse.json({ success: true, data: updatedData })
     } else {
-      return NextResponse.json(
-        { success: false, error: 'Failed to update workout' },
-        { status: 500 }
-      )
+      return NextResponse.json({ success: false, error: 'Update failed' }, { status: 500 })
     }
+
   } catch (error) {
-    console.error('Error updating workout:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to update workout' },
-      { status: 500 }
-    )
+    console.error('API Error [PUT /workouts/:id]:', error)
+    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 })
   }
 }
 
-// DELETE /api/workouts/[id] - Delete a specific workout
+// ==================================================================
+// DELETE: Remove Workout
+// ==================================================================
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const workoutId = parseInt(params.id)
+    const { id } = await params
+    const workoutId = parseInt(id)
+
     if (isNaN(workoutId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid workout ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: 'Invalid ID' }, { status: 400 })
     }
 
-    // Check if workout exists
-    const existingWorkouts = await selectQuery('SELECT id FROM workouts WHERE id = ?', [workoutId])
-    if (existingWorkouts.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Workout not found' },
-        { status: 404 }
-      )
-    }
-
-    // Delete workout
+    // "Safe Delete" pattern: We don't need to SELECT first.
+    // The DELETE command returns the number of rows affected.
     const changes = await executeMutation('DELETE FROM workouts WHERE id = ?', [workoutId])
 
     if (changes > 0) {
       return NextResponse.json({ success: true, message: 'Workout deleted successfully' })
     } else {
-      return NextResponse.json(
-        { success: false, error: 'Failed to delete workout' },
-        { status: 500 }
-      )
+      return NextResponse.json({ success: false, error: 'Workout not found' }, { status: 404 })
     }
+
   } catch (error) {
-    console.error('Error deleting workout:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to delete workout' },
-      { status: 500 }
-    )
+    console.error('API Error [DELETE /workouts/:id]:', error)
+    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 })
   }
 }

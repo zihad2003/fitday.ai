@@ -1,61 +1,93 @@
-// app/api/meals/[id]/route.ts - Update Meal Status
 import { NextRequest, NextResponse } from 'next/server'
-import { selectQuery, executeMutation } from '@/lib/d1'
+import { executeMutation } from '@/lib/d1'
+import { z } from 'zod'
 
-// PUT /api/meals/[id] - মিল আপডেট করা (যেমন: completed টিক দেওয়া)
+export const runtime = 'edge'
+
+// --- FIX 1: Use Standard Zod Boolean (No Arguments) ---
+// This guarantees compatibility and removes the red line.
+const updateSchema = z.object({
+  completed: z.boolean() 
+})
+
+// ==================================================================
+// PUT: Update Meal Status
+// ==================================================================
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const mealId = parseInt(params.id)
+    const { id } = await params
+    const mealId = parseInt(id)
+
     if (isNaN(mealId)) {
-      return NextResponse.json({ success: false, error: 'Invalid meal ID' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Invalid ID format' }, { status: 400 })
     }
 
     const body = await request.json()
-    // আমরা শুধু completed স্ট্যাটাস আপডেট করার অপশন দিচ্ছি
-    const { completed } = body
+    
+    // Validate
+    const validation = updateSchema.safeParse(body)
 
-    if (completed === undefined) {
-      return NextResponse.json({ success: false, error: 'Completed status required' }, { status: 400 })
+    if (!validation.success) {
+      // --- FIX 2: Custom Error Logic Here ---
+      // Instead of configuring it inside z.boolean(), we set the message here.
+      // This is cleaner and type-safe.
+      return NextResponse.json({ 
+        success: false, 
+        error: "Completed status is required and must be true/false" 
+      }, { status: 400 })
     }
 
-    // আপডেট কোয়েরি
+    const { completed } = validation.data
+
+    // Database Update
     const sql = `
-      UPDATE meals
-      SET completed = ?, updated_at = CURRENT_TIMESTAMP
+      UPDATE meals 
+      SET completed = ?, updated_at = CURRENT_TIMESTAMP 
       WHERE id = ?
     `
-    const paramsList = [completed ? 1 : 0, mealId]
-    const changes = await executeMutation(sql, paramsList)
+    const args = [completed ? 1 : 0, mealId]
+    const changes = await executeMutation(sql, args)
 
     if (changes > 0) {
-      return NextResponse.json({ success: true, message: 'Meal updated' })
+      return NextResponse.json({ success: true, message: 'Meal status updated' })
     } else {
       return NextResponse.json({ success: false, error: 'Meal not found' }, { status: 404 })
     }
+
   } catch (error) {
-    console.error('Error updating meal:', error)
-    return NextResponse.json({ success: false, error: 'Failed to update meal' }, { status: 500 })
+    console.error('API Error [PUT]:', error)
+    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 })
   }
 }
 
-// DELETE /api/meals/[id] - মিল ডিলিট করা
+// ==================================================================
+// DELETE: Remove Meal
+// ==================================================================
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const mealId = parseInt(params.id)
+    const { id } = await params
+    const mealId = parseInt(id)
+
+    if (isNaN(mealId)) {
+      return NextResponse.json({ success: false, error: 'Invalid ID format' }, { status: 400 })
+    }
+
     const changes = await executeMutation('DELETE FROM meals WHERE id = ?', [mealId])
 
     if (changes > 0) {
-      return NextResponse.json({ success: true, message: 'Meal deleted' })
+      return NextResponse.json({ success: true, message: 'Meal deleted successfully' })
     } else {
       return NextResponse.json({ success: false, error: 'Meal not found' }, { status: 404 })
     }
+
   } catch (error) {
-    return NextResponse.json({ success: false, error: 'Failed to delete meal' }, { status: 500 })
+    console.error('API Error [DELETE]:', error)
+    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 })
   }
 }

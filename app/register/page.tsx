@@ -1,252 +1,236 @@
-// app/register/page.tsx - Futuristic & Secure Registration
 'use client'
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { saveUserSession } from '@/lib/auth'
 import Link from 'next/link'
-import ErrorPopup from '@/components/ErrorPopup'
+import { saveUserSession } from '@/lib/auth'
+
+// --- 1. STRICT TYPES ---
+interface RegisterResponse {
+  success: boolean
+  data?: any // In a real app, import the User type here
+  error?: string
+}
+
+interface InputGroupProps {
+  label: string
+  name: string
+  type: string
+  placeholder: string
+  value: string | number
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void
+}
 
 export default function Register() {
   const router = useRouter()
+  const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  
-  // Password Visibility States
-  const [showPass, setShowPass] = useState(false)
-  const [showConfirmPass, setShowConfirmPass] = useState(false)
 
-  // Height State
-  const [heightFt, setHeightFt] = useState('')
-  const [heightIn, setHeightIn] = useState('')
-
+  // Form State
   const [formData, setFormData] = useState({
-    name: '', email: '', password: '', confirmPassword: '', 
-    age: '', gender: 'male', weight: '', activity_level: 'sedentary', goal: 'lose_weight'
+    name: '',
+    email: '',
+    password: '',
+    age: '',
+    gender: 'male',
+    height: '',
+    weight: '',
+    activity_level: 'sedentary',
+    goal: 'lose_weight'
   })
 
-  // --- Logic Helpers ---
-  const handleInput = (key: string, val: string) => {
-    if ((key === 'age' || key === 'weight') && (val.includes('-') || Number(val) < 0)) return
-    setFormData({ ...formData, [key]: val })
+  // Handle Input Changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleHeight = (type: 'ft' | 'in', val: string) => {
-    if (val.includes('-') || Number(val) < 0) return
-    if (type === 'ft') setHeightFt(val)
-    else setHeightIn(val)
-  }
-
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // Submit Logic
+  const handleRegister = async () => {
     setLoading(true)
     setError('')
 
-    // 1. Email Format Check
-    if (!validateEmail(formData.email)) {
-      setError("Invalid email format. Please check again.")
-      setLoading(false)
-      return
-    }
-
-    // 2. Password Match Check
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match!")
-      setLoading(false)
-      return
-    }
-
-    // 3. Password Length Check
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters long.")
-      setLoading(false)
-      return
-    }
-
-    const ft = parseFloat(heightFt) || 0
-    const inch = parseFloat(heightIn) || 0
-    const totalCm = (ft * 30.48) + (inch * 2.54)
-
-    if (totalCm <= 0 || Number(formData.age) <= 0 || Number(formData.weight) <= 0) {
-        setError("Invalid body metrics. Please enter positive values.")
-        setLoading(false)
-        return
-    }
-
     try {
-      // confirmPassword ফিল্ডটি API-তে পাঠানোর দরকার নেই
-      const { confirmPassword, ...apiData } = formData
-
-      const payload = { 
-        ...apiData, 
-        height: Math.round(totalCm), 
-        age: parseFloat(formData.age), 
-        weight: parseFloat(formData.weight) 
+      const payload = {
+        ...formData,
+        age: Number(formData.age),
+        height: Number(formData.height),
+        weight: Number(formData.weight)
       }
 
-      const res = await fetch('/api/users', { 
-        method: 'POST', 
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload) 
+        body: JSON.stringify(payload)
       })
 
-      const data = await res.json()
-      
+      // --- FIX: Cast the response here ---
+      const data = (await res.json()) as RegisterResponse
+
       if (data.success) {
-        saveUserSession(data.data)
-        router.push('/dashboard')
+        if (data.data) {
+            saveUserSession(data.data)
+            router.push('/dashboard')
+        }
       } else {
-        setError(data.error || 'Registration failed.')
+        setError(data.error || 'Registration failed')
+        setLoading(false)
       }
     } catch (err) {
-      setError('Network error. Check connection.')
-    } finally {
+      setError('System Error. Please try again.')
       setLoading(false)
     }
   }
 
+  // --- RENDER ---
   return (
-    <div className="min-h-screen py-10 px-4 flex items-center justify-center bg-gray-50 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 relative overflow-hidden px-4 font-sans">
       
-      {error && <ErrorPopup message={error} onClose={() => setError('')} />}
-
-      {/* Background Effect */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-        <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
-        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
-      </div>
-
-      <div className="bg-white/90 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl w-full max-w-3xl border border-white z-10 relative">
-        <h2 className="text-3xl font-bold text-gray-800 mb-2 text-center">Create Account</h2>
-        <p className="text-center text-gray-500 mb-8 text-sm">Start your medical-grade fitness journey</p>
+      {/* Background Ambience */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[120px] -z-10"></div>
+      
+      <div className="w-full max-w-lg">
         
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Step Indicator */}
+        <div className="flex justify-between mb-8 px-4">
+          {[1, 2, 3].map((s) => (
+            <div key={s} className="flex items-center gap-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500 ${
+                step >= s ? 'bg-cyan-500 text-black shadow-[0_0_15px_rgba(6,182,212,0.5)]' : 'bg-white/10 text-slate-500'
+              }`}>
+                {s}
+              </div>
+              <div className={`h-1 w-12 rounded-full transition-all duration-500 ${
+                step > s ? 'bg-cyan-500' : 'bg-white/10'
+              }`}></div>
+            </div>
+          ))}
+        </div>
+
+        {/* Main Glass Panel */}
+        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 relative overflow-hidden">
           
-          {/* Identity Section */}
-          <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-2xl border border-blue-100 shadow-sm">
-            <h3 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-600"></span> User Identity
-            </h3>
-            <div className="grid md:grid-cols-2 gap-4">
-              <input required placeholder="Full Name" className="input-modern" 
-                value={formData.name} onChange={e => handleInput('name', e.target.value)} />
-              
-              <input required type="email" placeholder="Email Address" className="input-modern" 
-                value={formData.email} onChange={e => handleInput('email', e.target.value)} />
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-white tracking-tight">
+              {step === 1 && "Create Identity"}
+              {step === 2 && "Physiology Calibration"}
+              {step === 3 && "Set Objectives"}
+            </h2>
+            <p className="text-slate-400 text-sm mt-1">
+              {step === 1 && "Start your journey with FitDay AI"}
+              {step === 2 && "We use this to calculate your metabolic rate"}
+              {step === 3 && "Define your targets for the AI engine"}
+            </p>
+          </div>
 
-              {/* Password with Eye Icon */}
-              <div className="relative">
-                <input required type={showPass ? "text" : "password"} placeholder="Password" className="input-modern w-full" 
-                  value={formData.password} onChange={e => handleInput('password', e.target.value)} />
-                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-3.5 text-gray-400 hover:text-blue-600">
-                  {showPass ? '🙈' : '👁️'}
+          {error && (
+            <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs font-mono">
+              [ERROR] {error}
+            </div>
+          )}
+
+          {/* STEP 1: IDENTITY */}
+          {step === 1 && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-300">
+              <InputGroup label="Full Name" name="name" type="text" placeholder="John Doe" value={formData.name} onChange={handleChange} />
+              <InputGroup label="Email Address" name="email" type="email" placeholder="john@example.com" value={formData.email} onChange={handleChange} />
+              <InputGroup label="Password" name="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleChange} />
+              
+              <button onClick={() => setStep(2)} className="w-full mt-4 bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                Continue <span className="text-lg">→</span>
+              </button>
+            </div>
+          )}
+
+          {/* STEP 2: PHYSIOLOGY */}
+          {step === 2 && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-300">
+              <div className="grid grid-cols-2 gap-4">
+                <InputGroup label="Age" name="age" type="number" placeholder="25" value={formData.age} onChange={handleChange} />
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Gender</label>
+                  <select name="gender" value={formData.gender} onChange={handleChange} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-cyan-500 text-white transition-all appearance-none">
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <InputGroup label="Height (cm)" name="height" type="number" placeholder="175" value={formData.height} onChange={handleChange} />
+                <InputGroup label="Weight (kg)" name="weight" type="number" placeholder="70" value={formData.weight} onChange={handleChange} />
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button onClick={() => setStep(1)} className="flex-1 py-3 text-slate-400 hover:text-white transition">Back</button>
+                <button onClick={() => setStep(3)} className="flex-[2] bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                   Next <span className="text-lg">→</span>
                 </button>
               </div>
+            </div>
+          )}
 
-              {/* Confirm Password */}
-              <div className="relative">
-                <input required type={showConfirmPass ? "text" : "password"} placeholder="Confirm Password" className={`input-modern w-full ${formData.confirmPassword && formData.password !== formData.confirmPassword ? 'border-red-300 bg-red-50' : ''}`}
-                  value={formData.confirmPassword} onChange={e => handleInput('confirmPassword', e.target.value)} />
-                 <button type="button" onClick={() => setShowConfirmPass(!showConfirmPass)} className="absolute right-3 top-3.5 text-gray-400 hover:text-blue-600">
-                  {showConfirmPass ? '🙈' : '👁️'}
+          {/* STEP 3: OBJECTIVES */}
+          {step === 3 && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-300">
+              <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Primary Goal</label>
+                  <select name="goal" value={formData.goal} onChange={handleChange} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-cyan-500 text-white transition-all">
+                    <option value="lose_weight">Lose Weight (Fat Loss)</option>
+                    <option value="maintain">Maintain (Recomp)</option>
+                    <option value="gain_muscle">Build Muscle (Bulk)</option>
+                  </select>
+              </div>
+
+              <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Daily Activity</label>
+                  <select name="activity_level" value={formData.activity_level} onChange={handleChange} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-cyan-500 text-white transition-all">
+                    <option value="sedentary">Sedentary (Office Job)</option>
+                    <option value="light">Lightly Active (1-2 days/week)</option>
+                    <option value="moderate">Moderately Active (3-5 days/week)</option>
+                    <option value="active">Very Active (6+ days/week)</option>
+                  </select>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button onClick={() => setStep(2)} className="flex-1 py-3 text-slate-400 hover:text-white transition">Back</button>
+                <button 
+                  onClick={handleRegister} 
+                  disabled={loading}
+                  className="flex-[2] bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded-xl font-bold shadow-[0_0_20px_rgba(8,145,178,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                   {loading ? 'Initializing...' : 'Complete Setup'}
                 </button>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Body Metrics Section */}
-          <div className="bg-gradient-to-br from-green-50 to-white p-6 rounded-2xl border border-green-100 shadow-sm">
-            <h3 className="text-xs font-bold text-green-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-               <span className="w-2 h-2 rounded-full bg-green-600"></span> Physical Stats
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <input type="number" min="1" placeholder="Age" className="input-modern" 
-                value={formData.age} onChange={e => handleInput('age', e.target.value)} />
-              
-              <div className="relative">
-                <select className="input-modern appearance-none w-full" value={formData.gender} onChange={e => handleInput('gender', e.target.value)}>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
-                <span className="absolute right-3 top-3.5 text-gray-400 pointer-events-none">▼</span>
-              </div>
-              
-              <div className="flex gap-2 col-span-2 bg-white rounded-xl border border-gray-200 p-1">
-                <input placeholder="Ft" type="number" min="1" className="w-1/2 p-2 outline-none text-center border-r border-gray-100" 
-                  value={heightFt} onChange={e => handleHeight('ft', e.target.value)} />
-                <input placeholder="In" type="number" min="0" max="11" className="w-1/2 p-2 outline-none text-center" 
-                  value={heightIn} onChange={e => handleHeight('in', e.target.value)} />
-              </div>
-              
-              <input placeholder="Weight (kg)" type="number" min="1" className="input-modern col-span-2" 
-                value={formData.weight} onChange={e => handleInput('weight', e.target.value)} />
-            </div>
-          </div>
+        </div>
 
-          {/* Goals Section */}
-          <div className="bg-gradient-to-br from-purple-50 to-white p-6 rounded-2xl border border-purple-100 shadow-sm">
-            <h3 className="text-xs font-bold text-purple-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-purple-600"></span> Objectives
-            </h3>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="relative">
-                <select className="input-modern appearance-none w-full" value={formData.activity_level} onChange={e => handleInput('activity_level', e.target.value)}>
-                  <option value="sedentary">🏢 Sedentary (Office Job)</option>
-                  <option value="light">🚶 Light Activity</option>
-                  <option value="moderate">🏃 Moderate Exercise</option>
-                  <option value="active">🏋️ Very Active</option>
-                </select>
-                <span className="absolute right-3 top-3.5 text-gray-400 pointer-events-none">▼</span>
-              </div>
-              
-              <div className="relative">
-                <select className="input-modern appearance-none w-full" value={formData.goal} onChange={e => handleInput('goal', e.target.value)}>
-                  <option value="lose_weight">🔥 Lose Weight</option>
-                  <option value="maintain">⚖️ Maintain Weight</option>
-                  <option value="gain_muscle">💪 Build Muscle</option>
-                </select>
-                <span className="absolute right-3 top-3.5 text-gray-400 pointer-events-none">▼</span>
-              </div>
-            </div>
-          </div>
+        <div className="text-center mt-8">
+           <Link href="/login" className="text-sm text-slate-500 hover:text-cyan-400 transition">
+             Already have an ID? Login here
+           </Link>
+        </div>
 
-          <button disabled={loading} className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-xl font-bold text-lg transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2">
-            {loading ? (
-              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-            ) : 'Initialize System'}
-          </button>
-        </form>
-        
-        <p className="text-center mt-6 text-sm text-gray-500">
-          Already have an account? <Link href="/login" className="text-blue-600 font-bold hover:underline">Login System</Link>
-        </p>
       </div>
-      
-      {/* CSS Injection for Modern Inputs */}
-      <style jsx>{`
-        .input-modern {
-          width: 100%;
-          padding: 12px 16px;
-          border-radius: 12px;
-          border: 1px solid #e2e8f0;
-          outline: none;
-          background: white;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          font-size: 0.95rem;
-          color: #1e293b;
-        }
-        .input-modern:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-          transform: translateY(-1px);
-        }
-        .input-modern::placeholder {
-          color: #94a3b8;
-        }
-      `}</style>
+    </div>
+  )
+}
+
+// --- FIX: Typed Helper Component ---
+function InputGroup({ label, name, type, placeholder, value, onChange }: InputGroupProps) {
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">{label}</label>
+      <input 
+        name={name}
+        type={type}
+        required
+        value={value}
+        onChange={onChange}
+        className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-cyan-500 text-white placeholder-slate-600 transition-all focus:bg-white/10"
+        placeholder={placeholder}
+      />
     </div>
   )
 }

@@ -1,80 +1,64 @@
--- db/schema.sql
--- Full Database Schema for FitDay AI
--- Cleaned & Optimized for Auth, Diet & Workout Features
-
--- 1. Clean Slate (Drop old tables to avoid conflicts)
+-- db/schema.sql - Optimized for Logic & Performance
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS meals;
 DROP TABLE IF EXISTS workouts;
 DROP TABLE IF EXISTS food_items;
-DROP TABLE IF EXISTS exercise_library;
 
--- 2. Users Table (Authentication & Health Profile)
+-- 1. Users (Added salt for security)
 CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL, -- For Secure Login
+  password TEXT NOT NULL, 
+  salt TEXT NOT NULL, -- SECURITY FIX: Store salt for hashing
   name TEXT NOT NULL,
-  gender TEXT CHECK(gender IN ('male', 'female', 'other')) NOT NULL,
+  gender TEXT NOT NULL,
   age INTEGER NOT NULL,
-  height_cm REAL NOT NULL, -- Stored in CM for calculations
-  weight_kg REAL NOT NULL, -- Stored in KG for calculations
+  height_cm REAL NOT NULL, 
+  weight_kg REAL NOT NULL, 
   activity_level TEXT DEFAULT 'sedentary',
-  goal TEXT NOT NULL, -- lose_weight, maintain, gain_muscle
-  target_calories INTEGER, -- Calculated by AI
+  goal TEXT NOT NULL,
+  target_calories INTEGER,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Meals Table (User's Daily Diet Plan)
--- This stores the generated plan and checkbox status
+-- 2. Meals (LOGIC FIX: Added macro columns)
 CREATE TABLE meals (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
-  date TEXT NOT NULL, -- Format: YYYY-MM-DD
-  meal_type TEXT NOT NULL, -- breakfast, lunch, snack, dinner
+  date TEXT NOT NULL, 
+  meal_type TEXT NOT NULL, 
   food TEXT NOT NULL,
   calories INTEGER NOT NULL,
-  completed BOOLEAN DEFAULT 0, -- 0 = Not Eaten, 1 = Eaten
+  protein REAL DEFAULT 0, -- Store actual protein
+  carbs REAL DEFAULT 0,   -- Store actual carbs
+  fat REAL DEFAULT 0,     -- Store actual fat
+  completed BOOLEAN DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- 4. Workouts Table (User's Daily Exercise Plan)
--- This stores the generated workout and checkbox status
+-- 3. Workouts (No changes needed)
 CREATE TABLE workouts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
-  date TEXT NOT NULL, -- Format: YYYY-MM-DD
-  type TEXT NOT NULL, -- Exercise Name / Description
-  completed BOOLEAN DEFAULT 0, -- 0 = Pending, 1 = Done
+  date TEXT NOT NULL,
+  type TEXT NOT NULL,
+  completed BOOLEAN DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- 5. Food Knowledge Base (Static Data)
--- Used by AI to generate diet plans
+-- 4. Food Items (Static Data)
 CREATE TABLE food_items (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   bangla_name TEXT,
   serving_unit TEXT NOT NULL,
   calories REAL NOT NULL,
-  protein REAL,
-  carbs REAL,
-  fat REAL,
+  protein REAL NOT NULL,
+  carbs REAL NOT NULL,
+  fat REAL NOT NULL,
   category TEXT,
   is_bangladeshi_staple BOOLEAN DEFAULT TRUE
-);
-
--- 6. Exercise Knowledge Base (Static Data)
--- Used by AI to generate workout plans
-CREATE TABLE exercise_library (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  difficulty TEXT,
-  muscle_group TEXT NOT NULL, -- chest, legs, back, etc.
-  equipment_needed TEXT DEFAULT 'none',
-  video_url TEXT,
-  safety_instruction TEXT
 );

@@ -1,136 +1,109 @@
-// app/api/meals/generate/route.ts - Automatic Bangladeshi Diet Planner
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { selectQuery, executeMutation } from '@/lib/d1'
 
 export const runtime = 'edge'
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json()
-    const { user_id, date } = body
-
-    if (!user_id || !date) {
-      return NextResponse.json({ success: false, error: 'User ID and Date required' }, { status: 400 })
-    }
-
-    // ১. ইউজারের ক্যালোরি টার্গেট জানা
-    const users = await selectQuery('SELECT target_calories, goal FROM users WHERE id = ?', [user_id])
-    if (users.length === 0) {
-      return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
-    }
-    const user = users[0]
+    // TypeScript Error Fix: Type casting the incoming body
+    const { user_id, date } = (await req.json()) as { user_id: number; date: string }
     
-    // টার্গেট না থাকলে ডিফল্ট ২০০০ ধরা হবে
-    const dailyCalories = user.target_calories || 2000
+    // ১. ইউজার প্রোফাইল ফেচ করা
+    const users = await selectQuery('SELECT * FROM users WHERE id = ?', [user_id])
+    const user = users[0] as any
 
-    // ২. ক্যালোরি ডিস্ট্রিবিউশন (Bangladeshi Habit)
-    // সকাল (২৫%), দুপুর (৩৫%), বিকেল (১৫%), রাত (২৫%)
-    const targets = {
-      breakfast: dailyCalories * 0.25,
-      lunch: dailyCalories * 0.35,
-      snack: dailyCalories * 0.15,
-      dinner: dailyCalories * 0.25
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'User not found' })
     }
 
-    // ৩. খাবার ডাটাবেস থেকে লোড করা
-    const foods = await selectQuery('SELECT * FROM food_items')
+    // ২. মেডিকেল লজিক: ক্যালরি ক্যালকুলেশন (Mifflin-St Jeor Equation)
+    let bmr = 10 * user.weight_kg + 6.25 * user.height_cm - 5 * user.age
+    bmr += user.gender === 'male' ? 5 : -161
     
-    // ক্যাটাগরি অনুযায়ী খাবার আলাদা করা
-    const carbs = foods.filter((f: any) => f.category === 'carb')
-    const proteins = foods.filter((f: any) => f.category === 'protein')
-    const veggies = foods.filter((f: any) => f.category === 'vegetable')
-    const fruits = foods.filter((f: any) => f.category === 'fruit' || f.category === 'snack')
+    const activityMultipliers: Record<string, number> = { 
+      sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725 
+    }
+    
+    let targetCals = bmr * (activityMultipliers[user.activity_level] || 1.2)
+    
+    // গোল অনুযায়ী ক্যালরি অ্যাডজাস্টমেন্ট
+    if (user.goal === 'lose_weight') targetCals -= 500
+    if (user.goal === 'gain_muscle') targetCals += 300
 
-    // ৪. মিল প্ল্যান জেনারেট করার ফাংশন
-    const generateMeal = (type: string, targetCal: number) => {
-      let items: any[] = []
-      let selectedCarb, selectedProtein, selectedVeg, selectedSnack
-
-      // র‍্যান্ডম সিলেকশন লজিক
-      const pick = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)]
-
-      if (type === 'breakfast') {
-        // সকাল: রুটি/পরোটা + ডিম/ভাজি
-        selectedCarb = pick(carbs.filter((c: any) => c.name.includes('Ruti') || c.name.includes('Bread')))
-        selectedProtein = pick(proteins.filter((p: any) => p.name.includes('Egg')))
-        items.push(selectedCarb, selectedProtein)
-      } 
-      else if (type === 'lunch') {
-        // দুপুর: ভাত + মাছ/মাংস + ডাল + সবজি
-        selectedCarb = pick(carbs.filter((c: any) => c.name.includes('Rice')))
-        selectedProtein = pick(proteins.filter((p: any) => !p.name.includes('Egg'))) // ডিম বাদে মাছ/মাংস
-        selectedVeg = pick(veggies)
-        
-        // ডাল মাস্ট (বাঙালি লাঞ্চ)
-        const dal = proteins.find((p: any) => p.name.includes('Dal'))
-        
-        items.push(selectedCarb, selectedProtein, selectedVeg)
-        if (dal) items.push(dal)
+    // ৩. খাবার সিলেকশন লজিক (Bangladeshi Context: Combo Meals)
+    // We define "slots" but each slot can generate multiple items
+    const mealStructure = [
+      { 
+        type: 'breakfast', 
+        components: [
+          { category: 'carb', min: 100, max: 300 }, // Ruti/Paratha
+          { category: 'protein', min: 50, max: 150 } // Egg/Dal
+        ]
+      },
+      { 
+        type: 'lunch', 
+        components: [
+          { category: 'carb', min: 200, max: 400 }, // Rice
+          { category: 'protein', min: 100, max: 300 }, // Fish/Chicken
+          { category: 'vegetable', min: 50, max: 150 } // Bhorta/Shak
+        ]
+      },
+      { 
+        type: 'snack', 
+        components: [
+          { category: 'snack', min: 50, max: 250 } // Singara/Fuchka or Fruit (fallback handled in query if needed, or update seed)
+        ]
+      },
+      { 
+        type: 'dinner', 
+        components: [
+          { category: 'carb', min: 100, max: 300 }, // Ruti/Rice
+          { category: 'protein', min: 100, max: 250 } // Chicken/Fish
+        ]
       }
-      else if (type === 'dinner') {
-        // রাত: রুটি/হালকা ভাত + প্রোটিন + সবজি
-        selectedCarb = pick(carbs) // ভাত বা রুটি
-        selectedProtein = pick(proteins.filter((p: any) => !p.name.includes('Egg')))
-        selectedVeg = pick(veggies)
-        items.push(selectedCarb, selectedProtein, selectedVeg)
-      }
-      else {
-        // স্ন্যাকস: ফল বা দই
-        selectedSnack = pick(fruits)
-        items.push(selectedSnack)
-      }
+    ]
 
-      // null ভ্যালু ফিল্টার করা
-      items = items.filter(i => i)
+    const generatedPlan = []
 
-      // পরিমাণ (Quantity) অ্যাডজাস্টমেন্ট
-      // সব আইটেমের মোট ক্যালোরি যোগ করে টার্গেটের সাথে মিলিয়ে পরিমাণ বাড়ানো/কমানো
-      const totalBaseCal = items.reduce((sum, item) => sum + item.calories, 0)
-      const multiplier = targetCal / totalBaseCal
+    // Clean up old meal plan for this date to avoid duplicates
+    // await executeMutation('DELETE FROM meals WHERE user_id = ? AND date = ?', [user_id, date]) 
+    // Commented out: The user might want to generate multiple times or just add to it. 
+    // But usually regeneration implies replacement. Let's leave it additive for now or safe.
 
-      return items.map(item => {
-        const quantity = Math.round(1 * multiplier * 10) / 10 // ১ ইউনিটের সাথে মাল্টিপ্লাই
-        const desc = `${item.bangla_name || item.name} - ${quantity} serving(s)`
+    for (const mealTime of mealStructure) {
+      for (const component of mealTime.components) {
         
-        return {
-          user_id,
-          date,
-          meal_type: type,
-          food: desc,
-          calories: Math.round(item.calories * multiplier),
-          completed: false
+        // Try exact category match
+        let foods = await selectQuery(
+          'SELECT name, calories FROM food_items WHERE category = ? AND calories BETWEEN ? AND ? ORDER BY RANDOM() LIMIT 1',
+          [component.category, component.min, component.max]
+        )
+        
+        // Fallback for snacks if 'snack' category yields nothing, try 'fruit'
+        if ((!foods || foods.length === 0) && component.category === 'snack') {
+           foods = await selectQuery(
+            'SELECT name, calories FROM food_items WHERE category = ? AND calories BETWEEN ? AND ? ORDER BY RANDOM() LIMIT 1',
+            ['fruit', component.min, component.max]
+          )
         }
-      })
+
+        const food = (foods[0] as any) || { name: 'Healthy Option', calories: 150 }
+
+        // ৪. ডাটাবেসে সেভ করা
+        const insertQuery = `
+          INSERT INTO meals (user_id, date, meal_type, food, calories, completed) 
+          VALUES (?, ?, ?, ?, ?, 0)
+        `
+        await executeMutation(insertQuery, [user_id, date, mealTime.type, food.name, food.calories])
+        
+        generatedPlan.push({ type: mealTime.type, food: food.name, calories: food.calories })
+      }
     }
 
-    // ৫. প্ল্যান তৈরি
-    const breakfast = generateMeal('breakfast', targets.breakfast)
-    const lunch = generateMeal('lunch', targets.lunch)
-    const snack = generateMeal('snack', targets.snack)
-    const dinner = generateMeal('dinner', targets.dinner)
+    return NextResponse.json({ success: true, plan: generatedPlan })
 
-    const allMeals = [...breakfast, ...lunch, ...snack, ...dinner]
-
-    // ৬. আগের প্ল্যান ডিলিট করা (একই দিনে ডুপ্লিকেট এড়াতে)
-    await executeMutation('DELETE FROM meals WHERE user_id = ? AND date = ?', [user_id, date])
-
-    // ৭. নতুন প্ল্যান ডাটাবেসে সেভ করা
-    for (const meal of allMeals) {
-      await executeMutation(
-        'INSERT INTO meals (user_id, date, meal_type, food, completed) VALUES (?, ?, ?, ?, ?)',
-        [meal.user_id, meal.date, meal.meal_type, meal.food, 0]
-      )
-    }
-
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Daily meal plan generated successfully', 
-      total_calories: Math.round(dailyCalories),
-      plan: allMeals 
-    })
-
-  } catch (error) {
-    console.error('Error generating diet plan:', error)
-    return NextResponse.json({ success: false, error: 'Failed to generate plan' }, { status: 500 })
+  } catch (error: any) {
+    console.error('Meal Gen Error:', error)
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }

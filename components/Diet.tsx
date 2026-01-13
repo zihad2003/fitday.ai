@@ -1,4 +1,3 @@
-// components/Diet.tsx - With Verification
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -10,7 +9,7 @@ interface Meal {
   meal_type: string
   food: string
   calories: number
-  completed: boolean
+  completed: number | boolean // D1 returns 0 or 1, UI uses boolean
 }
 
 export default function Diet() {
@@ -18,177 +17,218 @@ export default function Diet() {
   const [meals, setMeals] = useState<Meal[]>([])
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
-  
-  // কনফার্মেশন মডালের জন্য স্টেট
   const [confirmMeal, setConfirmMeal] = useState<Meal | null>(null)
-
+  const [userId, setUserId] = useState<number | null>(null)
+  
   const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
     const user = getUserSession()
-    if (!user) router.push('/login')
-    else fetchMeals(user.id)
+    if (!user) {
+      router.push('/login')
+    } else {
+      setUserId(user.id)
+      fetchMeals(user.id)
+    }
   }, [])
 
+  // হেল্পার ফাংশন: SQLite এর 0/1 কে boolean এ রূপান্তর করার জন্য
+  const isCompleted = (val: number | boolean) => val === 1 || val === true
+
   const fetchMeals = async (uid: number) => {
-    try {
-      const res = await fetch(`/api/meals?user_id=${uid}&date=${today}`)
-      const data = await res.json()
-
-      if (data.success && data.data.length > 0) {
-        setMeals(data.data)
-        calculateProgress(data.data)
-      } else {
-        generatePlan(uid)
-      }
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
-  const generatePlan = async (uid: number) => {
-    try {
-      setLoading(true)
-      const res = await fetch('/api/meals/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: uid, date: today })
-      })
-      const data = await res.json()
-      if (data.success) {
-        setMeals(data.plan)
-        calculateProgress(data.plan)
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // ১. চেক বক্সে ক্লিক করলে এই ফাংশন কল হবে
-  const handleCheckClick = (meal: Meal) => {
-    // যদি অলরেডি কমপ্লিট করা থাকে, তাহলে আন-চেক করার জন্য কনফার্মেশন লাগবে না (বা চাইলে দিতে পারেন)
-    if (meal.completed) {
-      toggleMeal(meal.id, true) // সরাসরি আন-চেক
+  setLoading(true);
+  try {
+    const res = await fetch(`/api/meals?user_id=${uid}&date=${today}`);
+    // টাইপস্ক্রিপ্ট এরর এড়াতে 'as any' যোগ করা হয়েছে
+    const json = (await res.json()) as any; 
+    
+    // এখন json.success বা json.data তে আর এরর দিবে না
+    if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+      setMeals(json.data);
+      calculateProgress(json.data);
     } else {
-      setConfirmMeal(meal) // পপ-আপ ওপেন হবে
+      await generatePlan(uid);
+    }
+  } catch (error) {
+    console.error("Fetch Error:", error);
+  } finally {
+    setLoading(false);
+  }
+}
+ const generatePlan = async (uid: number) => {
+  setLoading(true);
+  try {
+    const res = await fetch('/api/meals/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: uid, date: today })
+    });
+    
+    const json = (await res.json()) as any; 
+    
+    if (json && json.success) {
+      // আপনার API 'plan' অথবা 'data' যেকোনো নামে ডাটা পাঠাতে পারে, দুটিই চেক করা হচ্ছে
+      const newMeals = json.plan || json.data || [];
+      setMeals(newMeals);
+      calculateProgress(newMeals);
+    }
+  } catch (error) {
+    console.error("Generation Error:", error);
+  } finally {
+    setLoading(false);
+  }
+}
+
+  const handleCheckClick = (meal: Meal) => {
+    if (isCompleted(meal.completed)) {
+      toggleMeal(meal.id, meal.completed)
+    } else {
+      setConfirmMeal(meal)
     }
   }
 
-  // ২. পপ-আপে "Yes" দিলে এই ফাংশন কল হবে
   const confirmToggle = async () => {
     if (confirmMeal) {
-      await toggleMeal(confirmMeal.id, false)
-      setConfirmMeal(null) // পপ-আপ বন্ধ
+      await toggleMeal(confirmMeal.id, confirmMeal.completed)
+      setConfirmMeal(null)
     }
   }
 
-  const toggleMeal = async (id: number, currentStatus: boolean) => {
-    const updatedMeals = meals.map(m => 
-      m.id === id ? { ...m, completed: !currentStatus } : m
-    )
-    setMeals(updatedMeals)
-    calculateProgress(updatedMeals)
+  const toggleMeal = async (id: number, currentStatus: number | boolean) => {
+  const nextStatus = isCompleted(currentStatus) ? 0 : 1;
+  const updatedMeals = meals.map(m => m.id === id ? { ...m, completed: nextStatus } : m);
+  
+  setMeals(updatedMeals);
+  calculateProgress(updatedMeals);
 
-    await fetch(`/api/meals/${id}`, {
+  try {
+    const res = await fetch(`/api/meals/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ completed: !currentStatus })
-    })
+      body: JSON.stringify({ completed: nextStatus })
+    });
+    
+    const result = (await res.json()) as any; // 'result' নামে ডাটা নিন
+    if (!result.success) throw new Error("Sync failed");
+    
+  } catch (error) {
+    console.error("Sync Error:", error);
+    if (userId) fetchMeals(userId); // এরর হলে রিলোড করুন
   }
+}
 
   const calculateProgress = (items: Meal[]) => {
     if (items.length === 0) return setProgress(0)
-    const completedCount = items.filter(m => m.completed).length
+    const completedCount = items.filter(m => isCompleted(m.completed)).length
     setProgress(Math.round((completedCount / items.length) * 100))
   }
 
-  const groupedMeals = {
-    breakfast: meals.filter(m => m.meal_type === 'breakfast'),
-    lunch: meals.filter(m => m.meal_type === 'lunch'),
-    snack: meals.filter(m => m.meal_type === 'snack'),
-    dinner: meals.filter(m => m.meal_type === 'dinner'),
-  }
+  const mealTypes = ['breakfast', 'lunch', 'snack', 'dinner']
 
   return (
-    <div className="max-w-2xl mx-auto p-4 pb-24 relative">
-      
-      {/* Header & Progress (Same as before) */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-6 text-white shadow-lg mb-6">
-        <h1 className="text-2xl font-bold mb-2">🥗 Daily Nutrition</h1>
-        <div className="mt-4 bg-blue-800/30 rounded-full h-2">
-          <div className="bg-white h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
+    <div className="min-h-screen bg-slate-950 text-white p-4 pb-24 font-sans">
+      {/* Futuristic Header */}
+      <div className="glass-panel p-6 rounded-3xl mb-8 relative overflow-hidden border border-white/10 bg-white/5 backdrop-blur-md">
+        <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-cyan-600/10 to-transparent w-full"></div>
+        <div className="flex justify-between items-center relative z-10">
+          <h1 className="text-2xl font-black tracking-tighter italic uppercase">
+            Fuel <span className="text-cyan-400">Logs</span>
+          </h1>
+          <div className="text-[10px] font-mono bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded">
+            SYNC_DATE: {today}
+          </div>
         </div>
-        <p className="text-right text-xs mt-2">{progress}% Completed</p>
+        
+        <div className="mt-6 h-2 bg-slate-900 rounded-full overflow-hidden relative z-10 border border-white/5">
+          <div 
+            className="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 shadow-[0_0_15px_#06b6d4] transition-all duration-1000" 
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+        <p className="text-right text-[10px] text-slate-500 mt-2 font-mono uppercase tracking-widest">
+            METABOLIC SYNC: <span className="text-cyan-400">{progress}%</span>
+        </p>
       </div>
 
-      {loading && <p className="text-center text-gray-500">Preparing your meal plan...</p>}
+      {loading && (
+        <div className="flex flex-col items-center justify-center py-10 gap-3">
+            <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-xs text-cyan-500 animate-pulse font-mono uppercase tracking-widest">Decoding Bio-Signals...</p>
+        </div>
+      )}
 
-      <div className="space-y-6">
-        {Object.entries(groupedMeals).map(([type, items]) => (
-          items.length > 0 && (
-            <div key={type} className="animate-fade-in">
-              <h3 className="text-lg font-bold text-gray-800 capitalize mb-3 flex items-center gap-2">
-                {type === 'breakfast' && '🍳'} {type === 'lunch' && '🍚'}
-                {type === 'snack' && '🍎'} {type === 'dinner' && '🌙'} {type}
+      {/* Meals List */}
+      <div className="space-y-8">
+        {mealTypes.map((type) => {
+          const items = meals.filter(m => m.meal_type === type)
+          if (items.length === 0 && !loading) return null
+
+          return (
+            <div key={type} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-3">
+                <span className="w-8 h-[1px] bg-slate-800"></span>
+                {type}
               </h3>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                {items.map((meal) => (
-                  <div key={meal.id} className={`p-4 border-b last:border-0 flex items-center gap-4 transition-colors ${meal.completed ? 'bg-gray-50' : 'bg-white'}`}>
-                    
-                    {/* Checkbox Trigger */}
-                    <input 
-                      type="checkbox"
-                      checked={meal.completed}
-                      onChange={() => handleCheckClick(meal)} 
-                      className="w-6 h-6 accent-blue-600 cursor-pointer"
-                    />
-                    
-                    <div className="flex-1">
-                      <p className={`font-medium text-gray-800 ${meal.completed ? 'line-through text-gray-400' : ''}`}>
-                        {meal.food}
-                      </p>
-                      <p className="text-xs text-blue-600 font-medium mt-1">🔥 {meal.calories} kcal</p>
+              <div className="grid gap-3">
+                {items.map((meal) => {
+                  const completed = isCompleted(meal.completed)
+                  return (
+                    <div 
+                      key={meal.id} 
+                      onClick={() => handleCheckClick(meal)}
+                      className={`p-5 rounded-2xl border transition-all duration-300 flex items-center gap-4 group ${
+                        completed 
+                          ? 'bg-cyan-950/20 border-cyan-500/20 opacity-60' 
+                          : 'bg-slate-900/40 border-white/5 hover:border-cyan-500/40 hover:bg-slate-900/80'
+                      }`}
+                    >
+                      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                        completed 
+                          ? 'bg-cyan-500 border-cyan-500 shadow-[0_0_10px_#06b6d4]' 
+                          : 'border-slate-700 group-hover:border-cyan-500/50'
+                      }`}>
+                        {completed && <span className="text-black font-bold text-xs">✓</span>}
+                      </div>
+                      <div className="flex-1">
+                        <p className={`font-bold text-sm transition-all ${completed ? 'text-slate-500 line-through' : 'text-slate-100'}`}>
+                          {meal.food}
+                        </p>
+                        <p className="text-[10px] font-mono text-cyan-500/70 mt-1">{meal.calories} KCAL</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )
-        ))}
+        })}
       </div>
 
-      {/* --- CONFIRMATION MODAL --- */}
+      {/* Confirmation Modal */}
       {confirmMeal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl transform transition-all scale-100">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                🥣
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Did you eat this?</h3>
-              <p className="text-gray-500 text-sm mb-6">
-                You are marking <span className="font-semibold text-gray-800">"{confirmMeal.food}"</span> as consumed. Be honest for best results!
-              </p>
-              
-              <div className="flex gap-3">
-                <button 
-                  onClick={() => setConfirmMeal(null)}
-                  className="flex-1 py-3 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition"
-                >
-                  No, Wait
-                </button>
-                <button 
-                  onClick={confirmToggle}
-                  className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 shadow-lg shadow-blue-200 transition"
-                >
-                  Yes, Ate it
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-slate-950/90 z-[100] flex items-center justify-center p-6 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-slate-900 border border-white/10 rounded-3xl p-8 w-full max-w-sm shadow-2xl">
+            <h3 className="text-xl font-bold text-white text-center mb-2">Confirm Log</h3>
+            <p className="text-slate-400 text-sm text-center mb-8">
+              Mark <span className="text-cyan-400 font-bold">"{confirmMeal.food}"</span> as consumed?
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setConfirmMeal(null)} 
+                className="flex-1 py-4 bg-slate-800 rounded-xl font-bold text-slate-400 hover:bg-slate-700 transition-colors"
+              >
+                BACK
+              </button>
+              <button 
+                onClick={confirmToggle} 
+                className="flex-1 py-4 bg-cyan-600 rounded-xl font-bold text-white hover:bg-cyan-500 shadow-[0_0_20px_rgba(8,145,178,0.4)] transition-all"
+              >
+                CONFIRM
+              </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   )
 }

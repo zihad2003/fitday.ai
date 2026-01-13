@@ -2,26 +2,99 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global styles for a modern, clean look */
-* {
-  box-sizing: border-box;
-}
-
-html, body {
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  line-height: 1.6;
-  color: #333;
+/* 1. BASE SETTINGS */
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 2, 6, 23; /* Slate 950 */
+  --background-end-rgb: 2, 6, 23;
 }
 
 body {
-  background-color: #f9fafb; /* Light gray background for a modern feel */
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-start-rgb));
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
 }
 
-/* Custom utilities for mobile-first design */
+/* 2. CUSTOM SCROLLBAR (Chrome/Safari/Edge) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #020617; /* Slate 950 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b; /* Slate 800 */
+  border-radius: 3px;
+  transition:background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #06b6d4; /* Cyan 500 */
+}
+
+/* Firefox Scrollbar Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1e293b #020617;
+}
+
+/* 3. UTILITY CLASSES (Glassmorphism & Effects) */
+@layer components {
+  .glass-panel {
+    @apply bg-slate-900/50 backdrop-blur-xl border border-white/10 shadow-xl;
+  }
+
+  .glass-card {
+    @apply relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 transition-all duration-300;
+  }
+  
+  /* Hide Scrollbar but allow scrolling */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* 4. ANIMATIONS (Referenced in your JSX) */
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  
+  /* Floating Effect */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  /* Shimmer Effect (Used in Buttons) */
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  .animate-shimmer {
+    animation: shimmer 2s infinite;
+  }
+
+  /* Scan Line (Used in Modal) */
+  @keyframes scan {
+    0%, 100% { top: 0%; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+  /* Note: The class 'animate-[scan_...]' in Tailwind uses arbitrary values, 
+     but we define the keyframes here so Tailwind can find it if configured, 
+     or you can use a utility class like this: */
+  .animate-scan {
+    animation: scan 2s linear infinite;
   }
 }

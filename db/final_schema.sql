@@ -2,8 +2,10 @@
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS meals;
 DROP TABLE IF EXISTS workouts;
+DROP TABLE IF EXISTS food_items;
+DROP TABLE IF EXISTS exercise_library;
 
--- ১. ইউজার টেবিল (পাসওয়ার্ড ও মেডিকেল ডাটা সহ)
+-- 1. Users Table
 CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT UNIQUE NOT NULL,
@@ -19,7 +21,7 @@ CREATE TABLE users (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- ২. মিলস টেবিল
+-- 2. Meals Table
 CREATE TABLE meals (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
@@ -32,7 +34,7 @@ CREATE TABLE meals (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- ৩. ওয়ার্কআউট টেবিল
+-- 3. Workouts Table
 CREATE TABLE workouts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
@@ -41,4 +43,27 @@ CREATE TABLE workouts (
   completed BOOLEAN DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 4. Food Items Table
+CREATE TABLE food_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  bangla_name TEXT,
+  serving_unit TEXT,
+  calories INTEGER,
+  protein REAL,
+  carbs REAL,
+  fat REAL,
+  category TEXT
+);
+
+-- 5. Exercise Library
+CREATE TABLE exercise_library (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  difficulty TEXT,
+  muscle_group TEXT,
+  equipment_needed TEXT,
+  safety_instruction TEXT
 );
