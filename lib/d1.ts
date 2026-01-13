@@ -6,24 +6,30 @@ export const runtime = 'edge'
 // ১. ডাটাবেস কানেকশন পাওয়ার হেল্পার ফাংশন
 function getDB() {
   try {
-    // wrangler.toml এ বাইন্ডিং নাম 'FITNESS_DB', তাই এখানেও তাই হতে হবে
-
-    // লোকাল ডেভেলপমেন্টের জন্য
-    if ((process.env as any).FITNESS_DB) {
-      return (process.env as any).FITNESS_DB
+    // 1. Try process.env (Local dev or some Cloudflare setups)
+    const envDB = (process.env as any).FITNESS_DB;
+    if (envDB) {
+      console.log('✅ Found FITNESS_DB in process.env');
+      return envDB;
     }
 
-    // প্রোডাকশন মোডে (Cloudflare Pages)
-    const ctx = getRequestContext()
+    // 2. Try getRequestContext (Required for Cloudflare Pages production with @cloudflare/next-on-pages)
+    const ctx = getRequestContext();
     if (ctx && ctx.env && (ctx.env as any).FITNESS_DB) {
-      return (ctx.env as any).FITNESS_DB
+      console.log('✅ Found FITNESS_DB in getRequestContext().env');
+      return (ctx.env as any).FITNESS_DB;
     }
 
-    console.error("❌ FITNESS_DB binding not found. Check wrangler.toml and environment variables.")
-    return null
-  } catch (e) {
-    console.error("❌ Database connection error:", e)
-    return null
+    if (!ctx) {
+      console.warn('⚠️ getRequestContext() returned null - ensure you are using the correct adapter and running on Edge.');
+    } else {
+      console.error("❌ FITNESS_DB binding not found in ctx.env. Available keys:", Object.keys(ctx.env || {}));
+    }
+
+    return null;
+  } catch (e: any) {
+    console.error("❌ Database connection detection error:", e.message);
+    return null;
   }
 }
 

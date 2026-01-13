@@ -66,15 +66,20 @@ export default function Login() {
 
       <div className="glass-panel p-8 rounded-3xl w-full max-w-md border border-white/10 bg-black/40 backdrop-blur-xl relative">
         <div className="flex justify-center mb-6">
-          <div className="w-24 h-24 relative group">
-            <div className="absolute inset-0 bg-cyan-500/30 rounded-full blur-xl group-hover:bg-cyan-500/50 transition-all"></div>
-            <img src="/logo.png" alt="FitDay Logo" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(6,182,212,0.6)]" />
+          <div className="w-32 h-32 relative group">
+            <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-2xl group-hover:bg-cyan-500/40 transition-all"></div>
+            <img
+              src="/logo.png"
+              alt="FitDay Logo"
+              className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(6,182,212,0.6)]"
+              style={{ mixBlendMode: 'screen' }}
+            />
           </div>
         </div>
 
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-white tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-cyan-200 to-white">FitDay AI</h2>
-          <p className="text-slate-400 mt-2 text-sm font-mono uppercase tracking-[0.2em]">Signal Authorization Required</p>
+          <h2 className="text-4xl font-black text-white tracking-widest bg-clip-text text-transparent bg-gradient-to-b from-white to-cyan-400">FITDAY</h2>
+          <p className="text-slate-500 mt-2 text-[10px] font-mono uppercase tracking-[0.4em] opacity-80">Neuro-Sync Connection Required</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-5">
