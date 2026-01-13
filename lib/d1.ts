@@ -7,7 +7,7 @@ export const runtime = 'edge'
 function getDB() {
   try {
     // wrangler.toml এ বাইন্ডিং নাম 'FITNESS_DB', তাই এখানেও তাই হতে হবে
-    
+
     // লোকাল ডেভেলপমেন্টের জন্য
     if ((process.env as any).FITNESS_DB) {
       return (process.env as any).FITNESS_DB
@@ -32,7 +32,7 @@ export async function selectQuery(query: string, params: any[] = []) {
   const db = getDB()
   if (!db) {
     console.error("❌ Database instance is null in selectQuery")
-    return []
+    return null // Return null to indicate connection failure
   }
 
   try {
@@ -41,7 +41,7 @@ export async function selectQuery(query: string, params: any[] = []) {
     return results || []
   } catch (error) {
     console.error("❌ SQL Select Error:", error)
-    return []
+    throw error // Re-throw to be caught by route handler
   }
 }
 
@@ -54,8 +54,8 @@ export async function executeMutation(query: string, params: any[] = []) {
   }
 
   try {
-    console.log("📝 Executing SQL:", query) 
-    console.log("👉 Params:", params)       
+    console.log("📝 Executing SQL:", query)
+    console.log("👉 Params:", params)
 
     const stmt = db.prepare(query).bind(...params)
     const info = await stmt.run()
@@ -69,7 +69,7 @@ export async function executeMutation(query: string, params: any[] = []) {
         changes = (info as any).changes
       } else if (info.success) {
         // যদি changes না পাওয়া যায় কিন্তু success true হয়, তবে অন্তত ১ ধরুন (INSERT এর ক্ষেত্রে)
-        changes = 1 
+        changes = 1
       }
     }
 

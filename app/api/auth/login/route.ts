@@ -16,7 +16,12 @@ export async function POST(request: NextRequest) {
     // 1. Fetch User (Include password field)
     const users = await selectQuery('SELECT * FROM users WHERE email = ?', [email])
 
+    if (users === null) {
+      return NextResponse.json({ success: false, error: 'Database Connection Error. Please verify D1 bindings.' }, { status: 503 })
+    }
+
     if (users.length === 0) {
+      console.log(`[Login] No user found for email: ${email}`);
       return NextResponse.json({ success: false, error: 'Invalid credentials' }, { status: 401 })
     }
 

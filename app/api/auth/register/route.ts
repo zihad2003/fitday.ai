@@ -16,6 +16,11 @@ export async function POST(request: NextRequest) {
 
         // 1. Check Duplicates
         const existingUsers = await selectQuery('SELECT id FROM users WHERE email = ?', [email])
+
+        if (existingUsers === null) {
+            return NextResponse.json({ success: false, error: 'Database Connection Error' }, { status: 503 })
+        }
+
         if (existingUsers.length > 0) {
             return NextResponse.json({ success: false, error: 'Email already exists' }, { status: 409 })
         }
