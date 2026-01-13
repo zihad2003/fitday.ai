@@ -1,7 +1,9 @@
 name = "fitday-ai"
 compatibility_date = "2024-01-01"
+# This flag is required for Next.js features that rely on Node.js APIs
+compatibility_flags = ["nodejs_compat"]
 
-# Updated to match the actual build output from @cloudflare/next-on-pages
+# Updated to match the actual build output from your previous logs
 pages_build_output_dir = ".vercel/output/static"
 
 [[d1_databases]]
