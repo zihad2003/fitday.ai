@@ -17,6 +17,8 @@ type Workout = {
   id: number
   type: string
   completed: number // 0 or 1
+  gif_url?: string
+  difficulty?: string
 }
 
 export default function ChecklistPage() {
@@ -25,7 +27,7 @@ export default function ChecklistPage() {
   const [loading, setLoading] = useState(true)
 
   // Get current user ID (Replace with real auth later)
-  const USER_ID = 1 
+  const USER_ID = 1
   const today = format(new Date(), 'yyyy-MM-dd')
 
 
@@ -110,7 +112,7 @@ export default function ChecklistPage() {
   // --- 4. Render ---
   return (
     <div className="min-h-screen bg-slate-950 text-white selection:bg-cyan-500/30 font-sans pb-20">
-      
+
       {/* Background Grid */}
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
 
@@ -121,14 +123,14 @@ export default function ChecklistPage() {
             ← BACK TO HUB
           </Link>
           <div className="flex items-center gap-2">
-             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-             <span className="text-xs font-mono text-emerald-500 uppercase tracking-widest">Live Sync</span>
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span className="text-xs font-mono text-emerald-500 uppercase tracking-widest">Live Sync</span>
           </div>
         </div>
       </div>
 
       <main className="max-w-3xl mx-auto px-6 pt-10 relative z-10">
-        
+
         {/* Progress Card */}
         <div className="bg-gradient-to-br from-slate-900 to-slate-900/50 border border-white/10 rounded-3xl p-8 mb-12 relative overflow-hidden shadow-2xl">
           <div className="absolute top-0 left-0 w-full h-1 bg-slate-800">
@@ -158,7 +160,7 @@ export default function ChecklistPage() {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 gap-8">
-            
+
             {/* Meals Column */}
             <section className="space-y-4">
               <div className="flex items-center justify-between mb-4">
@@ -169,28 +171,26 @@ export default function ChecklistPage() {
                   {meals.filter(m => m.completed).length}/{meals.length}
                 </span>
               </div>
-              
+
               {meals.length === 0 ? (
-                 <div className="p-6 border border-dashed border-white/10 rounded-2xl text-center text-slate-500 text-sm bg-white/[0.02]">
-                   No meal plan generated for today.
-                 </div>
+                <div className="p-6 border border-dashed border-white/10 rounded-2xl text-center text-slate-500 text-sm bg-white/[0.02]">
+                  No meal plan generated for today.
+                </div>
               ) : (
                 meals.map(meal => (
-                  <div 
+                  <div
                     key={meal.id}
                     onClick={() => toggleMeal(meal.id, meal.completed)}
-                    className={`group relative p-4 rounded-2xl border cursor-pointer transition-all duration-300 overflow-hidden ${
-                      meal.completed 
-                        ? 'bg-emerald-500/5 border-emerald-500/20 opacity-50' 
+                    className={`group relative p-4 rounded-2xl border cursor-pointer transition-all duration-300 overflow-hidden ${meal.completed
+                        ? 'bg-emerald-500/5 border-emerald-500/20 opacity-50'
                         : 'bg-slate-900/50 border-white/10 hover:border-emerald-500/40 hover:bg-slate-800'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start gap-4 relative z-10">
-                      <div className={`mt-1 min-w-[20px] h-5 rounded border flex items-center justify-center transition-all ${
-                        meal.completed 
-                          ? 'bg-emerald-500 border-emerald-500 rotate-0' 
+                      <div className={`mt-1 min-w-[20px] h-5 rounded border flex items-center justify-center transition-all ${meal.completed
+                          ? 'bg-emerald-500 border-emerald-500 rotate-0'
                           : 'border-slate-600 group-hover:border-emerald-500 rotate-45 group-hover:rotate-0 rounded-md'
-                      }`}>
+                        }`}>
                         {meal.completed && <svg className="w-3 h-3 text-black font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4"><path d="M5 13l4 4L19 7" /></svg>}
                       </div>
                       <div>
@@ -220,33 +220,48 @@ export default function ChecklistPage() {
               </div>
 
               {workouts.length === 0 ? (
-                 <div className="p-6 border border-dashed border-white/10 rounded-2xl text-center text-slate-500 text-sm bg-white/[0.02]">
-                   Rest Day / Active Recovery
-                 </div>
+                <div className="p-6 border border-dashed border-white/10 rounded-2xl text-center text-slate-500 text-sm bg-white/[0.02]">
+                  Rest Day / Active Recovery
+                </div>
               ) : (
                 workouts.map(workout => (
-                  <div 
+                  <div
                     key={workout.id}
                     onClick={() => toggleWorkout(workout.id, workout.completed)}
-                    className={`group relative p-4 rounded-2xl border cursor-pointer transition-all duration-300 overflow-hidden ${
-                      workout.completed 
-                        ? 'bg-cyan-500/5 border-cyan-500/20 opacity-50' 
+                    className={`group relative p-4 rounded-2xl border cursor-pointer transition-all duration-300 overflow-hidden ${workout.completed
+                        ? 'bg-cyan-500/5 border-cyan-500/20 opacity-50'
                         : 'bg-slate-900/50 border-white/10 hover:border-cyan-500/40 hover:bg-slate-800'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start gap-4 relative z-10">
-                      <div className={`mt-1 min-w-[20px] h-5 rounded border flex items-center justify-center transition-all ${
-                        workout.completed 
-                          ? 'bg-cyan-500 border-cyan-500 rotate-0' 
+                      <div className={`mt-1 min-w-[20px] h-5 rounded border flex items-center justify-center transition-all ${workout.completed
+                          ? 'bg-cyan-500 border-cyan-500 rotate-0'
                           : 'border-slate-600 group-hover:border-cyan-500 rotate-45 group-hover:rotate-0 rounded-md'
-                      }`}>
+                        }`}>
                         {workout.completed && <svg className="w-3 h-3 text-black font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4"><path d="M5 13l4 4L19 7" /></svg>}
                       </div>
                       <div>
                         <h3 className={`font-semibold text-sm leading-snug transition-colors ${workout.completed ? 'text-cyan-400/80 line-through decoration-cyan-500/30' : 'text-slate-200 group-hover:text-cyan-300'}`}>
                           {workout.type}
                         </h3>
-                        <p className="text-xs text-slate-400 mt-1">Targeted Protocol</p>
+                        <p className="text-xs text-slate-400 mt-1">Targeted Protocol {workout.difficulty && <span className="text-[10px] uppercase border border-slate-700 px-1 rounded ml-2">{workout.difficulty}</span>}</p>
+
+                        {/* GIF Demo */}
+                        {workout.gif_url && (
+                          <div className="mt-3 rounded-lg overflow-hidden border border-white/5 relative group/gif">
+                            <img
+                              src={workout.gif_url}
+                              alt="Exercise Demo"
+                              className="w-full h-32 object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <div className="bg-black/50 backdrop-blur-sm px-2 py-1 rounded text-[10px] text-white font-mono uppercase tracking-widest group-hover/gif:opacity-0 transition-opacity">
+                                AI Demo
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

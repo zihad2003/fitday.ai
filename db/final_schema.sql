@@ -65,5 +65,6 @@ CREATE TABLE exercise_library (
   difficulty TEXT,
   muscle_group TEXT,
   equipment_needed TEXT,
-  safety_instruction TEXT
+  safety_instruction TEXT,
+  gif_url TEXT
 );

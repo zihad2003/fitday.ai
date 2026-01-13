@@ -11,7 +11,7 @@ const createWorkoutSchema = z.object({
   type: z.string().min(3, "Workout description is too short"),
   completed: z.boolean().optional().default(false),
   // Optional: Add duration/calories if your DB supports them later
-  duration: z.number().min(1).optional().default(0), 
+  duration: z.number().min(1).optional().default(0),
   calories: z.number().min(1).optional().default(0)
 })
 
@@ -21,40 +21,45 @@ const createWorkoutSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    
+
     // Extract Filters
     const userId = searchParams.get('user_id')
     const date = searchParams.get('date')
     const completed = searchParams.get('completed')
 
     // Dynamic SQL Construction
-    let sql = 'SELECT * FROM workouts WHERE 1=1'
+    let sql = `
+      SELECT w.*, e.gif_url, e.difficulty, e.muscle_group 
+      FROM workouts w 
+      LEFT JOIN exercise_library e ON w.type = e.name 
+      WHERE 1=1
+    `
     const params: (string | number)[] = []
 
     if (userId) {
-      sql += ' AND user_id = ?'
+      sql += ' AND w.user_id = ?'
       params.push(parseInt(userId))
     }
 
     if (date) {
-      sql += ' AND date = ?'
+      sql += ' AND w.date = ?'
       params.push(date)
     }
 
     if (completed !== null) {
-      sql += ' AND completed = ?'
+      sql += ' AND w.completed = ?'
       params.push(completed === 'true' ? 1 : 0)
     }
 
     // Default Sorting: Newest dates first
-    sql += ' ORDER BY date DESC, created_at DESC'
+    sql += ' ORDER BY w.date DESC, w.created_at DESC'
 
     const workouts = await selectQuery(sql, params)
-    
-    return NextResponse.json({ 
-      success: true, 
-      count: workouts.length, 
-      data: workouts 
+
+    return NextResponse.json({
+      success: true,
+      count: workouts.length,
+      data: workouts
     })
 
   } catch (error) {
@@ -72,11 +77,11 @@ export async function POST(request: NextRequest) {
 
     // 1. Validate Input
     const validation = createWorkoutSchema.safeParse(body)
-    
+
     if (!validation.success) {
-      return NextResponse.json({ 
-        success: false, 
-        error: validation.error.issues[0].message 
+      return NextResponse.json({
+        success: false,
+        error: validation.error.issues[0].message
       }, { status: 400 })
     }
 
@@ -95,9 +100,9 @@ export async function POST(request: NextRequest) {
       VALUES (?, ?, ?, ?)
     `
     const params = [
-      data.user_id, 
-      data.date, 
-      data.type, 
+      data.user_id,
+      data.date,
+      data.type,
       data.completed ? 1 : 0
     ]
 
@@ -106,11 +111,11 @@ export async function POST(request: NextRequest) {
     if (changes > 0) {
       // Fetch the newly created item
       const newWorkouts = await selectQuery('SELECT * FROM workouts WHERE id = last_insert_rowid()')
-      
-      return NextResponse.json({ 
-        success: true, 
+
+      return NextResponse.json({
+        success: true,
         message: 'Workout logged successfully',
-        data: newWorkouts[0] 
+        data: newWorkouts[0]
       }, { status: 201 })
     } else {
       return NextResponse.json({ success: false, error: 'Database insert failed' }, { status: 500 })

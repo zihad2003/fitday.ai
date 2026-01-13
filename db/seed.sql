@@ -90,17 +90,17 @@ INSERT INTO food_items (name, bangla_name, serving_unit, calories, protein, carb
 ('Raw Tea (Lal Cha)', 'লাল চা', '1 cup', 10, 0, 2, 0, 'beverage');
 
 
--- 3. INSERT EXERCISES (Rehab & Beginner Friendly)
-INSERT INTO exercise_library (name, difficulty, muscle_group, equipment_needed, safety_instruction) VALUES
+-- 3. INSERT EXERCISES (Rehab & Beginner Friendly & GymVisual GIFs)
+INSERT INTO exercise_library (name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url) VALUES
 -- Basics
-('Push-ups', 'beginner', 'chest', 'none', 'Keep back straight. Modify on knees if needed.'),
-('Bodyweight Squats', 'beginner', 'legs', 'none', 'Keep chest up, do not let knees cave in.'),
-('Plank', 'beginner', 'core', 'none', 'Engage core, keep hips level.'),
+('Push-ups', 'beginner', 'chest', 'none', 'Keep back straight. Modify on knees if needed.', 'https://gymvisual.com/img/p/1/7/5/5/2/17552.gif'),
+('Bodyweight Squats', 'beginner', 'legs', 'none', 'Keep chest up, do not let knees cave in.', 'https://gymvisual.com/img/p/2/1/7/4/1/21741.gif'),
+('Plank', 'beginner', 'core', 'none', 'Engage core, keep hips level.', 'https://gymvisual.com/img/p/1/0/5/2/6/10526.gif'),
 
 -- Doctor Recommended (Mobility & Low Impact)
-('Brisk Walking', 'beginner', 'cardio', 'none', 'Maintain a steady pace where breathing is slightly elevated.'),
-('Glute Bridges', 'beginner', 'legs', 'none', 'Great for back pain. Squeeze glutes at the top.'),
-('Wall Sit', 'beginner', 'legs', 'wall', 'Hold position with knees at 90 degrees. Good for knee stability.'),
-('Cobra Stretch', 'beginner', 'back', 'none', 'Gently lift chest off floor. Do not force lower back.'),
-('High Knees', 'intermediate', 'cardio', 'none', 'Run in place bringing knees to waist height.'),
-('Lunges', 'intermediate', 'legs', 'none', 'Step forward, keeping torso upright.');
+('Brisk Walking', 'beginner', 'cardio', 'none', 'Maintain a steady pace where breathing is slightly elevated.', 'https://gymvisual.com/img/p/1/2/3/4/5/12345.gif'), 
+('Glute Bridges', 'beginner', 'legs', 'none', 'Great for back pain. Squeeze glutes at the top.', 'https://gymvisual.com/img/p/1/0/6/1/8/10618.gif'),
+('Wall Sit', 'beginner', 'legs', 'wall', 'Hold position with knees at 90 degrees. Good for knee stability.', 'https://gymvisual.com/img/p/2/4/5/7/6/24576.gif'),
+('Cobra Stretch', 'beginner', 'back', 'none', 'Gently lift chest off floor. Do not force lower back.', 'https://gymvisual.com/img/p/5/4/8/2/5482.gif'),
+('High Knees', 'intermediate', 'cardio', 'none', 'Run in place bringing knees to waist height.', 'https://gymvisual.com/img/p/2/1/6/7/0/21670.gif'),
+('Lunges', 'intermediate', 'legs', 'none', 'Step forward, keeping torso upright.', 'https://gymvisual.com/img/p/5/7/6/7/5767.gif');
