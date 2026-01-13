@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { handle } from 'hono/vercel'
 import { cors } from 'hono/cors'
+export const runtime = 'edge'
 
 // 1. STRONG TYPING: Define exactly what your environment looks like
 // This prevents "undefined" crashes and gives you autocomplete.
@@ -33,10 +34,10 @@ app.notFound((c) => {
 
 // Health Check
 app.get('/', (c) => {
-  return c.json({ 
-    success: true, 
-    message: 'FitDay AI Engine is Operational', 
-    timestamp: new Date().toISOString() 
+  return c.json({
+    success: true,
+    message: 'FitDay AI Engine is Operational',
+    timestamp: new Date().toISOString()
   })
 })
 

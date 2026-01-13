@@ -7,18 +7,18 @@ export const runtime = 'edge';
 export async function hashPassword(password: string, salt: string) {
   const enc = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
-    "raw", 
-    enc.encode(password + salt), 
-    { name: "PBKDF2" }, 
-    false, 
+    "raw",
+    enc.encode(password + salt),
+    { name: "PBKDF2" },
+    false,
     ["deriveBits", "deriveKey"]
   );
-  
+
   // Using a fixed application salt for PBKDF2 + user specific salt
   const hashBuffer = await crypto.subtle.deriveBits(
     {
       name: "PBKDF2",
-      salt: enc.encode("fitday_secure_app_salt"), 
+      salt: enc.encode("fitday_secure_app_salt"),
       iterations: 100000,
       hash: "SHA-256"
     },
@@ -26,7 +26,9 @@ export async function hashPassword(password: string, salt: string) {
     256
   );
 
-  return Buffer.from(hashBuffer).toString('hex');
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
 }
 
 export function generateSalt() {
