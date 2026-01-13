@@ -25,28 +25,34 @@ export default function Login() {
     setError('')
 
     try {
-      // 
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       })
-      
-      // --- 2. Cast the response to our Interface ---
-      const data = (await res.json()) as LoginResponse
-      
+
+      const content = await res.text()
+      let data: LoginResponse
+
+      try {
+        data = JSON.parse(content) as LoginResponse
+      } catch (e) {
+        console.error('Invalid JSON response:', content)
+        setError('Server Error: Invalid Response Format')
+        return
+      }
+
       if (data.success) {
-        // Now TypeScript knows 'data.data' exists
         if (data.data) {
-            saveUserSession(data.data)
-            router.push('/dashboard')
+          saveUserSession(data.data)
+          router.push('/dashboard')
         }
       } else {
-        // Now TypeScript knows 'data.error' exists
         setError(data.error || 'Access Denied')
       }
     } catch (error) {
-      setError('Connection Failure')
+      console.error('Login Fetch Error:', error)
+      setError('Connection Failure: System Offline or Network Error')
     } finally {
       setLoading(false)
     }
@@ -58,31 +64,38 @@ export default function Login() {
 
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyan-500/20 rounded-full blur-[100px] -z-10 animate-pulse"></div>
 
-      <div className="glass-panel p-8 rounded-3xl w-full max-w-md border border-white/10 bg-black/40 backdrop-blur-xl">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-white tracking-tight">System Access</h2>
-          <p className="text-slate-400 mt-2 text-sm">Enter credentials to proceed</p>
+      <div className="glass-panel p-8 rounded-3xl w-full max-w-md border border-white/10 bg-black/40 backdrop-blur-xl relative">
+        <div className="flex justify-center mb-6">
+          <div className="w-24 h-24 relative group">
+            <div className="absolute inset-0 bg-cyan-500/30 rounded-full blur-xl group-hover:bg-cyan-500/50 transition-all"></div>
+            <img src="/logo.png" alt="FitDay Logo" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(6,182,212,0.6)]" />
+          </div>
         </div>
-        
+
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-white tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-cyan-200 to-white">FitDay AI</h2>
+          <p className="text-slate-400 mt-2 text-sm font-mono uppercase tracking-[0.2em]">Signal Authorization Required</p>
+        </div>
+
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
             <label className="text-xs font-bold text-cyan-500 uppercase ml-1 mb-1 block tracking-widest">Email ID</label>
-            <input 
-              type="email" required 
+            <input
+              type="email" required
               className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-cyan-500 text-white placeholder-slate-600 transition-all"
               placeholder="user@example.com"
-              onChange={e => setFormData({...formData, email: e.target.value})}
+              onChange={e => setFormData({ ...formData, email: e.target.value })}
             />
           </div>
 
           <div>
             <label className="text-xs font-bold text-cyan-500 uppercase ml-1 mb-1 block tracking-widest">Passcode</label>
             <div className="relative">
-              <input 
-                type={showPass ? "text" : "password"} required 
+              <input
+                type={showPass ? "text" : "password"} required
                 className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-cyan-500 text-white placeholder-slate-600 transition-all"
                 placeholder="••••••••"
-                onChange={e => setFormData({...formData, password: e.target.value})}
+                onChange={e => setFormData({ ...formData, password: e.target.value })}
               />
               <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-4 text-slate-500 hover:text-white transition">
                 {showPass ? 'HIDE' : 'SHOW'}

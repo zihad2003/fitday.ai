@@ -10,3 +10,4 @@ pages_build_output_dir = ".vercel/output/static"
 binding = "FITNESS_DB"
 database_name = "fitday-ai-db"
 database_id = "42dfee08-f14f-4e08-938d-6fdebab4700e"
+
