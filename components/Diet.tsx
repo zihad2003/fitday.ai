@@ -35,17 +35,24 @@ export default function Diet() {
   // হেল্পার ফাংশন: SQLite এর 0/1 কে boolean এ রূপান্তর করার জন্য
   const isCompleted = (val: number | boolean) => val === 1 || val === true
 
-  const fetchMeals = async (uid: number) => {
+const fetchMeals = async (uid: number) => {
   setLoading(true);
   try {
-    const res = await fetch(`/api/meals?user_id=${uid}&date=${today}`);
-    // টাইপস্ক্রিপ্ট এরর এড়াতে 'as any' যোগ করা হয়েছে
+    const res = await fetch(`/api/meal-plans?user_id=${uid}&date=${today}`);
     const json = (await res.json()) as any; 
     
-    // এখন json.success বা json.data তে আর এরর দিবে না
     if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
-      setMeals(json.data);
-      calculateProgress(json.data);
+      // Transform meal plan data to meal format
+      const transformedMeals = json.data.map((item: any) => ({
+        id: item.id,
+        meal_type: item.meal_type,
+        food: item.food_name,
+        calories: Math.round(item.total_calories),
+        completed: false
+      }));
+      
+      setMeals(transformedMeals);
+      calculateProgress(transformedMeals);
     } else {
       await generatePlan(uid);
     }
@@ -55,10 +62,10 @@ export default function Diet() {
     setLoading(false);
   }
 }
- const generatePlan = async (uid: number) => {
+const generatePlan = async (uid: number) => {
   setLoading(true);
   try {
-    const res = await fetch('/api/meals/generate', {
+    const res = await fetch('/api/meal-plans/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: uid, date: today })
@@ -67,10 +74,22 @@ export default function Diet() {
     const json = (await res.json()) as any; 
     
     if (json && json.success) {
-      // আপনার API 'plan' অথবা 'data' যেকোনো নামে ডাটা পাঠাতে পারে, দুটিই চেক করা হচ্ছে
-      const newMeals = json.plan || json.data || [];
-      setMeals(newMeals);
-      calculateProgress(newMeals);
+      // Handle both data and plan response formats
+      const mealsData = json.data || json.plan || [];
+      
+      if (Array.isArray(mealsData)) {
+        // Transform meal plan data to meal format
+        const newMeals = mealsData.map((item: any, index: number) => ({
+          id: index + 1, // Temporary ID for display
+          meal_type: item.meal_type || 'breakfast',
+          food: item.food || item.name,
+          calories: item.calories || Math.round(item.total_calories),
+          completed: false
+        }));
+        
+        setMeals(newMeals);
+        calculateProgress(newMeals);
+      }
     }
   } catch (error) {
     console.error("Generation Error:", error);
@@ -94,26 +113,21 @@ export default function Diet() {
     }
   }
 
-  const toggleMeal = async (id: number, currentStatus: number | boolean) => {
+const toggleMeal = async (id: number, currentStatus: number | boolean) => {
   const nextStatus = isCompleted(currentStatus) ? 0 : 1;
   const updatedMeals = meals.map(m => m.id === id ? { ...m, completed: nextStatus } : m);
   
   setMeals(updatedMeals);
   calculateProgress(updatedMeals);
 
+  // For now, just update local state
+  // In a real implementation, you would need to map this to meal_plans or meals table
   try {
-    const res = await fetch(`/api/meals/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ completed: nextStatus })
-    });
-    
-    const result = (await res.json()) as any; // 'result' নামে ডাটা নিন
-    if (!result.success) throw new Error("Sync failed");
-    
+    console.log(`Meal ${id} marked as ${nextStatus ? 'completed' : 'incomplete'}`);
+    // TODO: Implement proper meal logging API
   } catch (error) {
     console.error("Sync Error:", error);
-    if (userId) fetchMeals(userId); // এরর হলে রিলোড করুন
+    if (userId) fetchMeals(userId);
   }
 }
 

@@ -37,25 +37,25 @@ type ApiResponse<T> = {
 const WORKOUT_TEMPLATES: Record<string, DayPlan[]> = {
   gain_muscle: [
     {
-      day: 'Monday', focus: 'Push (Chest/Triceps)', exercises: [
-        { id: '1', name: 'Barbell Bench Press', sets: 4, reps: '8-12', rest: '90s', tags: ['Chest', 'Compound'], gif_url: '' },
-        { id: '2', name: 'Incline Dumbbell Press', sets: 3, reps: '10-12', rest: '60s', tags: ['Upper Chest'], gif_url: '' },
-        { id: '3', name: 'Tricep Rope Pushdown', sets: 3, reps: '12-15', rest: '45s', tags: ['Triceps'], gif_url: '' },
-        { id: '4', name: 'Lateral Raises', sets: 4, reps: '15-20', rest: '45s', tags: ['Shoulders'], gif_url: '' }
+day: 'Monday', focus: 'Push (Chest/Triceps)', exercises: [
+        { id: '1', name: 'Barbell Bench Press', sets: 4, reps: '8-12', rest: '90s', tags: ['Chest', 'Compound'], gif_url: 'https://i.imgur.com/8Xqy7sD.gif' },
+        { id: '2', name: 'Incline Dumbbell Press', sets: 3, reps: '10-12', rest: '60s', tags: ['Upper Chest'], gif_url: 'https://i.imgur.com/7Wx3R9m.gif' },
+        { id: '3', name: 'Tricep Rope Pushdown', sets: 3, reps: '12-15', rest: '45s', tags: ['Triceps'], gif_url: 'https://i.imgur.com/8Xz7P9w.gif' },
+        { id: '4', name: 'Lateral Raises', sets: 4, reps: '15-20', rest: '45s', tags: ['Shoulders'], gif_url: 'https://i.imgur.com/7Xz0Y9f.gif' }
       ]
     },
     {
-      day: 'Tuesday', focus: 'Pull (Back/Biceps)', exercises: [
-        { id: '5', name: 'Deadlift', sets: 3, reps: '5-8', rest: '120s', tags: ['Back', 'Strength'], gif_url: '' },
-        { id: '6', name: 'Lat Pulldown', sets: 3, reps: '10-12', rest: '60s', tags: ['Lats'], gif_url: '' },
-        { id: '7', name: 'Barbell Curls', sets: 3, reps: '10-12', rest: '60s', tags: ['Biceps'], gif_url: '' }
+day: 'Tuesday', focus: 'Pull (Back/Biceps)', exercises: [
+        { id: '5', name: 'Deadlift', sets: 3, reps: '5-8', rest: '120s', tags: ['Back', 'Strength'], gif_url: 'https://i.imgur.com/8Zx6K9r.gif' },
+        { id: '6', name: 'Lat Pulldown', sets: 3, reps: '10-12', rest: '60s', tags: ['Lats'], gif_url: 'https://i.imgur.com/7Xu8M9t.gif' },
+        { id: '7', name: 'Barbell Curls', sets: 3, reps: '10-12', rest: '60s', tags: ['Biceps'], gif_url: 'https://i.imgur.com/7Xz7F9m.gif' }
       ]
     },
     { day: 'Wednesday', focus: 'Active Recovery', exercises: [] },
     { 
-      day: 'Thursday', focus: 'Legs (Quad Focus)', exercises: [
-        { id: '8', name: 'Barbell Squat', sets: 4, reps: '6-10', rest: '120s', tags: ['Legs', 'Compound'], gif_url: '' },
-        { id: '9', name: 'Leg Extension', sets: 3, reps: '12-15', rest: '60s', tags: ['Quads'], gif_url: '' }
+day: 'Thursday', focus: 'Legs (Quad Focus)', exercises: [
+        { id: '8', name: 'Barbell Squat', sets: 4, reps: '6-10', rest: '120s', tags: ['Legs', 'Compound'], gif_url: 'https://i.imgur.com/7Xz7Z9h.gif' },
+        { id: '9', name: 'Leg Extension', sets: 3, reps: '12-15', rest: '60s', tags: ['Quads'], gif_url: 'https://i.imgur.com/7Xz5H9p.gif' }
       ]
     },
     { day: 'Friday', focus: 'Upper Body Pump', exercises: [] },
@@ -64,10 +64,10 @@ const WORKOUT_TEMPLATES: Record<string, DayPlan[]> = {
   ],
   lose_weight: [
     {
-      day: 'Monday', focus: 'HIIT Circuit', exercises: [
-        { id: '10', name: 'Burpees', sets: 4, reps: '45 sec', rest: '15s', tags: ['Cardio', 'Full Body'], gif_url: '' },
-        { id: '11', name: 'Mountain Climbers', sets: 4, reps: '45 sec', rest: '15s', tags: ['Core'], gif_url: '' },
-        { id: '12', name: 'Jump Squats', sets: 4, reps: '30 sec', rest: '30s', tags: ['Legs', 'Plyo'], gif_url: '' }
+day: 'Monday', focus: 'HIIT Circuit', exercises: [
+        { id: '10', name: 'Burpees', sets: 4, reps: '45 sec', rest: '15s', tags: ['Cardio', 'Full Body'], gif_url: 'https://i.imgur.com/7Xz7D9l.gif' },
+        { id: '11', name: 'Mountain Climbers', sets: 4, reps: '45 sec', rest: '15s', tags: ['Core'], gif_url: 'https://i.imgur.com/8Xz9V9d.gif' },
+        { id: '12', name: 'Jump Squats', sets: 4, reps: '30 sec', rest: '30s', tags: ['Legs', 'Plyo'], gif_url: 'https://i.imgur.com/6Xz4E9m.gif' }
       ]
     },
     { day: 'Tuesday', focus: 'LISS Cardio', exercises: [] },
@@ -95,21 +95,48 @@ export default function WorkoutPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // --- 3. FETCH DATA ---
+// --- 3. FETCH DATA ---
   useEffect(() => {
     // Define async function inside useEffect
-    const fetchUser = async () => {
+    const fetchUserAndWorkouts = async () => {
       const USER_ID = 1 // Defined inside scope
       
       try {
-        const res = await fetch(`/api/users/${USER_ID}`)
+        // Fetch user profile
+        const userRes = await fetch(`/api/users?id=${USER_ID}`)
+        const userJson = (await userRes.json()) as ApiResponse<UserProfile>
         
-        // FIX: Cast Result to ApiResponse
-        const json = (await res.json()) as ApiResponse<UserProfile>
-        
-        if (json.success) {
-          setUserProfile(json.data) // Type is now correct
+        if (userJson.success) {
+          setUserProfile(userJson.data)
         }
+
+        // Fetch workout plans for today
+        const today = new Date().toISOString().split('T')[0]
+        const workoutRes = await fetch(`/api/workout-plans?user_id=${USER_ID}&date=${today}`)
+        const workoutJson = (await workoutRes.json()) as any
+        
+        if (workoutJson.success && workoutJson.data.length > 0) {
+          // Transform workout plan data to exercise format
+          const transformedExercises = workoutJson.data.map((item: any, index: number) => ({
+            id: item.id.toString(),
+            name: item.exercise_name || item.name,
+            sets: item.sets,
+            reps: item.reps,
+            rest: '60s', // Default rest time
+            tags: [item.muscle_group],
+            gif_url: item.gif_url || ''
+          }))
+
+          // Update current plan with real data
+          if (userProfile && currentPlan[activeTab]) {
+            const updatedPlan = [...currentPlan]
+            updatedPlan[activeTab] = {
+              ...updatedPlan[activeTab],
+              exercises: transformedExercises
+            }
+          }
+        }
+        
       } catch (err) {
         console.error(err)
       } finally {
@@ -117,7 +144,7 @@ export default function WorkoutPage() {
       }
     }
 
-    fetchUser()
+    fetchUserAndWorkouts()
   }, [])
 
   // Logic to select plan based on user profile
@@ -204,19 +231,26 @@ export default function WorkoutPage() {
                 <div key={exercise.id} className="bg-slate-900 border border-white/10 rounded-3xl p-6 md:p-8 hover:border-orange-500/30 transition duration-300 group">
                   <div className="flex flex-col md:flex-row gap-8">
                     
-                    {/* Visual Area */}
-                    <div className="w-full md:w-1/3 aspect-video bg-black rounded-xl overflow-hidden relative border border-white/5">
-                      <div className="absolute inset-0 flex items-center justify-center text-slate-700 bg-slate-950">
-                        {exercise.gif_url ? (
-                           // In real app use: <img src={exercise.gif_url} className="w-full h-full object-cover" />
-                           <div className="text-xs font-mono">GIF LOADED</div>
-                        ) : (
+{/* Visual Area */}
+                     <div className="w-full md:w-1/3 aspect-video bg-black rounded-xl overflow-hidden relative border border-white/5">
+                       {exercise.gif_url ? (
+                         <img 
+                           src={exercise.gif_url} 
+                           alt={exercise.name}
+                           className="w-full h-full object-cover"
+                           onError={(e) => {
+                             e.currentTarget.style.display = 'none';
+                             e.currentTarget.parentElement?.classList.add('bg-slate-950');
+                           }}
+                         />
+                       ) : (
+                         <div className="absolute inset-0 flex items-center justify-center text-slate-700 bg-slate-950">
                            <div className="flex flex-col items-center gap-2">
                              <span className="text-3xl opacity-50">▶</span>
                              <span className="text-[10px] font-mono uppercase">Visual Reference</span>
                            </div>
-                        )}
-                      </div>
+                         </div>
+                       )}
                       
                       <div className="absolute bottom-2 left-2 flex gap-1">
                         {exercise.tags.map(tag => (

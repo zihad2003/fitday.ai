@@ -31,6 +31,29 @@ export async function hashPassword(password: string, salt: string) {
   return hashHex;
 }
 
+/**
+ * SECURITY: Verify password against stored hash
+ */
+export async function verifyPassword(password: string, storedPassword: string): Promise<boolean> {
+  try {
+    // Extract salt from stored password (format: salt:hash)
+    const [salt, hash] = storedPassword.split(':');
+    
+    if (!salt || !hash) {
+      return false;
+    }
+    
+    // Hash the provided password with the same salt
+    const hashedPassword = await hashPassword(password, salt);
+    
+    // Compare the hashes
+    return hashedPassword === hash;
+  } catch (error) {
+    console.error('Password verification error:', error);
+    return false;
+  }
+}
+
 export function generateSalt() {
   return crypto.randomUUID();
 }

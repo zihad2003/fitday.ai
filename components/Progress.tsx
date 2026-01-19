@@ -27,16 +27,32 @@ export default function Progress() {
 
   const fetchProgress = async (uid: number) => {
     try {
-      // রিয়েল ডাটাবেস থেকে ডাটা ফেচ করার লজিক (Mocking for UI focus)
-      const mockData: ProgressData[] = [
-        { date: '2026-01-01', workouts: 1, meals: 3, weight: 75 },
-        { date: '2026-01-02', workouts: 1, meals: 4, weight: 74.8 },
-        { date: '2026-01-03', workouts: 0, meals: 3, weight: 74.6 },
-        { date: '2026-01-04', workouts: 1, meals: 4, weight: 74.4 },
-        { date: '2026-01-05', workouts: 2, meals: 4, weight: 74.2 },
-        { date: '2026-01-06', workouts: 1, meals: 4, weight: 74.0 },
-      ]
-      setProgressData(mockData)
+      // Fetch real progress data
+      const res = await fetch(`/api/progress?user_id=${uid}&period=week`)
+      const json = await res.json() as any
+      
+      if (json && json.success && Array.isArray(json.data)) {
+        // Transform progress data to ProgressData format
+        const transformedData = json.data.map((item: any) => ({
+          date: item.date,
+          workouts: 0, // TODO: Get from workouts API
+          meals: 0, // TODO: Get from meals API
+          weight: item.weight_kg || 0
+        }))
+        
+        setProgressData(transformedData)
+      } else {
+        // Fallback to mock data if API fails
+        const mockData: ProgressData[] = [
+          { date: '2026-01-01', workouts: 1, meals: 3, weight: 75 },
+          { date: '2026-01-02', workouts: 1, meals: 4, weight: 74.8 },
+          { date: '2026-01-03', workouts: 0, meals: 3, weight: 74.6 },
+          { date: '2026-01-04', workouts: 1, meals: 4, weight: 74.4 },
+          { date: '2026-01-05', workouts: 2, meals: 4, weight: 74.2 },
+          { date: '2026-01-06', workouts: 1, meals: 4, weight: 74.0 },
+        ]
+        setProgressData(mockData)
+      }
     } catch (error) {
       console.error("Analytics Sync Error:", error)
     } finally {
@@ -44,8 +60,8 @@ export default function Progress() {
     }
   }
 
-  const totalWorkouts = progressData.reduce((sum, day) => sum + day.workouts, 0)
-  const totalMeals = progressData.reduce((sum, day) => sum + day.meals, 0)
+  const totalWorkouts = progressData.reduce((sum: number, day: any) => sum + day.workouts, 0)
+  const totalMeals = progressData.reduce((sum: number, day: any) => sum + day.meals,0)
   const avgMeals = progressData.length > 0 ? totalMeals / progressData.length : 0
   const weightLoss = progressData.length > 1 ? progressData[0].weight - progressData[progressData.length - 1].weight : 0
 
@@ -91,7 +107,7 @@ export default function Progress() {
           {/* History Feed */}
           <div className="lg:col-span-2 glass-panel p-8 rounded-3xl border border-white/5 bg-white/5 relative overflow-hidden">
             <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-8 border-l-2 border-cyan-500 pl-4">Biological History</h3>
-            
+           
             <div className="space-y-4">
               {progressData.slice(-7).reverse().map((day, index) => (
                 <div key={index} className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all group">
@@ -121,7 +137,7 @@ export default function Progress() {
             <p className="text-slate-400 text-xs mb-8 leading-relaxed font-mono">
               Signal established across 7 cycles. Biological mass stabilized at <span className="text-cyan-400">{progressData[progressData.length-1]?.weight}kg</span>.
             </p>
-            
+             
             <button
               onClick={() => {
                 if (navigator.share) {

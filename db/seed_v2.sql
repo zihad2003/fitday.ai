@@ -3,6 +3,16 @@ DELETE FROM food_items;
 DELETE FROM exercise_library;
 
 -- ======================================================
+-- IMPORT COMPREHENSIVE BANGLADESHI FOOD DATABASE
+-- ======================================================
+.read bangladeshi_foods.sql
+
+-- ======================================================
+-- IMPORT COMPREHENSIVE EXERCISE LIBRARY
+-- ======================================================
+.read exercise_library.sql
+
+-- ======================================================
 -- 1. MEDICAL / HEALTHY STAPLES (For AI Recommendations)
 -- ======================================================
 

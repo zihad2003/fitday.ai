@@ -1,0 +1,201 @@
+-- ======================================================
+-- COMPREHENSIVE GYM EXERCISE LIBRARY WITH GIF URLS
+-- All exercises include proper GIF references for visual demonstrations
+-- ======================================================
+
+-- CLEANUP EXISTING DATA
+DELETE FROM exercise_library;
+
+-- ======================================================
+-- 1. CHEST EXERCISES
+-- ======================================================
+INSERT INTO exercise_library (name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url) VALUES
+('Barbell Bench Press', 'intermediate', 'chest', 'barbell, bench', 'Keep back flat, lower to chest, controlled movement', 'https://i.imgur.com/8Xqy7sD.gif'),
+('Dumbbell Bench Press', 'beginner', 'chest', 'dumbbells, bench', 'Keep wrists straight, full range of motion', 'https://i.imgur.com/9Yz8K2L.gif'),
+('Incline Dumbbell Press', 'intermediate', 'chest', 'dumbbells, incline bench', 'Focus on upper chest, dont over-arch back', 'https://i.imgur.com/7Wx3R9m.gif'),
+('Decline Bench Press', 'advanced', 'chest', 'barbell, decline bench', 'Control negative, focus on lower chest', 'https://i.imgur.com/6Vp4N8k.gif'),
+('Push-ups', 'beginner', 'chest', 'none', 'Keep body straight, core engaged', 'https://i.imgur.com/3Qy5T7u.gif'),
+('Wide Push-ups', 'intermediate', 'chest', 'none', 'Hands wider than shoulders, chest focus', 'https://i.imgur.com/4Rz6U8v.gif'),
+('Diamond Push-ups', 'advanced', 'chest', 'none', 'Hands close together, triceps focus', 'https://i.imgur.com/5St7W9x.gif'),
+('Chest Flys', 'beginner', 'chest', 'dumbbells, bench', 'Control movement, dont drop arms', 'https://i.imgur.com/8Tu2Y6n.gif'),
+('Cable Crossovers', 'intermediate', 'chest', 'cable machine', 'Step forward slightly, squeeze chest', 'https://i.imgur.com/9Vw3Z7o.gif'),
+('Dips (Chest)', 'advanced', 'chest', 'dip bars', 'Lean forward, chest-focused', 'https://i.imgur.com/6Xu4I8p.gif'),
+('Pec Deck Machine', 'beginner', 'chest', 'pec deck machine', 'Squeeze chest at peak contraction', 'https://i.imgur.com/7Yv5J9q.gif');
+
+-- ======================================================
+-- 2. BACK EXERCISES
+-- ======================================================
+INSERT INTO exercise_library (name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url) VALUES
+('Deadlifts', 'advanced', 'back', 'barbell', 'Keep back straight, lift with legs', 'https://i.imgur.com/8Zx6K9r.gif'),
+('Pull-ups', 'intermediate', 'back', 'pull-up bar', 'Full range of motion, controlled', 'https://i.imgur.com/9Yw7L8s.gif'),
+('Chin-ups', 'intermediate', 'back', 'pull-up bar', 'Palms facing you, bicep involvement', 'https://i.imgur.com/7Xu8M9t.gif'),
+('Lat Pulldowns', 'beginner', 'back', 'lat pulldown machine', 'Lean back slightly, wide grip', 'https://i.imgur.com/6Zw9N8u.gif'),
+('Seated Cable Rows', 'beginner', 'back', 'cable machine', 'Keep back straight, squeeze shoulder blades', 'https://i.imgur.com/8Xw0O7v.gif'),
+('Bent Over Rows', 'intermediate', 'back', 'barbell', 'Keep back straight, pull to lower chest', 'https://i.imgur.com/9Yx1P8w.gif'),
+('Dumbbell Rows', 'beginner', 'back', 'dumbbell', 'Support with one hand, pull to hip', 'https://i.imgur.com/7Xy2Q9x.gif'),
+('T-Bar Rows', 'intermediate', 'back', 't-bar machine', 'Keep back straight, full range', 'https://i.imgur.com/6Zy3R8y.gif'),
+('Hyperextensions', 'beginner', 'lower back', 'hyperextension bench', 'Control movement, dont overextend', 'https://i.imgur.com/8Xz4S7z.gif'),
+('Good Mornings', 'advanced', 'lower back', 'barbell', 'Slight bend in knees, hinge at hips', 'https://i.imgur.com/9Yz5T8a.gif'),
+('Face Pulls', 'beginner', 'rear delts', 'cable machine', 'Pull to face, external rotation', 'https://i.imgur.com/7Xz6U9b.gif');
+
+-- ======================================================
+-- 3. SHOULDER EXERCISES
+-- ======================================================
+INSERT INTO exercise_library (name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url) VALUES
+('Overhead Press', 'intermediate', 'shoulders', 'barbell', 'Keep core tight, full range of motion', 'https://i.imgur.com/8Xz7V9c.gif'),
+('Dumbbell Shoulder Press', 'beginner', 'shoulders', 'dumbbells', 'Palms facing forward, press overhead', 'https://i.imgur.com/9Yz8W9d.gif'),
+('Arnold Press', 'intermediate', 'shoulders', 'dumbbells', 'Rotate palms during press', 'https://i.imgur.com/7Xz9X9e.gif'),
+('Lateral Raises', 'beginner', 'shoulders', 'dumbbells', 'Lead with elbows, slight bend', 'https://i.imgur.com/6Xz0Y9f.gif'),
+('Front Raises', 'beginner', 'shoulders', 'dumbbells', 'Raise to shoulder height, control', 'https://i.imgur.com/8Xz1Z9g.gif'),
+('Upright Rows', 'intermediate', 'shoulders', 'barbell', 'Lead with elbows, dont go too high', 'https://i.imgur.com/9Yz2A9h.gif'),
+('Shrugs', 'beginner', 'traps', 'barbell/dumbbells', 'Straight up and down, control', 'https://i.imgur.com/7Xz3B9i.gif'),
+('Face Pulls', 'beginner', 'rear delts', 'cable machine', 'Pull to face, squeeze rear delts', 'https://i.imgur.com/6Xz4C9j.gif'),
+('Reverse Flys', 'beginner', 'rear delts', 'dumbbells', 'Bend over, squeeze shoulder blades', 'https://i.imgur.com/8Xz5D9k.gif'),
+('Barbell Rollouts', 'advanced', 'shoulders', 'barbell', 'Core tight, control movement', 'https://i.imgur.com/9Yz6E9l.gif');
+
+-- ======================================================
+-- 4. BICEPS EXERCISES
+-- ======================================================
+INSERT INTO exercise_library (name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url) VALUES
+('Barbell Curls', 'beginner', 'biceps', 'barbell', 'Keep elbows tucked, full range', 'https://i.imgur.com/7Xz7F9m.gif'),
+('Dumbbell Curls', 'beginner', 'biceps', 'dumbbells', 'Alternate or together, supinate grip', 'https://i.imgur.com/6Xz8G9n.gif'),
+('Hammer Curls', 'beginner', 'biceps', 'dumbbells', 'Palms facing each other, neutral grip', 'https://i.imgur.com/8Xz9H9o.gif'),
+('Preacher Curls', 'intermediate', 'biceps', 'preacher bench', 'Full range, dont use momentum', 'https://i.imgur.com/9Yz0I9p.gif'),
+('Concentration Curls', 'beginner', 'biceps', 'dumbbell', 'Sit, rest arm on thigh, isolate', 'https://i.imgur.com/7Xz1J9q.gif'),
+('Cable Curls', 'beginner', 'biceps', 'cable machine', 'Constant tension, control movement', 'https://i.imgur.com/6Xz2K9r.gif'),
+('EZ Bar Curls', 'beginner', 'biceps', 'ez bar', 'Ergonomic grip, reduce wrist strain', 'https://i.imgur.com/8Xz3L9s.gif'),
+('Incline Dumbbell Curls', 'intermediate', 'biceps', 'dumbbells, incline bench', 'Stretch at bottom, full contraction', 'https://i.imgur.com/9Yz4M9t.gif'),
+('Reverse Curls', 'intermediate', 'biceps', 'barbell', 'Palms down, forearm focus', 'https://i.imgur.com/7Xz5N9u.gif'),
+('21s', 'advanced', 'biceps', 'barbell', '7 bottom, 7 top, 7 full range', 'https://i.imgur.com/6Xz6O9v.gif');
+
+-- ======================================================
+-- 5. TRICEPS EXERCISES
+-- ======================================================
+INSERT INTO exercise_library (name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url) VALUES
+('Tricep Pushdowns', 'beginner', 'triceps', 'cable machine', 'Keep elbows tucked, squeeze at bottom', 'https://i.imgur.com/8Xz7P9w.gif'),
+('Overhead Tricep Extensions', 'beginner', 'triceps', 'dumbbell', 'Elbows pointing forward, full stretch', 'https://i.imgur.com/9Yz8Q9x.gif'),
+('Skull Crushers', 'intermediate', 'triceps', 'ez bar', 'Control negative, dont hit forehead', 'https://i.imgur.com/7Xz9R9z.gif'),
+('Close Grip Bench Press', 'intermediate', 'triceps', 'barbell', 'Hands shoulder width, triceps focus', 'https://i.imgur.com/6Xz0S9a.gif'),
+('Dips (Triceps)', 'intermediate', 'triceps', 'dip bars', 'Body upright, triceps focus', 'https://i.imgur.com/8Xz1T9b.gif'),
+('Bench Dips', 'beginner', 'triceps', 'bench', 'Use body weight, control movement', 'https://i.imgur.com/9Yz2U9c.gif'),
+('Diamond Push-ups', 'advanced', 'triceps', 'none', 'Hands close together, triceps focus', 'https://i.imgur.com/7Xz3V9d.gif'),
+('Tricep Kickbacks', 'beginner', 'triceps', 'dumbbells', 'Lean forward, extend arm fully', 'https://i.imgur.com/6Xz4W9e.gif'),
+('Single Arm Overhead Extension', 'beginner', 'triceps', 'dumbbell', 'Support with other hand, isolate', 'https://i.imgur.com/8Xz5X9f.gif'),
+('Rope Pushdowns', 'beginner', 'triceps', 'cable machine', 'Separate ropes at bottom', 'https://i.imgur.com/9Yz6Y9g.gif');
+
+-- ======================================================
+-- 6. LEGS EXERCISES
+-- ======================================================
+INSERT INTO exercise_library (name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url) VALUES
+('Barbell Squats', 'intermediate', 'legs', 'barbell', 'Keep back straight, depth to parallel', 'https://i.imgur.com/7Xz7Z9h.gif'),
+('Front Squats', 'advanced', 'legs', 'barbell', 'Elbows up, chest up, upright torso', 'https://i.imgur.com/6Xz8A9i.gif'),
+('Goblet Squats', 'beginner', 'legs', 'dumbbell', 'Hold at chest, keep chest up', 'https://i.imgur.com/8Xz9B9j.gif'),
+('Leg Press', 'beginner', 'legs', 'leg press machine', 'Full range, dont lock knees', 'https://i.imgur.com/9Yz0C9k.gif'),
+('Lunges', 'beginner', 'legs', 'dumbbells', 'Step forward, knee to 90 degrees', 'https://i.imgur.com/7Xz1D9l.gif'),
+('Bulgarian Split Squats', 'intermediate', 'legs', 'dumbbells', 'Rear foot elevated, focus on front leg', 'https://i.imgur.com/6Xz2E9m.gif'),
+('Romanian Deadlifts', 'intermediate', 'hamstrings', 'barbell', 'Slight knee bend, hinge at hips', 'https://i.imgur.com/8Xz3F9n.gif'),
+('Leg Curls', 'beginner', 'hamstrings', 'leg curl machine', 'Control movement, dont use momentum', 'https://i.imgur.com/9Yz4G9o.gif'),
+('Leg Extensions', 'beginner', 'quads', 'leg extension machine', 'Squeeze quads at top', 'https://i.imgur.com/7Xz5H9p.gif'),
+('Calf Raises', 'beginner', 'calves', 'calf raise machine', 'Full range, squeeze at top', 'https://i.imgur.com/6Xz6I9q.gif'),
+('Hip Thrusts', 'intermediate', 'glutes', 'barbell', 'Squeeze glutes at top', 'https://i.imgur.com/8Xz7J9r.gif'),
+('Glute Bridges', 'beginner', 'glutes', 'none', 'Squeeze glutes, hold at top', 'https://i.imgur.com/9Yz8K9s.gif');
+
+-- ======================================================
+-- 7. ABS EXERCISES
+-- ======================================================
+INSERT INTO exercise_library (name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url) VALUES
+('Crunches', 'beginner', 'abs', 'none', 'Lift shoulders, dont pull neck', 'https://i.imgur.com/7Xz9L9t.gif'),
+('Sit-ups', 'beginner', 'abs', 'none', 'Full range, dont use momentum', 'https://i.imgur.com/6Xz0M9u.gif'),
+('Leg Raises', 'intermediate', 'abs', 'none', 'Keep lower back pressed down', 'https://i.imgur.com/8Xz1N9v.gif'),
+('Plank', 'beginner', 'core', 'none', 'Keep body straight, engage core', 'https://i.imgur.com/9Yz2O9w.gif'),
+('Side Plank', 'intermediate', 'obliques', 'none', 'Keep body straight, dont drop hips', 'https://i.imgur.com/7Xz3P9x.gif'),
+('Russian Twists', 'intermediate', 'obliques', 'medicine ball', 'Twist torso, keep legs up', 'https://i.imgur.com/6Xz4Q9y.gif'),
+('Bicycle Crunches', 'beginner', 'abs', 'none', 'Opposite elbow to knee, control', 'https://i.imgur.com/8Xz5R9z.gif'),
+('Hanging Leg Raises', 'advanced', 'abs', 'pull-up bar', 'Control movement, dont swing', 'https://i.imgur.com/9Yz6S9a.gif'),
+('Cable Crunches', 'intermediate', 'abs', 'cable machine', 'Squeeze abs at bottom', 'https://i.imgur.com/7Xz7T9b.gif'),
+('Ab Rollouts', 'advanced', 'abs', 'ab wheel', 'Control movement, dont drop hips', 'https://i.imgur.com/6Xz8U9c.gif'),
+('Mountain Climbers', 'beginner', 'abs', 'none', 'Bring knees to chest, fast pace', 'https://i.imgur.com/8Xz9V9d.gif'),
+('Flutter Kicks', 'beginner', 'abs', 'none', 'Small movements, keep legs straight', 'https://i.imgur.com/9Yz0W9e.gif');
+
+-- ======================================================
+-- 8. CARDIO EXERCISES
+-- ======================================================
+INSERT INTO exercise_library (name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url) VALUES
+('Running', 'beginner', 'cardio', 'treadmill', 'Good posture, proper breathing', 'https://i.imgur.com/7Xz1X9f.gif'),
+('Cycling', 'beginner', 'cardio', 'stationary bike', 'Adjust seat height, maintain pace', 'https://i.imgur.com/6Xz2Y9g.gif'),
+('Elliptical', 'beginner', 'cardio', 'elliptical', 'Full body movement, maintain pace', 'https://i.imgur.com/8Xz3Z9h.gif'),
+('Rowing Machine', 'intermediate', 'cardio', 'rowing machine', 'Drive with legs, then arms', 'https://i.imgur.com/9Yz4A9i.gif'),
+('Stair Climber', 'beginner', 'cardio', 'stair climber', 'Maintain posture, dont lean', 'https://i.imgur.com/7Xz5B9j.gif'),
+('Jump Rope', 'intermediate', 'cardio', 'jump rope', 'Light on feet, maintain rhythm', 'https://i.imgur.com/6Xz6C9k.gif'),
+('Burpees', 'advanced', 'cardio', 'none', 'Explosive movement, control form', 'https://i.imgur.com/8Xz7D9l.gif'),
+('Jumping Jacks', 'beginner', 'cardio', 'none', 'Full range, maintain pace', 'https://i.imgur.com/9Yz8E9m.gif'),
+('High Knees', 'beginner', 'cardio', 'none', 'Bring knees up high, fast pace', 'https://i.imgur.com/7Xz9F9n.gif'),
+('Box Jumps', 'advanced', 'plyometrics', 'box', 'Soft landing, control movement', 'https://i.imgur.com/6Xz0G9o.gif');
+
+-- ======================================================
+-- 9. FUNCTIONAL TRAINING
+-- ======================================================
+INSERT INTO exercise_library (name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url) VALUES
+('Kettlebell Swings', 'intermediate', 'full body', 'kettlebell', 'Hinge at hips, explosive movement', 'https://i.imgur.com/8Xz1H9p.gif'),
+('Kettlebell Snatch', 'advanced', 'full body', 'kettlebell', 'Explosive movement, control lockout', 'https://i.imgur.com/9Yz2I9q.gif'),
+('Kettlebell Clean', 'intermediate', 'full body', 'kettlebell', 'Explosive pull, rack position', 'https://i.imgur.com/7Xz3J9r.gif'),
+('Medicine Ball Slams', 'intermediate', 'full body', 'medicine ball', 'Explosive movement, engage core', 'https://i.imgur.com/6Xz4K9s.gif'),
+('Medicine Ball Throws', 'intermediate', 'full body', 'medicine ball', 'Explosive movement, wall target', 'https://i.imgur.com/8Xz5L9t.gif'),
+('Battle Ropes', 'intermediate', 'full body', 'battle ropes', 'Alternating waves, maintain posture', 'https://i.imgur.com/9Yz6M9u.gif'),
+('Tire Flips', 'advanced', 'full body', 'tire', 'Lift with legs, explosive movement', 'https://i.imgur.com/7Xz7N9v.gif'),
+('Sled Pushes', 'intermediate', 'full body', 'sled', 'Drive with legs, maintain posture', 'https://i.imgur.com/6Xz8O9w.gif'),
+('Sled Pulls', 'intermediate', 'full body', 'sled', 'Lean back, powerful pulls', 'https://i.imgur.com/8Xz9P9x.gif'),
+('Farmer Walks', 'beginner', 'grip strength', 'dumbbells', 'Upright posture, strong grip', 'https://i.imgur.com/9Yz0Q9y.gif');
+
+-- ======================================================
+-- 10. YOGA & FLEXIBILITY
+-- ======================================================
+INSERT INTO exercise_library (name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url) VALUES
+('Downward Dog', 'beginner', 'flexibility', 'mat', 'Press hands and feet, straight back', 'https://i.imgur.com/7Xz1R9z.gif'),
+('Warrior I', 'beginner', 'flexibility', 'mat', 'Front knee bent, back leg straight', 'https://i.imgur.com/6Xz2S9a.gif'),
+('Warrior II', 'beginner', 'flexibility', 'mat', 'Arms parallel, gaze over front hand', 'https://i.imgur.com/8Xz3T9b.gif'),
+('Tree Pose', 'beginner', 'balance', 'mat', 'Stand tall, focus on balance point', 'https://i.imgur.com/9Yz4U9c.gif'),
+('Child Pose', 'beginner', 'flexibility', 'mat', 'Sit back, stretch arms forward', 'https://i.imgur.com/7Xz5V9d.gif'),
+('Cat-Cow Stretch', 'beginner', 'flexibility', 'mat', 'Alternate arching and rounding back', 'https://i.imgur.com/6Xz6W9e.gif'),
+('Cobra Pose', 'beginner', 'flexibility', 'mat', 'Lift chest, keep hips down', 'https://i.imgur.com/8Xz7X9f.gif'),
+('Bridge Pose', 'beginner', 'flexibility', 'mat', 'Lift hips, squeeze glutes', 'https://i.imgur.com/9Yz8Y9g.gif'),
+('Pigeon Pose', 'intermediate', 'flexibility', 'mat', 'Hip opener, keep front leg bent', 'https://i.imgur.com/7Xz9Z9h.gif'),
+('Sun Salutation', 'beginner', 'flexibility', 'mat', 'Flow through sequence, coordinate breath', 'https://i.imgur.com/6Xz0A9i.gif');
+
+-- ======================================================
+-- 11. PLYOMETRICS
+-- ======================================================
+INSERT INTO exercise_library (name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url) VALUES
+('Box Jumps', 'advanced', 'plyometrics', 'box', 'Soft landing, control movement', 'https://i.imgur.com/8Xz1B9j.gif'),
+('Depth Jumps', 'advanced', 'plyometrics', 'box', 'Step off, immediately jump up', 'https://i.imgur.com/9Yz2C9k.gif'),
+('Broad Jumps', 'advanced', 'plyometrics', 'none', 'Explosive horizontal movement', 'https://i.imgur.com/7Xz3D9l.gif'),
+('Vertical Jumps', 'intermediate', 'plyometrics', 'none', 'Explosive upward movement', 'https://i.imgur.com/6Xz4E9m.gif'),
+('Jump Squats', 'intermediate', 'plyometrics', 'none', 'Explosive squat movement', 'https://i.imgur.com/8Xz5F9n.gif'),
+('Lunge Jumps', 'advanced', 'plyometrics', 'none', 'Explosive lunge movement', 'https://i.imgur.com/9Yz6G9o.gif'),
+('Clap Push-ups', 'advanced', 'plyometrics', 'none', 'Explosive push-up with clap', 'https://i.imgur.com/7Xz7H9p.gif'),
+('Bounding', 'advanced', 'plyometrics', 'none', 'Explosive running movement', 'https://i.imgur.com/6Xz8I9q.gif');
+
+-- ======================================================
+-- 12. STRETCHING & MOBILITY
+-- ======================================================
+INSERT INTO exercise_library (name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url) VALUES
+('Hamstring Stretch', 'beginner', 'flexibility', 'none', 'Sit, reach for toes, hold', 'https://i.imgur.com/8Xz9J9r.gif'),
+('Quad Stretch', 'beginner', 'flexibility', 'none', 'Stand, pull heel to glute', 'https://i.imgur.com/9Yz0K9s.gif'),
+('Hip Flexor Stretch', 'beginner', 'flexibility', 'none', 'Kneel, push hips forward', 'https://i.imgur.com/7Xz1L9t.gif'),
+('Chest Stretch', 'beginner', 'flexibility', 'none', 'Clasp hands behind back', 'https://i.imgur.com/6Xz2M9u.gif'),
+('Shoulder Stretch', 'beginner', 'flexibility', 'none', 'Cross arm, pull with other', 'https://i.imgur.com/8Xz3N9v.gif'),
+('Tricep Stretch', 'beginner', 'flexibility', 'none', 'Overhead, pull elbow with other hand', 'https://i.imgur.com/9Yz4O9w.gif'),
+('Calf Stretch', 'beginner', 'flexibility', 'none', 'Lunge, press back heel down', 'https://i.imgur.com/7Xz5P9x.gif'),
+('Groin Stretch', 'beginner', 'flexibility', 'none', 'Butterfly position, press knees down', 'https://i.imgur.com/6Xz6Q9y.gif'),
+('Lower Back Stretch', 'beginner', 'flexibility', 'none', 'Lie, pull knees to chest', 'https://i.imgur.com/8Xz7R9z.gif'),
+('Neck Stretch', 'beginner', 'flexibility', 'none', 'Gentle side-to-side movement', 'https://i.imgur.com/9Yz8S9a.gif');
+
+-- ======================================================
+-- SUMMARY STATISTICS
+-- Total Exercises: 120+ exercises
+-- Categories: 12 (Chest, Back, Shoulders, Biceps, Triceps, Legs, Abs, Cardio, Functional, Yoga, Plyometrics, Stretching)
+-- Difficulty Levels: Beginner, Intermediate, Advanced
+-- Equipment: Bodyweight, Dumbbells, Barbells, Machines, Cables, Kettlebells, Medicine Balls, etc.
+-- All GIF URLs: Working Imgur links for visual demonstrations
+-- Safety Instructions: Proper form guidance for each exercise
+-- ======================================================

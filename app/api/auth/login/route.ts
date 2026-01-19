@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { selectQuery } from '@/lib/d1'
-import { hashPassword } from '@/lib/auth'
+import { verifyPassword } from '@/lib/auth'
 
 export const runtime = 'edge';
 
@@ -28,20 +28,8 @@ export async function POST(request: NextRequest) {
     const user = users[0] as any
     const storedPassword = user.password // Expected format "salt:hash"
 
-    // 2. Verify Password
-    // Handle legacy or different formats safely
-    let isValid = false;
-
-    if (storedPassword.includes(':')) {
-      const [salt, storedHash] = storedPassword.split(':');
-      const attemptHash = await hashPassword(password, salt);
-      if (attemptHash === storedHash) {
-        isValid = true;
-      }
-    } else {
-      // Fallback for old plain text or unsalted (not recommended but handles legacy dev data)
-      if (storedPassword === password) isValid = true;
-    }
+// 2. Verify Password
+    const isValid = await verifyPassword(password, storedPassword);
 
     if (!isValid) {
       return NextResponse.json({ success: false, error: 'Invalid credentials' }, { status: 401 })

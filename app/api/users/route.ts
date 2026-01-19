@@ -9,11 +9,16 @@ export const runtime = 'edge';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
+    const userId = searchParams.get('id')
     const email = searchParams.get('email')
+    
     let sql = 'SELECT * FROM users'
     let params: any[] = []
 
-    if (email) {
+    if (userId) {
+      sql += ' WHERE id = ?'
+      params.push(parseInt(userId))
+    } else if (email) {
       sql += ' WHERE email = ?'
       params.push(email)
     }
@@ -25,8 +30,17 @@ export async function GET(request: NextRequest) {
       return userWithoutPassword
     })
 
-    return NextResponse.json({ success: true, data: safeUsers })
+    if (userId && safeUsers.length === 0) {
+      return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      data: userId ? (safeUsers[0] || null) : safeUsers,
+      count: userId ? 1 : safeUsers.length
+    })
   } catch (error) {
+    console.error('API Error [GET /users]:', error)
     return NextResponse.json({ success: false, error: 'Failed to fetch users' }, { status: 500 })
   }
 }
