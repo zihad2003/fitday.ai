@@ -14,10 +14,16 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'All fields are required' }, { status: 400 })
         }
 
-        // 1. Check Duplicates
-        const existingUsers = await selectQuery('SELECT id FROM users WHERE email = ?', [email])
+// 1. Check Duplicates
+        let existingUsers;
+        try {
+            existingUsers = await selectQuery('SELECT id FROM users WHERE email = ?', [email])
+        } catch (dbError) {
+            console.error('Database query error:', dbError)
+            return NextResponse.json({ success: false, error: 'Database connection error' }, { status: 500 })
+        }
 
-        if (existingUsers === null) {
+        if (!existingUsers) {
             return NextResponse.json({ success: false, error: 'Database Connection Error' }, { status: 503 })
         }
 
@@ -60,18 +66,30 @@ export async function POST(request: NextRequest) {
             targetCalories
         ]
 
-        const changes = await executeMutation(sql, params)
+        let changes;
+        try {
+            changes = await executeMutation(sql, params)
+        } catch (dbError) {
+            console.error('Database insertion error:', dbError)
+            return NextResponse.json({ success: false, error: 'Failed to create user record' }, { status: 500 })
+        }
 
-        if (changes > 0) {
+if (changes > 0) {
             // Fetch user to return ID (important for session)
-            const userResult = await selectQuery('SELECT * FROM users WHERE email = ?', [email])
-            if (userResult.length > 0) {
-                const { password, ...safeUser } = userResult[0]
-                return NextResponse.json({ success: true, data: safeUser }, { status: 201 })
+            let userResult;
+            try {
+                userResult = await selectQuery('SELECT * FROM users WHERE email = ?', [email])
+                if (userResult && userResult.length > 0) {
+                    const { password, ...safeUser } = userResult[0]
+                    return NextResponse.json({ success: true, data: safeUser }, { status: 201 })
+                }
+                return NextResponse.json({ success: true, message: 'User created' }, { status: 201 })
+            } catch (fetchError) {
+                console.error('Fetch user error:', fetchError)
+                return NextResponse.json({ success: true, message: 'User created successfully' }, { status: 201 })
             }
-            return NextResponse.json({ success: true, message: 'User created' }, { status: 201 })
         } else {
-            return NextResponse.json({ success: false, error: 'DB Insert Failed' }, { status: 500 })
+            return NextResponse.json({ success: false, error: 'Failed to create user in database' }, { status: 500 })
         }
 
     } catch (error: any) {
