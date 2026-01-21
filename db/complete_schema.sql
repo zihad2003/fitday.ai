@@ -20,7 +20,6 @@ CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL, 
-  salt TEXT NOT NULL,
   name TEXT NOT NULL,
   gender TEXT NOT NULL CHECK (gender IN ('male', 'female', 'other')),
   age INTEGER NOT NULL CHECK (age > 0),

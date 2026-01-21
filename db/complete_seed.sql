@@ -17,12 +17,11 @@ DELETE FROM users;
 -- 1. SAMPLE USERS
 -- ======================================================
 INSERT INTO users (
-  email, password, salt, name, gender, age, height_cm, weight_kg, 
+  email, password, name, gender, age, height_cm, weight_kg, 
   activity_level, goal, target_calories, bmr, tdee
 ) VALUES 
-('user@fitdayai.com', 'hashed_password_1', 'salt_1', 'Ahmed Rahman', 'male', 28, 178, 72, 'moderate', 'gain_muscle', 2800, 1750, 2400),
-('user2@fitdayai.com', 'hashed_password_2', 'salt_2', 'Fatima Khan', 'female', 25, 165, 58, 'light', 'lose_weight', 1800, 1350, 1650),
-('user3@fitdayai.com', 'hashed_password_3', 'salt_3', 'Karim Islam', 'male', 32, 173, 68, 'active', 'maintain', 2500, 1680, 2500);
+('user@fitdayai.com', 'static-salt:6ddd35d65ca1f0d5f7a3254c4d21aa5441da8b5b9e6a054248b163bf46b736c4', 'Ahmed Rahman', 'male', 28, 178, 72, 'moderate', 'gain_muscle', 2800, 1750, 2400),
+('user2@fitdayai.com', 'static-salt:6ddd35d65ca1f0d5f7a3254c4d21aa5441da8b5b9e6a054248b163bf46b736c4', 'Fatima Khan', 'female', 25, 165, 58, 'light', 'lose_weight', 1800, 1350, 1650);
 
 -- ======================================================
 -- 2. BANGLADESHI FOOD ITEMS (SELECTED SAMPLES)
