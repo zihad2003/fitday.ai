@@ -4,6 +4,7 @@ import './globals.css'
 import Providers from '@/components/Providers'
 import GlobalSearch from '@/components/GlobalSearch'
 import { SkipToContent } from '@/lib/accessibility'
+import PWAInstallPrompt from '@/components/PWAInstallPrompt'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -34,6 +35,7 @@ export default function RootLayout({
         <SkipToContent />
         <Providers>
           <GlobalSearch />
+          <PWAInstallPrompt />
           {children}
         </Providers>
 
