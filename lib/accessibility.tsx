@@ -1,9 +1,11 @@
+'use client'
+
 /**
  * Accessibility Utilities
  * Helper functions and hooks for implementing WCAG 2.1 AA compliance
  */
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /**
  * Trap focus within a modal or dialog
@@ -197,5 +199,3 @@ export function formatForScreenReader(value: number, unit?: string): string {
     return unit ? `${formatted} ${unit}` : formatted
 }
 
-// Export useState for useKeyboardNavigation
-import { useState } from 'react'
