@@ -92,3 +92,20 @@ export async function getRecommendedWorkout(goal: string): Promise<any> {
         exercises: routine.slice(0, 8) // Limit to 8 exercises
     }
 }
+
+/**
+ * Get exercises filtered by muscle group
+ */
+export async function getExercisesByMuscleGroup(muscleGroup: string): Promise<ExerciseDBItem[]> {
+    const exercises = await fetchAllExercises()
+    if (!exercises.length) return []
+
+    const normalizedMuscle = muscleGroup.toLowerCase()
+
+    return exercises.filter(exercise =>
+        exercise.primaryMuscles.some(m => m.toLowerCase().includes(normalizedMuscle)) ||
+        exercise.secondaryMuscles.some(m => m.toLowerCase().includes(normalizedMuscle)) ||
+        exercise.category.toLowerCase().includes(normalizedMuscle)
+    )
+}
+

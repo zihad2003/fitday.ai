@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter, Outfit } from 'next/font/google'
 import './globals.css'
 import Providers from '@/components/Providers'
+import GlobalSearch from '@/components/GlobalSearch'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -30,6 +31,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
       <body className="antialiased bg-slate-950 text-white">
         <Providers>
+          <GlobalSearch />
           {children}
         </Providers>
 
