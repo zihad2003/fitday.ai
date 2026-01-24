@@ -30,24 +30,33 @@ export default function AIInsights() {
         const insightsData: InsightData = {}
 
         if (foodRes) {
-          const foodJson = await foodRes.json()
-          if (foodJson.success && foodJson.data.suggestions?.[0]) {
+          const foodJson = await foodRes.json() as {
+            success?: boolean
+            data?: { suggestions?: Array<{ food_name?: string }> }
+          }
+          if (foodJson.success && foodJson.data?.suggestions?.[0]) {
             insightsData.food_suggestion = foodJson.data.suggestions[0].food_name
           }
         }
 
         if (exerciseRes) {
-          const exerciseJson = await exerciseRes.json()
-          if (exerciseJson.success && exerciseJson.data.suggestions?.[0]) {
+          const exerciseJson = await exerciseRes.json() as {
+            success?: boolean
+            data?: { suggestions?: Array<{ exercise_name?: string }> }
+          }
+          if (exerciseJson.success && exerciseJson.data?.suggestions?.[0]) {
             insightsData.exercise_suggestion = exerciseJson.data.suggestions[0].exercise_name
           }
         }
 
         if (lifestyleRes) {
-          const lifestyleJson = await lifestyleRes.json()
+          const lifestyleJson = await lifestyleRes.json() as {
+            success?: boolean
+            data?: { motivation?: { daily_quote?: string } }
+          }
           if (lifestyleJson.success) {
-            insightsData.lifestyle_tip = lifestyleJson.data.motivation?.daily_quote
-            insightsData.daily_quote = lifestyleJson.data.motivation?.daily_quote
+            insightsData.lifestyle_tip = lifestyleJson.data?.motivation?.daily_quote
+            insightsData.daily_quote = lifestyleJson.data?.motivation?.daily_quote
           }
         }
 
