@@ -21,7 +21,7 @@ type UserProfile = {
   height_cm: number
   age: number
   gender: string
-  goal: string
+  goal: 'lose_weight' | 'gain_muscle' | 'maintain' | string
   activity_level: string
   target_calories: number
 }
@@ -68,24 +68,37 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const session = getUserSession()
-        if (!session) { router.push('/login'); return }
-        const res = await fetch(`/api/users/${session.id}`)
-        let userData = session
+        // 1. Get Session from Server (HttpOnly Cookie)
+        const meRes = await fetch('/api/auth/me')
+        if (!meRes.ok) {
+          router.push('/login')
+          return
+        }
+        const sessionJson = (await meRes.json()) as { success: boolean, data: UserProfile }
+        if (!sessionJson.success) {
+          router.push('/login')
+          return
+        }
 
+        let userData = sessionJson.data // This is the user object from the token
+
+        // 2. Fetch full profile if needed (optional, depends on if token has everything)
+        // For now, we assume token has critical info, or we refresh it.
+        // But the original code fetched /api/users/[id], so let's stick to that to get fresh data
+        const res = await fetch(`/api/users/${userData.id}`)
         if (res.ok) {
           const json = (await res.json()) as ApiResponse<UserProfile>
           if (json.success) userData = json.data
         }
 
         setUser(userData)
-        setDailySchedule(generateDailySchedule(userData))
+        setDailySchedule(generateDailySchedule(userData as any))
 
         // STATIC PLAN FOR MEALS
-        const staticPlan = getFullDailyPlan(userData)
+        const staticPlan = getFullDailyPlan(userData as any)
 
         // DYNAMIC WORKOUT OVERRIDE
-        getRecommendedWorkout(userData.goal).then(dynamicWorkout => {
+        getRecommendedWorkout((userData as any).goal).then(dynamicWorkout => {
           if (dynamicWorkout) {
             setDetailedPlan({ ...staticPlan, workout: dynamicWorkout })
           } else {
@@ -98,12 +111,7 @@ export default function Dashboard() {
 
       } catch (err) {
         console.error('Error:', err)
-        const session = getUserSession()
-        if (session) {
-          setUser(session)
-          setDailySchedule(generateDailySchedule(session))
-          setDetailedPlan(getFullDailyPlan(session))
-        }
+        router.push('/login')
       } finally {
         setLoading(false)
       }

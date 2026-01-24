@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { selectQuery } from '@/lib/d1'
 import { verifyPassword } from '@/lib/auth'
+import { createSession } from '@/lib/session'
 
 export const runtime = 'edge';
 
@@ -28,16 +29,18 @@ export async function POST(request: NextRequest) {
     const user = users[0] as any
     const storedPassword = user.password // Expected format "salt:hash"
 
-// 2. Verify Password
+    // 2. Verify Password
     const isValid = await verifyPassword(password, storedPassword);
 
     if (!isValid) {
       return NextResponse.json({ success: false, error: 'Invalid credentials' }, { status: 401 })
     }
 
-    // 3. Return Session Data
+    // 3. Create Session (HttpOnly Cookie)
     const { password: _, ...safeUser } = user
-    return NextResponse.json({ success: true, data: safeUser })
+    await createSession(safeUser)
+
+    return NextResponse.json({ success: true, message: 'Login successful' })
 
   } catch (error) {
     console.error('Login Error:', error)

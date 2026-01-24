@@ -41,21 +41,29 @@ export default function ProfilePage() {
   const [heightIn, setHeightIn] = useState('')
 
   useEffect(() => {
-    const session = getUserSession()
-    if (!session) { router.push('/login'); return }
-    setUserId(session.id)
-
+    // Replaced client-side session with server-side check
     const fetchProfile = async () => {
       try {
-        const res = await fetch(`/api/users/${session.id}`)
-        const json = (await res.json()) as ApiResponse<UserProfile>
-        if (json.success) {
-          setUser(json.data)
-          setFormData(json.data)
+        const meRes = await fetch('/api/auth/me')
+        if (!meRes.ok) { router.push('/login'); return }
+        const sessionJson = (await meRes.json()) as { success: boolean, data: UserProfile }
+
+        if (sessionJson.success) {
+          const userData = sessionJson.data
+          setUser(userData)
+          setUserId(userData.id)
+          setFormData(userData)
+
           // Convert CM to FT/IN
-          const totalInches = json.data.height_cm / 2.54
+          const totalInches = userData.height_cm / 2.54
           setHeightFt(Math.floor(totalInches / 12).toString())
           setHeightIn(Math.round(totalInches % 12).toString())
+
+          // Optional: Fetch fresh from DB if needed, but token usually has enough.
+          // If we want exact sync:
+          // const dbRes = await fetch(`/api/users/${userData.id}`) ...
+        } else {
+          router.push('/login')
         }
       } catch (err) {
         console.error('Profile load failed', err)

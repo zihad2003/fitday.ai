@@ -19,8 +19,15 @@ function getDB() {
       }
     } catch (err) { }
 
+    // 3. Safety Check
+    if (process.env.NODE_ENV === 'production') {
+      console.error("CRITICAL: Database binding (FITNESS_DB) missing in PRODUCTION.");
+      throw new Error("Database configuration error");
+    }
+
     return null;
   } catch (e: any) {
+    if (process.env.NODE_ENV === 'production') throw e;
     return null;
   }
 }

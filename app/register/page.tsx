@@ -66,10 +66,8 @@ export default function Register() {
       const data = await res.json() as RegisterResponse
 
       if (data.success) {
-        if (data.data) {
-          saveUserSession(data.data)
-          router.push('/dashboard')
-        }
+        // Server sets cookie automatically
+        router.push('/dashboard')
       } else {
         setError(data.error || 'Initialization failed')
         setLoading(false)

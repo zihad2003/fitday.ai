@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { selectQuery, executeMutation } from '@/lib/d1'
 import { calculateBMR, calculateTDEE, calculateMacros } from '@/lib/nutrition'
 import { hashPassword, generateSalt } from '@/lib/auth'
+import { createSession } from '@/lib/session'
 
 export const runtime = 'edge';
 
@@ -50,12 +51,13 @@ export async function POST(request: NextRequest) {
 
         // 4. Save to DB
         const sql = `
-      INSERT INTO users (email, password, name, gender, age, height_cm, weight_kg, activity_level, experience_level, goal, target_calories)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (email, password, salt, name, gender, age, height_cm, weight_kg, activity_level, experience_level, goal, target_calories)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
         const params = [
             email,
             storedPassword,
+            salt, // Fix: Explicitly store salt
             name,
             gender,
             age,
@@ -81,7 +83,11 @@ export async function POST(request: NextRequest) {
             try {
                 userResult = await selectQuery('SELECT * FROM users WHERE email = ?', [email])
                 if (userResult && userResult.length > 0) {
-                    const { password, ...safeUser } = userResult[0]
+                    const { password, salt: _, ...safeUser } = userResult[0] // Exclude salt too
+
+                    // 5. Create Session (HttpOnly)
+                    await createSession(safeUser)
+
                     return NextResponse.json({ success: true, data: safeUser }, { status: 201 })
                 }
                 return NextResponse.json({ success: true, message: 'User created' }, { status: 201 })

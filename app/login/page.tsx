@@ -34,10 +34,7 @@ export default function Login() {
       const data = (await res.json()) as LoginResponse
 
       if (data.success) {
-        if (data.data) {
-          saveUserSession(data.data)
-          router.push('/dashboard')
-        }
+        router.push('/dashboard')
       } else {
         setError(data.error || 'Access Denied')
       }
