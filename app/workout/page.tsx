@@ -87,7 +87,7 @@ export default function WorkoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: uid })
       })
-      const planJson = await planRes.json()
+      const planJson = (await planRes.json()) as any
 
       if (planJson.success) {
         setWeeklySchedule(planJson.data.schedule)
@@ -110,7 +110,7 @@ export default function WorkoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: userProfile.id })
       })
-      const json = await res.json()
+      const json = (await res.json()) as any
 
       if (json.success) {
         setWeeklySchedule(json.data.schedule)
@@ -181,8 +181,8 @@ export default function WorkoutPage() {
                   key={index}
                   onClick={() => setActiveTab(index)}
                   className={`flex-shrink-0 px-8 py-5 rounded-3xl border transition-all duration-300 relative overflow-hidden group ${isActive
-                      ? 'bg-orange-600 border-orange-500 text-white shadow-[0_0_25px_rgba(249,115,22,0.35)]'
-                      : 'bg-slate-900 border-white/10 text-slate-500 hover:border-orange-500/50 hover:text-slate-300'
+                    ? 'bg-orange-600 border-orange-500 text-white shadow-[0_0_25px_rgba(249,115,22,0.35)]'
+                    : 'bg-slate-900 border-white/10 text-slate-500 hover:border-orange-500/50 hover:text-slate-300'
                     }`}
                 >
                   <div className="text-[10px] font-mono uppercase mb-1 opacity-60">Day {day.day}</div>

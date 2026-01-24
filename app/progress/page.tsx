@@ -132,7 +132,7 @@ export default function ProgressPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: uid })
       })
-      const json = await res.json()
+      const json = (await res.json()) as any
       if (json.success) {
         setPrediction(json.data)
       }
@@ -345,8 +345,8 @@ export default function ProgressPage() {
                           animate={{ scale: 1 }}
                           transition={{ type: 'spring', stiffness: 260, damping: 20, delay: i * 0.1 }}
                           className={`w-full aspect-square rounded-2xl md:rounded-3xl border flex items-center justify-center transition-all ${day.workoutCompleted
-                              ? 'bg-purple-600 border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.3)]'
-                              : 'bg-slate-900/50 border-white/5'
+                            ? 'bg-purple-600 border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.3)]'
+                            : 'bg-slate-900/50 border-white/5'
                             }`}>
                           {day.workoutCompleted ? (
                             <span className="text-2xl md:text-3xl">🎚️</span>
