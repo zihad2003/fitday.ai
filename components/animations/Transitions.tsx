@@ -2,29 +2,33 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { usePathname } from 'next/navigation'
-import { ReactNode } from 'react'
+import { ReactNode, CSSProperties } from 'react'
 
-interface PageTransitionProps {
+interface BaseProps {
     children: ReactNode
+    className?: string
+    style?: CSSProperties
 }
 
 /**
  * Page Transition Wrapper
  * Provides smooth fade and slide animations between page changes
  */
-export function PageTransition({ children }: PageTransitionProps) {
+export function PageTransition({ children, className, style }: BaseProps) {
     const pathname = usePathname()
 
     return (
         <AnimatePresence mode="wait">
             <motion.div
                 key={pathname}
+                className={className}
+                style={style}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{
                     duration: 0.3,
-                    ease: [0.22, 1, 0.36, 1], // Custom easing for smooth feel
+                    ease: [0.22, 1, 0.36, 1],
                 }}
             >
                 {children}
@@ -35,11 +39,12 @@ export function PageTransition({ children }: PageTransitionProps) {
 
 /**
  * Fade In Animation
- * Simple fade in effect for elements
  */
-export function FadeIn({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
+export function FadeIn({ children, delay = 0, className, style }: BaseProps & { delay?: number }) {
     return (
         <motion.div
+            className={className}
+            style={style}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay }}
@@ -51,11 +56,12 @@ export function FadeIn({ children, delay = 0 }: { children: ReactNode; delay?: n
 
 /**
  * Slide Up Animation
- * Slides element up while fading in
  */
-export function SlideUp({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
+export function SlideUp({ children, delay = 0, className, style }: BaseProps & { delay?: number }) {
     return (
         <motion.div
+            className={className}
+            style={style}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
@@ -67,11 +73,12 @@ export function SlideUp({ children, delay = 0 }: { children: ReactNode; delay?: 
 
 /**
  * Scale In Animation
- * Scales element from small to normal size
  */
-export function ScaleIn({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
+export function ScaleIn({ children, delay = 0, className, style }: BaseProps & { delay?: number }) {
     return (
         <motion.div
+            className={className}
+            style={style}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
@@ -83,11 +90,12 @@ export function ScaleIn({ children, delay = 0 }: { children: ReactNode; delay?: 
 
 /**
  * Stagger Children Animation
- * Animates children with a stagger effect
  */
-export function StaggerContainer({ children, staggerDelay = 0.1 }: { children: ReactNode; staggerDelay?: number }) {
+export function StaggerContainer({ children, staggerDelay = 0.1, className, style }: BaseProps & { staggerDelay?: number }) {
     return (
         <motion.div
+            className={className}
+            style={style}
             initial="hidden"
             animate="visible"
             variants={{
@@ -105,11 +113,12 @@ export function StaggerContainer({ children, staggerDelay = 0.1 }: { children: R
 
 /**
  * Stagger Item
- * Individual item for stagger animation
  */
-export function StaggerItem({ children }: { children: ReactNode }) {
+export function StaggerItem({ children, className, style }: BaseProps) {
     return (
         <motion.div
+            className={className}
+            style={style}
             variants={{
                 hidden: { opacity: 0, y: 20 },
                 visible: { opacity: 1, y: 0 },
@@ -123,11 +132,12 @@ export function StaggerItem({ children }: { children: ReactNode }) {
 
 /**
  * Hover Scale Animation
- * Scales element on hover
  */
-export function HoverScale({ children, scale = 1.05 }: { children: ReactNode; scale?: number }) {
+export function HoverScale({ children, scale = 1.05, className, style }: BaseProps & { scale?: number }) {
     return (
         <motion.div
+            className={className}
+            style={style}
             whileHover={{ scale }}
             whileTap={{ scale: scale * 0.95 }}
             transition={{ duration: 0.2 }}
@@ -139,7 +149,6 @@ export function HoverScale({ children, scale = 1.05 }: { children: ReactNode; sc
 
 /**
  * Celebration Animation
- * Confetti-like celebration effect
  */
 export function Celebration({ show, onComplete }: { show: boolean; onComplete?: () => void }) {
     if (!show) return null
@@ -166,11 +175,10 @@ export function Celebration({ show, onComplete }: { show: boolean; onComplete?: 
 
 /**
  * Loading Dots Animation
- * Animated loading dots
  */
-export function LoadingDots() {
+export function LoadingDots({ className }: { className?: string }) {
     return (
-        <div className="flex gap-1">
+        <div className={`flex gap-1 ${className}`}>
             {[0, 1, 2].map((i) => (
                 <motion.div
                     key={i}
@@ -191,11 +199,12 @@ export function LoadingDots() {
 
 /**
  * Pulse Animation
- * Pulsing effect for attention
  */
-export function Pulse({ children }: { children: ReactNode }) {
+export function Pulse({ children, className, style }: BaseProps) {
     return (
         <motion.div
+            className={className}
+            style={style}
             animate={{
                 scale: [1, 1.05, 1],
             }}
@@ -212,11 +221,12 @@ export function Pulse({ children }: { children: ReactNode }) {
 
 /**
  * Shake Animation
- * Shake effect for errors
  */
-export function Shake({ children, trigger }: { children: ReactNode; trigger: boolean }) {
+export function Shake({ children, trigger, className, style }: BaseProps & { trigger: boolean }) {
     return (
         <motion.div
+            className={className}
+            style={style}
             animate={trigger ? {
                 x: [0, -10, 10, -10, 10, 0],
             } : {}}

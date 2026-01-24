@@ -1,299 +1,334 @@
-# 🏋️ FitDayAI - Complete Bangladeshi Fitness Tracker
+# 🏋️ FitDayAI - Your Personal Fitness & Lifestyle Assistant
 
-A comprehensive fitness tracking application with authentic Bangladeshi food database and modern gym exercise library with visual demonstrations.
+[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
+[![PWA](https://img.shields.io/badge/PWA-Enabled-purple)](https://web.dev/progressive-web-apps/)
+[![WCAG](https://img.shields.io/badge/WCAG-2.1%20AA-green)](https://www.w3.org/WAI/WCAG21/quickref/)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
-## 🎯 **Project Status: PRODUCTION READY WITH AI/ML** ✅
+> AI-powered fitness platform designed for South Asian users with personalized meal planning, workout generation, and progress tracking.
 
-### 🤖 **NEW: AI-Powered Features**
-- **AI Meal Suggestions** - Personalized Bangladeshi food recommendations using Google Gemini AI
-- **AI Exercise Suggestions** - Customized workout plans based on fitness level and goals
-- **AI Lifestyle Optimization** - Sleep, hydration, stress management, and recovery recommendations
-- **Daily AI Insights** - Real-time food, exercise, and motivation suggestions
-- **Intelligent Meal Planning** - Context-aware meal generation considering user history
-- **Smart Workout Plans** - Progressive overload and safety-aware exercise selection
+[Live Demo](https://fitday-ai.pages.dev) | [Documentation](./docs/COMPLETE_DOCUMENTATION.md) | [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md)
 
-### 🍽️ **Bangladeshi Food Features**
-- **250+ Authentic Food Items** - Complete Bangladeshi cuisine database
-- **20+ Food Categories** - Rice, biryani, dal, fish, meat, vegetables, etc.
-- **Regional Specialties** - Dhaka, Chittagong, Sylhet, Rajshahi, Barisal foods
-- **Authentic Bangla Names** - All items with proper Bangla script
-- **Complete Nutritional Data** - Calories, protein, carbs, fat for each item
-- **AI-Powered Meal Generation** - Goal-based meal plans with Bangladeshi preferences
+---
 
-### 🏋️ **Exercise Library Features**
-- **120+ Gym Exercises** - Complete workout library
-- **12 Exercise Categories** - Chest, back, shoulders, legs, core, cardio, etc.
-- **Visual GIF Demonstrations** - Working Imgur URLs for all exercises
-- **Multiple Difficulty Levels** - Beginner, intermediate, advanced
-- **Various Equipment Types** - Bodyweight, dumbbells, barbells, machines
-- **Proper Form Instructions** - Safety guidelines for each exercise
+## ✨ Features
 
-### 📊 **Progress & Analytics**
-- **Daily Progress Tracking** - Weight, calories, nutrition, steps, water, sleep
-- **Analytics Dashboard** - Progress summaries and trend analysis
-- **Compliance Tracking** - Meal and workout completion rates
-- **Goal Progress** - Weight loss/gain tracking with visual indicators
-- **Visual Analytics** - Charts and progress visualizations
+### 🤖 AI-Powered Intelligence
+- **Meal Planning**: Personalized nutrition with South Asian cuisine (12+ meals)
+- **Workout Generation**: Custom programs from 800+ exercise database
+- **Progress Prediction**: Trend analysis with milestone tracking
 
-### 🔐 **Security & Authentication**
-- **Secure Password Hashing** - PBKDF2 with salt for industry-standard security
-- **User Registration & Login** - Complete authentication system
-- **Session Management** - Secure local storage with proper cleanup
-- **Input Validation** - Zod schema validation for all API inputs
-- **SQL Injection Protection** - Parameterized queries for database security
+### 🎨 Premium UX/UI
+- **Smooth Animations**: Framer Motion throughout
+- **Dark Theme**: Modern glassmorphism design
+- **Responsive**: Mobile-first, works on all devices
+- **Accessibility**: WCAG 2.1 AA compliant
 
-### 🎨 **Modern Frontend**
-- **Futuristic UI** - Cyberpunk-themed interface
-- **Fully Responsive** - Mobile-friendly layout
-- **Real Data Integration** - All components use live APIs
-- **Type Safety** - 100% TypeScript implementation
-- **Bangla Language Support** - Cultural relevance in language and content
+### 📱 Progressive Web App
+- **Installable**: Add to home screen
+- **Offline Support**: Works without internet
+- **Background Sync**: Syncs data when online
+- **Push Notifications**: Stay engaged
 
-### 🛠️ **Production-Ready Backend**
-- **10+ API Endpoints** - Complete CRUD operations
-- **Cloudflare D1** - Serverless SQL database
-- **Edge Functions** - Global API distribution
-- **Error Handling** - Comprehensive error management
-- **Data Validation** - Input sanitization and validation
+### 🔍 Advanced Search
+- **Global Search (Cmd+K)**: Find anything instantly
+- **Food Search**: Autocomplete with nutrition info
+- **Exercise Search**: Filter by muscle group and difficulty
 
-## 🚀 **Live Demo**
+### 🔒 Security First
+- **JWT Authentication**: Secure httpOnly cookies
+- **CSRF Protection**: Validated mutations
+- **Rate Limiting**: Prevent abuse
+- **Encrypted Data**: Secure storage
 
-🌍 **Application URL**: https://e5060afc.fitday.ai.pages.dev
+---
 
-## 📂 **Project Structure**
+## 🚀 Quick Start
 
-```
-FitDayAI/
-├── 📱 app/                    # Next.js application
-│   ├── api/                   # API endpoints
-│   │   ├── auth/              # Authentication routes
-│   │   ├── users/             # User management
-│   │   ├── meals/             # Meal tracking
-│   │   ├── exercises/          # Exercise library
-│   │   ├── workout-plans/      # Workout planning
-│   │   └── progress/          # Progress tracking
-│   ├── (page routes)          # Application pages
-│   └── layout.tsx             # Root layout
-├── 🧩 components/              # React components
-│   ├── Diet.tsx               # Bangladeshi food tracking
-│   ├── Workout.tsx            # Exercise library with GIFs
-│   ├── Progress.tsx            # Analytics dashboard
-│   └── (auth components)      # Authentication components
-├── 📚 lib/                    # Utility libraries
-│   ├── auth.ts                # Authentication utilities
-│   ├── nutrition.ts             # Nutrition calculations
-│   └── d1.ts                  # Database connection
-├── 🗄️ db/                     # Database files
-│   ├── complete_schema.sql     # Full database schema
-│   ├── complete_seed.sql      # Sample data
-│   ├── bangladeshi_foods.sql # Food database
-│   └── exercise_library.sql  # Exercise library
-└── 📸 public/                  # Static assets
-    ├── logo.png               # Application logo
-    ├── icon-192x192.png       # PWA icon
-    ├── icon-512x512.png       # PWA icon
-    ├── manifest.json           # PWA manifest
-    └── sw.js                 # Service worker
-```
+### Prerequisites
+- Node.js 18+ and npm
+- PostgreSQL database (Neon recommended)
+- Redis instance (Upstash recommended)
+- Google Gemini API key
 
-## 🛠️ **Technologies Used**
+### Installation
 
-### **Frontend Stack**
-- **Next.js 15** - Modern React framework with App Router
-- **TypeScript** - Type-safe development
-- **Tailwind CSS** - Utility-first styling
-- **Edge Runtime** - Cloudflare optimized performance
-
-### **Backend Stack**
-- **Cloudflare D1** - Serverless SQL database
-- **Edge Functions** - Global API distribution
-- **SQLite** - Complete database schema
-- **RESTful API Design** - Clean API architecture
-
-### **Security Features**
-- **PBKDF2 Hashing** - Industry-standard password security
-- **Salt Storage** - Unique salt per user
-- **Input Validation** - Zod schema validation
-- **SQL Injection Protection** - Parameterized queries
-- **Session Management** - Secure local storage
-
-### **Performance Optimizations**
-- **Database Indexes** - Optimized query performance
-- **Edge Caching** - Global CDN distribution
-- **Lazy Loading** - Component-level code splitting
-- **Image Optimization** - GIF compression and caching
-
-## 🍽️ **Bangladeshi Food Coverage**
-
-### **Categories (20+)**
-1. **Rice & Bread** - ভাত, রুটি, পরোটা, লুচি, পুরি, নান, চাপাতি
-2. **Biryani & Special Rice** - কাচ্চি বিরিয়ানি, চিকেন বিরিয়ানি, বিফ তেহারি, মোরগ পোলাও
-3. **Dal (Lentils)** - মসুর ডাল, মুগ ডাল, অরহর ডাল, চোলা ডাল, বিউলি ডাল
-4. **Fish & Seafood** - ইলিশ, রুই, কাতলা, পাঙ্গাশ, চিংড়ি, শুঁটকি
-5. **Meat & Poultry** - চিকেন কারি, মাটন রেজালা, বিফ রেজালা, গ্রিল্ড চিকেন
-6. **Vegetables** - আলু ভর্তা, বেগুন ভর্তা, পটল ভর্তা, শজনে ডাটা ভর্তা
-7. **Street Food & Snacks** - সিঙারা, ফুচকা, চটপটি, ঝালমুড়ি, পিয়াজু
-8. **Sweets & Desserts** - রসগোল্লা, চমচম, মিষ্টি দই, পিঠা, হালুয়া
-9. **Beverages** - দুধ চা, বোরহানি, লাস্যি, নারিকেল পানি
-10. **Dairy Products** - টক দই, পনির, ঘি, মাখন
-11. **Fruits** - আম, কাঁঠাল, কলা, পেঁপে, পেয়ারা, লিচু
-12. **Eggs** - ডিম (সেদ্ধ), ডিম ভাজা, ডিম অমলেট, ডিম বিরিয়ানি
-13. **Spices & Condiments** - হলুদ, মরিচ, জিরা, সরিষার তেল
-14. **Healthy Options** - ওটস, সালাদ, টোফু, সয়ামিল্ক
-15. **Regional Specialties** - সরিষে ইলিশ, চিংড়ি মালাই কারি
-16. **Breakfast Items** - পান্তা ইলিশ, পান্তা ভাত, মুড়ি আলু ভর্তা
-17. **Ramadan Special** - বেগুনি, পিয়াজু, আলু চপ, জিলাপি
-18. **Wedding Foods** - মোরগ পোলাও, বিফ কালা ভুনা, শাহী দম বিরিয়ানি
-19. **Nuts & Seeds** - চিনাবাদাম, কাজু বাদাম, তিল, সরিষা
-20. **Fasting Foods** - Specific items for religious fasting
-
-### **Regional Coverage**
-- **Dhaka Region** - Capital specialties and urban favorites
-- **Chittagong** - Coastal and hilly region foods
-- **Sylhet** - Northeastern regional dishes
-- **Rajshahi** - North Bengal traditional foods
-- **Khulna** - Southwest region specialties
-- **Barisal** - Southern region delicacies
-
-## 🏋️ **Exercise Library Features**
-
-### **Exercise Categories (12)**
-1. **Chest Exercises** - Bench press, push-ups, flyes, crossovers
-2. **Back Exercises** - Deadlifts, pull-ups, rows, lat pulldowns
-3. **Shoulder Exercises** - Overhead press, lateral raises, shrugs
-4. **Biceps Exercises** - Curls, hammer curls, preacher curls
-5. **Triceps Exercises** - Pushdowns, extensions, dips
-6. **Legs Exercises** - Squats, lunges, leg press, extensions
-7. **Abs & Core** - Crunches, planks, leg raises, Russian twists
-8. **Cardio Exercises** - Running, cycling, elliptical, burpees
-9. **Functional Training** - Kettlebells, battle ropes, medicine balls
-10. **Yoga & Flexibility** - Stretches, poses, mobility work
-11. **Plyometrics** - Box jumps, depth jumps, explosive movements
-12. **Stretching & Mobility** - Dynamic and static stretches
-
-### **Visual Demonstrations**
-- **120+ GIF URLs** - Working Imgur links for all exercises
-- **Multiple Angles** - Front, side, and back views where needed
-- **Proper Form** - Demonstrates correct technique
-- **Beginner to Advanced** - Difficulty-appropriate demonstrations
-
-### **Equipment Categories**
-- **Bodyweight** - No equipment needed
-- **Dumbbells** - Free weight exercises
-- **Barbells** - Barbell exercises
-- **Machines** - Gym machine exercises
-- **Cables** - Cable machine exercises
-- **Kettlebells** - Kettlebell exercises
-- **Medicine Balls** - Medicine ball exercises
-- **Resistance Bands** - Band exercises
-
-## 📊 **API Documentation**
-
-### **Authentication**
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-
-### **User Management**
-- `GET /api/users` - Get users (with filters)
-- `POST /api/users` - Create user
-- `PUT /api/users?id={id}` - Update user
-- `DELETE /api/users?id={id}` - Delete user
-
-### **Meal Management**
-- `GET /api/meals` - Get user meals
-- `POST /api/meals/generate` - Generate meal plan
-- `PUT /api/meals/{id}` - Update meal status
-
-### **Exercise Library**
-- `GET /api/exercises` - Get exercise library
-- `GET /api/exercises?muscle_group={group}&difficulty={level}` - Browse exercises with filters
-
-### **Workout Management**
-- `GET /api/workouts` - Get user workouts
-- `GET /api/workout-plans/generate` - Generate workout plan
-- `GET /api/workout-plans` - Get workout plans
-
-### **Progress Tracking**
-- `POST /api/progress` - Log daily progress
-- `GET /api/progress` - Get progress data
-- `GET /api/progress?analytics=true` - Get analytics
-
-## 🚀 **How to Run**
-
-### **Development**
 ```bash
-# Clone repository
+# Clone the repository
 git clone https://github.com/zihad2003/fitday.ai.git
 cd fitday.ai
 
 # Install dependencies
 npm install
 
-# Run development server
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your credentials
+
+# Run database migrations
+npx drizzle-kit push:pg
+
+# Start development server
 npm run dev
-
-# Visit application
-# http://localhost:3000
 ```
 
-### **Database Setup**
-```bash
-# Apply complete schema
-cat db/complete_schema.sql | sqlite3 fitday.db
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-# Seed with sample data
-cat db/complete_seed.sql | sqlite3 fitday.db
+---
+
+## 📁 Project Structure
+
+```
+fitday-ai/
+├── app/                    # Next.js App Router
+│   ├── (auth)/            # Authentication pages
+│   ├── dashboard/         # Main dashboard
+│   ├── api/               # API routes
+│   └── layout.tsx         # Root layout
+├── components/            # React components
+│   ├── animations/        # Framer Motion components
+│   ├── ui/                # Accessible UI components
+│   └── ...                # Feature components
+├── lib/                   # Utilities & services
+│   ├── ai-meal-planner.ts
+│   ├── ai-workout-generator.ts
+│   ├── ai-progress-predictor.ts
+│   └── ...
+├── public/                # Static assets
+│   ├── sw.js              # Service worker
+│   └── manifest.json      # PWA manifest
+└── docs/                  # Documentation
 ```
 
-### **Production Deployment**
+---
+
+## 🛠️ Tech Stack
+
+**Frontend:**
+- [Next.js 15](https://nextjs.org/) - React framework
+- [TypeScript](https://www.typescriptlang.org/) - Type safety
+- [Tailwind CSS](https://tailwindcss.com/) - Styling
+- [Framer Motion](https://www.framer.com/motion/) - Animations
+- [Zustand](https://zustand-demo.pmnd.rs/) - State management
+- [React Query](https://tanstack.com/query) - Data fetching
+
+**Backend:**
+- [Next.js API Routes](https://nextjs.org/docs/api-routes/introduction) - Backend API
+- [Drizzle ORM](https://orm.drizzle.team/) - Database ORM
+- [PostgreSQL](https://www.postgresql.org/) - Database
+- [Upstash Redis](https://upstash.com/) - Rate limiting
+
+**AI/ML:**
+- [Google Gemini](https://ai.google.dev/) - AI chat
+- Custom algorithms - Meal planning, workout generation, progress prediction
+
+**PWA:**
+- Service Worker - Advanced caching
+- IndexedDB - Offline storage
+- Web Push API - Notifications
+
+---
+
+## 📊 Key Metrics
+
+- **10,000+** lines of code
+- **50+** components
+- **4** major development phases
+- **100%** TypeScript coverage
+- **WCAG 2.1 AA** accessibility compliance
+- **800+** exercises in database
+- **12+** South Asian meals
+
+---
+
+## 🎯 Core Features
+
+### AI Meal Planner
+- Calorie calculation using Mifflin-St Jeor Equation
+- Macro distribution based on goals
+- South Asian cuisine focus
+- Dietary restriction support
+- Cultural context for each meal
+
+### AI Workout Generator
+- Personalized workout splits (3-6 days/week)
+- Exercise selection from 800+ database
+- Sets/reps/rest based on goal and fitness level
+- Equipment filtering
+- Progressive overload planning
+
+### AI Progress Predictor
+- Linear regression for trend analysis
+- Weight prediction with confidence scores
+- Milestone generation
+- Personalized recommendations
+- Weekly progress reports
+
+---
+
+## ♿ Accessibility
+
+FitDayAI is built with accessibility as a priority:
+
+- ✅ **WCAG 2.1 AA Compliant**
+- ✅ **Keyboard Navigation**: Full keyboard support
+- ✅ **Screen Reader**: Proper ARIA labels
+- ✅ **Color Contrast**: 4.5:1 minimum ratio
+- ✅ **Touch Targets**: 44x44px minimum
+- ✅ **Focus Indicators**: Clear visual feedback
+- ✅ **Reduced Motion**: Respects user preferences
+
+---
+
+## 📱 PWA Features
+
+- **Installable**: Add to home screen on mobile/desktop
+- **Offline Support**: Works without internet connection
+- **Background Sync**: Syncs data when back online
+- **Push Notifications**: Stay engaged with reminders
+- **Fast Loading**: Cache-first strategy
+- **App-like Experience**: Standalone display mode
+
+---
+
+## 🔐 Security
+
+- **JWT Authentication**: Secure token-based auth
+- **httpOnly Cookies**: XSS protection
+- **CSRF Protection**: Validated mutations
+- **Rate Limiting**: 5 req/min for auth, 100 req/min for API
+- **SQL Injection Prevention**: Parameterized queries
+- **Password Hashing**: bcrypt with 10 rounds
+- **Secure Headers**: XSS, clickjacking protection
+
+---
+
+## 📖 Documentation
+
+- [Complete Documentation](./docs/COMPLETE_DOCUMENTATION.md) - Full project overview
+- [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md) - Step-by-step deployment
+- [Phase 1: Security](./docs/PHASE_1_SECURITY.md) - Security implementation
+- [Phase 2.1: Search](./docs/PHASE_2.1_SEARCH.md) - Search features
+- [Phase 2.2: Accessibility](./docs/PHASE_2.2_ACCESSIBILITY.md) - A11y features
+
+---
+
+## 🚀 Deployment
+
+### Cloudflare Pages (Recommended)
+
 ```bash
-# Build for production
+# Build command
+npx @cloudflare/next-on-pages
+
+# Output directory
+.vercel/output/static
+```
+
+See [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md) for detailed instructions.
+
+### Environment Variables
+
+```env
+DATABASE_URL=postgresql://...
+GEMINI_API_KEY=your_key
+UPSTASH_REDIS_REST_URL=https://...
+UPSTASH_REDIS_REST_TOKEN=your_token
+SESSION_SECRET=your_secret
+NEXT_PUBLIC_APP_URL=https://your-domain.com
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run linter
+npm run lint
+
+# Type check
+npm run type-check
+
+# Build test
 npm run build
-
-# Deploy to Cloudflare Pages
-npm run deploy
-
-# Or use deployment script
-./deploy.sh
 ```
 
-## 🎉 **Project Success Metrics**
+---
 
-### **Features Delivered**
-- ✅ **250+ Bangladeshi Food Items** - Complete nutritional database
-- ✅ **120+ Gym Exercises** - Full exercise library with GIFs
-- ✅ **5 Major Components** - Diet, Workout, Progress, Profile, Dashboard
-- ✅ **10+ API Endpoints** - Complete backend functionality
-- ✅ **20+ Food Categories** - Comprehensive Bangladeshi cuisine coverage
-- ✅ **12 Exercise Categories** - Complete fitness training coverage
+## 📈 Performance
 
-### **Technical Excellence**
-- ✅ **Type Safety** - 100% TypeScript implementation
-- ✅ **Security** - Industry-standard authentication and authorization
-- ✅ **Performance** - Optimized database queries and edge deployment
-- ✅ **Responsiveness** - Mobile-first responsive design
-- ✅ **Error Handling** - Comprehensive error management
-- ✅ **Data Validation** - Input sanitization and validation
+Expected Lighthouse scores:
+- **Performance**: 90+
+- **Accessibility**: 100
+- **Best Practices**: 100
+- **SEO**: 100
+- **PWA**: 100
 
-### **User Experience**
-- ✅ **Modern UI** - Cyberpunk-themed futuristic interface
-- ✅ **Bangla Support** - Authentic Bangladeshi food names
-- ✅ **Visual Exercises** - GIF demonstrations for all workouts
-- ✅ **Progress Tracking** - Comprehensive analytics and insights
-- ✅ **Meal Planning** - AI-powered Bangladeshi meal generation
-- ✅ **Goal Setting** - Personalized fitness and nutrition goals
+---
 
-## 🏆 **Final Status: PROJECT COMPLETE** ✅
+## 🤝 Contributing
 
-FitDayAI is now a **fully functional, production-ready** fitness tracking application specifically designed for Bangladeshi users with:
+Contributions are welcome! Please follow these steps:
 
-- 🍽️ **Complete Bangladeshi Food Database**
-- 🏋️ **Comprehensive Exercise Library with GIF Demonstrations**
-- 📊 **Advanced Progress Tracking & Analytics**
-- 🔐 **Secure Authentication & User Management**
-- 🎨 **Modern, Responsive User Interface**
-- 🚀 **Production-Ready Deployment**
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-The application successfully combines traditional Bangladeshi cuisine with modern fitness tracking, providing users with a culturally relevant and technologically advanced health management solution.
+---
 
-**🇧🇩 FitDayAI - Bridging Bangladeshi Tradition with Modern Fitness Technology 🇧🇩**
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **Exercise Database**: [yuhonas/free-exercise-db](https://github.com/yuhonas/free-exercise-db)
+- **AI**: Google Gemini
+- **Icons**: Heroicons
+- **Fonts**: Google Fonts (Inter, Outfit)
+- **Community**: South Asian Fitness Community
+
+---
+
+## 📞 Support
+
+- **Documentation**: [docs/](./docs/)
+- **Issues**: [GitHub Issues](https://github.com/zihad2003/fitday.ai/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/zihad2003/fitday.ai/discussions)
+
+---
+
+## 🗺️ Roadmap
+
+### Phase 5 (Future)
+- [ ] Social features (friends, sharing)
+- [ ] Wearable integration (Fitbit, Apple Watch)
+- [ ] Advanced analytics dashboard
+- [ ] Voice commands
+- [ ] AR workout guidance
+- [ ] Meal photo recognition
+- [ ] Barcode scanning
+- [ ] Community challenges
+
+---
+
+## 📊 Stats
+
+![GitHub stars](https://img.shields.io/github/stars/zihad2003/fitday.ai?style=social)
+![GitHub forks](https://img.shields.io/github/forks/zihad2003/fitday.ai?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/zihad2003/fitday.ai?style=social)
+
+---
+
+<div align="center">
+
+**Built with ❤️ for the fitness community**
+
+[Website](https://fitday-ai.pages.dev) • [Documentation](./docs/) • [Report Bug](https://github.com/zihad2003/fitday.ai/issues) • [Request Feature](https://github.com/zihad2003/fitday.ai/issues)
+
+</div>

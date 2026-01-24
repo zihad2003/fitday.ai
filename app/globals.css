@@ -5,58 +5,63 @@
 /* Accessibility Styles - WCAG 2.1 AA Compliant */
 @import '../styles/accessibility.css';
 
-/* 1. BASE SETTINGS */
 :root {
   --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 2, 6, 23;
-  /* Slate 950 */
-  --background-end-rgb: 2, 6, 23;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
+  --accent-purple: 147, 51, 234;
+  --accent-indigo: 79, 70, 229;
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-start-rgb));
-  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  overflow-x: hidden;
+@layer base {
+  body {
+    color: rgb(var(--foreground-rgb));
+    background: #000;
+    font-family: var(--font-inter), ui-sans-serif, system-ui;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  /* Premium Selection */
+  ::selection {
+    background: rgba(147, 51, 234, 0.3);
+    color: white;
+  }
 }
 
-/* 2. CUSTOM SCROLLBAR (Chrome/Safari/Edge) */
+/* 2. CUSTOM SCROLLBAR (Subtle Premium) */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #020617;
-  /* Slate 950 */
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  /* Slate 800 */
-  border-radius: 3px;
-  transition: background 0.2s;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  transition: all 0.3s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #06b6d4;
-  /* Cyan 500 */
+  background: rgba(147, 51, 234, 0.5);
 }
 
-/* Firefox Scrollbar Support */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #1e293b #020617;
+.subtle-scrollbar::-webkit-scrollbar {
+  width: 3px;
 }
 
 /* 3. UTILITY CLASSES (Glassmorphism & Effects) */
 @layer components {
-  .glass-panel {
-    @apply bg-slate-900/50 backdrop-blur-xl border border-white/10 shadow-xl;
+  .glass-card {
+    @apply relative overflow-hidden rounded-[3rem] border border-white/5 bg-zinc-900/40 backdrop-blur-3xl transition-all duration-500;
   }
 
-  .glass-card {
-    @apply relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 transition-all duration-300;
+  .glass-card:hover {
+    @apply border-purple-500/20 bg-zinc-900/60;
   }
 
   /* Hide Scrollbar but allow scrolling */
@@ -68,88 +73,9 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-}
 
-/* 4. ANIMATIONS (Referenced in your JSX) */
-@layer utilities {
-
-  /* Floating Effect */
-  @keyframes float {
-
-    0%,
-    100% {
-      transform: translateY(0px);
-    }
-
-    50% {
-      transform: translateY(-10px);
-    }
-  }
-
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  /* Shimmer Effect (Used in Buttons) */
-  @keyframes shimmer {
-    100% {
-      transform: translateX(100%);
-    }
-  }
-
-  .animate-shimmer {
-    animation: shimmer 2s infinite;
-  }
-
-  /* Scan Line (Used in Modal) */
-  @keyframes scan {
-
-    0%,
-    100% {
-      top: 0%;
-      opacity: 0;
-    }
-
-    10% {
-      opacity: 1;
-    }
-
-    90% {
-      opacity: 1;
-    }
-
-    100% {
-      top: 100%;
-      opacity: 0;
-    }
-  }
-
-  /* Note: The class 'animate-[scan_...]' in Tailwind uses arbitrary values, 
-     but we define the keyframes here so Tailwind can find it if configured, 
-     or you can use a utility class like this: */
-  .animate-scan {
-    animation: scan 2s linear infinite;
-  }
-
-  .font-outfit {
-    font-family: var(--font-outfit), sans-serif;
-  }
-
-  .text-glow {
-    text-shadow: 0 0 30px rgba(139, 92, 246, 0.4);
-  }
-
-  /* Argus-Inspired Styles */
-  .bg-argus-gradient {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(63, 63, 70, 0.1) 100%);
-  }
-
-  .argus-glass {
-    @apply bg-white/[0.01] backdrop-blur-[40px] border border-white/5 shadow-2xl transition-all duration-500;
-  }
-
-  .argus-glass:hover {
-    @apply border-purple-500/30 bg-purple-500/[0.02];
+  .stat-card {
+    @apply p-8 bg-zinc-950/40 border border-white/5 rounded-[3rem] hover:bg-zinc-950/60 backdrop-blur-2xl transition-all duration-700 hover:border-white/10;
   }
 
   .btn-beam {
@@ -164,28 +90,38 @@ body {
   .btn-beam:hover::before {
     @apply translate-x-[200%];
   }
+}
+
+/* 4. ANIMATIONS */
+@layer utilities {
+  .font-outfit {
+    font-family: var(--font-outfit), sans-serif;
+  }
+
+  .font-inter {
+    font-family: var(--font-inter), sans-serif;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 30px rgba(147, 51, 234, 0.4);
+  }
 
   .glow-purple {
     @apply absolute rounded-full blur-[120px] opacity-20 pointer-events-none;
     background: radial-gradient(circle, #8b5cf6, #6366f1);
   }
 
-  /* Dashboard Concept Utilities */
-  .wavy-sidebar {
-    @apply h-full w-24 bg-zinc-950 flex flex-col items-center py-10 border-r border-white/5;
-    mask-image: radial-gradient(circle at 100% 50%, transparent 20px, black 21px);
-    mask-size: 100% 80px;
-    mask-repeat: repeat-y;
+  /* Noise Overlay */
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    mask-image: radial-gradient(circle at center, black, transparent);
+    @apply opacity-[0.03] pointer-events-none;
   }
 
-  .squircle {
-    border-radius: 3rem;
-  }
-
-  /* Liquid Meta Blob (Inspired by Image 2) */
+  /* Liquid Blob Animation */
   .liquid-meta-blob {
-    @apply relative w-48 h-48 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full shadow-xl;
-    animation: metabolic-pulse 8s ease-in-out infinite;
+    @apply relative w-48 h-48 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full shadow-2xl;
+    animation: metabolic-pulse 10s ease-in-out infinite;
   }
 
   @keyframes metabolic-pulse {
@@ -193,26 +129,22 @@ body {
     0%,
     100% {
       border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
-      transform: scale(1);
+      transform: scale(1) rotate(0deg);
     }
 
-    25% {
+    33% {
       border-radius: 73% 27% 26% 74% / 65% 56% 44% 35%;
-      transform: scale(1.05) rotate(5deg);
+      transform: scale(1.1) rotate(2deg);
     }
 
-    50% {
+    66% {
       border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-      transform: scale(0.95) rotate(-5deg);
-    }
-
-    75% {
-      border-radius: 50% 50% 20% 80% / 25% 80% 20% 75%;
-      transform: scale(1.02);
+      transform: scale(0.9) rotate(-2deg);
     }
   }
+}
 
-  .stat-card {
-    @apply p-8 bg-zinc-900/50 border border-white/5 rounded-[2.5rem] hover:bg-zinc-900/80 transition-all duration-500;
-  }
+/* 5. MASKED SIDEBAR HOLE (Advanced UI) */
+.sidebar-mask {
+  mask-image: radial-gradient(60px at 100% 50%, transparent 100%, black 100%);
 }

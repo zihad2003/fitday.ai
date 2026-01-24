@@ -2,8 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Sparkles, Loader2, Camera } from 'lucide-react';
-import { t } from '@/lib/food-data';
+import { Send, Bot, User, Sparkles, Loader2, Camera, Languages } from 'lucide-react';
 
 interface Message {
     id: string;
@@ -12,9 +11,9 @@ interface Message {
     timestamp: Date;
 }
 
-export default function AICoach() {
+export default function AICoach({ fullHeight = false }: { fullHeight?: boolean }) {
     const [messages, setMessages] = useState<Message[]>([
-        { id: '1', text: 'Hello! I am your FitDay AI Coach. How can I help you today?', sender: 'bot', timestamp: new Date() }
+        { id: '1', text: 'Greeting sequence complete. I am the FitDay Neural Coach. How may I assist your metabolic evolution today?', sender: 'bot', timestamp: new Date() }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -47,13 +46,13 @@ export default function AICoach() {
             const response = await fetch('/api/coach/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: input })
+                body: JSON.stringify({ question: input, language: isEnglish ? 'en' : 'bn' })
             });
 
             const data = (await response.json()) as { answer?: string };
             const botMsg: Message = {
                 id: (Date.now() + 1).toString(),
-                text: data.answer || "I'm sorry, I couldn't process that. Please try again.",
+                text: data.answer || "Communication error. Re-syncing neural links...",
                 sender: 'bot',
                 timestamp: new Date()
             };
@@ -67,49 +66,34 @@ export default function AICoach() {
     };
 
     return (
-        <div className="flex flex-col h-[600px] w-full max-w-2xl mx-auto bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl overflow-hidden font-sans">
-            {/* Header */}
-            <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white/20 rounded-xl">
-                        <Bot className="text-white w-6 h-6" />
-                    </div>
-                    <div>
-                        <h2 className="text-white font-bold text-lg">FitDay AI Coach</h2>
-                        <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-                            <span className="text-emerald-100 text-xs">Online & Ready</span>
-                        </div>
-                    </div>
-                </div>
-                <button
-                    onClick={() => setIsEnglish(!isEnglish)}
-                    className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm transition-colors"
-                >
-                    {isEnglish ? 'বাংলা' : 'English'}
-                </button>
-            </div>
+        <div className={`flex flex-col w-full mx-auto relative overflow-hidden bg-transparent ${fullHeight ? 'h-full' : 'h-[600px]'}`}>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto px-6 py-8 space-y-6 subtle-scrollbar">
                 <AnimatePresence initial={false}>
-                    {messages.map((msg) => (
+                    {messages.map((msg, i) => (
                         <motion.div
                             key={msg.id}
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
                             className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
-                            <div className={`flex gap-3 max-w-[80%] ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.sender === 'user' ? 'bg-teal-500' : 'bg-gray-700'
+                            <div className={`flex gap-4 max-w-[85%] ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border border-white/10 shadow-lg ${msg.sender === 'user' ? 'bg-purple-600' : 'bg-zinc-900'
                                     }`}>
-                                    {msg.sender === 'user' ? <User size={16} className="text-white" /> : <Bot size={16} className="text-white" />}
+                                    {msg.sender === 'user' ? <User size={18} className="text-white" /> : <Bot size={18} className="text-purple-400" />}
                                 </div>
-                                <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.sender === 'user'
-                                    ? 'bg-teal-600 text-white rounded-tr-none'
-                                    : 'bg-white/10 text-white border border-white/5 rounded-tl-none'
-                                    }`}>
-                                    {msg.text}
+                                <div>
+                                    <div className={`p-5 rounded-[1.8rem] text-[13px] leading-relaxed relative ${msg.sender === 'user'
+                                            ? 'bg-purple-600/90 text-white rounded-tr-none shadow-[0_10px_25px_rgba(147,51,234,0.2)]'
+                                            : 'bg-white/[0.03] text-zinc-300 border border-white/5 rounded-tl-none backdrop-blur-sm'
+                                        }`}>
+                                        {msg.text}
+                                    </div>
+                                    <div className={`text-[8px] font-mono text-zinc-700 uppercase mt-1.5 ${msg.sender === 'user' ? 'text-right mr-1' : 'text-left ml-1'}`}>
+                                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </div>
                                 </div>
                             </div>
                         </motion.div>
@@ -117,9 +101,9 @@ export default function AICoach() {
                 </AnimatePresence>
                 {isLoading && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-                        <div className="bg-white/10 p-4 rounded-2xl rounded-tl-none border border-white/5 flex items-center gap-2">
-                            <Loader2 className="w-4 h-4 text-teal-400 animate-spin" />
-                            <span className="text-white/60 text-xs">Coach is thinking...</span>
+                        <div className="bg-white/5 px-5 py-4 rounded-[1.5rem] rounded-tl-none border border-white/5 flex items-center gap-3">
+                            <Loader2 className="w-3 h-3 text-purple-500 animate-spin" />
+                            <span className="text-zinc-500 text-[10px] uppercase font-black tracking-widest font-mono">Synthesizing Response...</span>
                         </div>
                     </motion.div>
                 )}
@@ -127,35 +111,50 @@ export default function AICoach() {
             </div>
 
             {/* Input Area */}
-            <div className="p-6 pt-2">
-                <div className="relative flex items-center">
+            <div className="p-6 md:p-8 bg-zinc-900/20 border-t border-white/5 relative z-20">
+                {/* Language Toggle */}
+                <div className="flex justify-center mb-4">
+                    <button
+                        onClick={() => setIsEnglish(!isEnglish)}
+                        className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full transition-all group"
+                    >
+                        <Languages size={12} className="text-purple-500 group-hover:rotate-12 transition-transform" />
+                        <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 group-hover:text-purple-400">
+                            {isEnglish ? 'English (Global)' : 'Bengali (Bangla)'}
+                        </span>
+                    </button>
+                </div>
+
+                <div className="relative flex items-center group">
                     <input
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder={isEnglish ? 'Ask about your calories or food...' : 'আপনার ক্যালোরি বা খাবার সম্পর্কে জিজ্ঞাসা করুন...'}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-6 pr-24 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
+                        placeholder={isEnglish ? 'Communicate with Neural Coach...' : 'কোচের সাথে কথা বলুন...'}
+                        className="w-full bg-zinc-950/80 border border-white/10 rounded-2xl py-5 pl-7 pr-28 text-[13px] text-white placeholder:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/30 transition-all font-medium backdrop-blur-xl"
                     />
-                    <div className="absolute right-2 flex gap-1">
-                        <button className="p-2 text-white/40 hover:text-white transition-colors">
+                    <div className="absolute right-3 flex gap-2">
+                        <button className="p-2.5 text-zinc-600 hover:text-purple-400 transition-colors hidden md:block" title="Visual Analysis">
                             <Camera size={20} />
                         </button>
                         <button
                             onClick={handleSend}
                             disabled={isLoading || !input.trim()}
-                            className="p-3 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 disabled:hover:bg-teal-500 rounded-xl text-white transition-all shadow-lg shadow-teal-500/20"
+                            className="p-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-30 disabled:hover:bg-purple-600 rounded-xl text-white transition-all shadow-[0_10px_20px_rgba(147,51,234,0.3)] active:scale-95 flex items-center justify-center"
                         >
                             <Send size={18} />
                         </button>
                     </div>
                 </div>
-                <div className="mt-3 flex items-center justify-center gap-4 text-[10px] text-white/20 uppercase tracking-widest font-bold">
-                    <span className="flex items-center gap-1"><Sparkles size={10} /> Powered by Gemini 1.5</span>
-                    <span>•</span>
-                    <span>Bangla Language Support</span>
+
+                <div className="mt-4 flex items-center justify-center gap-6 text-[9px] text-zinc-800 font-bold uppercase tracking-[0.3em]">
+                    <div className="flex items-center gap-1.5"><Sparkles size={10} className="text-purple-900" /> Powered by Gemini LLM</div>
+                    <div className="w-1 h-1 bg-zinc-900 rounded-full" />
+                    <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 bg-emerald-900 rounded-full" /> Biometric Analysis On</div>
                 </div>
             </div>
         </div>
     );
 }
+
