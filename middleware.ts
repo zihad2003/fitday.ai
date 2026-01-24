@@ -22,7 +22,7 @@ export async function middleware(request: NextRequest) {
 
     // 2. Rate Limiting (API Routes Only)
     if (path.startsWith('/api')) {
-        const ip = request.ip || request.headers.get('x-forwarded-for') || '127.0.0.1'
+        const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('cf-connecting-ip') || '127.0.0.1'
         const isAuthRoute = path.startsWith('/api/auth')
 
         // Stricter limits for auth routes (5 reqs/min), generous for others (100 reqs/min)
