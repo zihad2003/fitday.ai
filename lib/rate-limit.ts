@@ -1,5 +1,5 @@
 import { Ratelimit } from '@upstash/ratelimit'
-import { Redis } from '@upstash/redis'
+import { Redis } from '@upstash/redis/cloudflare'
 
 // Create a random in-memory fallback for development if no Redis credentials are provided
 const cache = new Map()

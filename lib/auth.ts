@@ -1,5 +1,4 @@
 // lib/auth.ts - Security & Session Utils
-export const runtime = 'edge';
 
 /**
  * SECURITY: Hash password with salt using Web Crypto API

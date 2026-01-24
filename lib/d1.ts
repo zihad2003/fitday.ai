@@ -1,7 +1,6 @@
 // lib/d1.ts - Final Correct Logic
 import { getRequestContext } from '@cloudflare/next-on-pages'
 
-export const runtime = 'edge'
 
 // ১. ডাটাবেস কানেকশন পাওয়ার হেল্পার ফাংশন
 // ১. ডাটাবেস কানেকশন পাওয়ার হেল্পার ফাংশন
