@@ -1,0 +1,199 @@
+/* Accessible Button Styles */
+
+.accessible-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    line-height: 1;
+    white-space: nowrap;
+    user-select: none;
+}
+
+/* Size Variants */
+.accessible-button--sm {
+    padding: 8px 16px;
+    font-size: 13px;
+    min-height: 36px;
+}
+
+.accessible-button--md {
+    padding: 12px 24px;
+    font-size: 15px;
+    min-height: 44px;
+}
+
+.accessible-button--lg {
+    padding: 16px 32px;
+    font-size: 17px;
+    min-height: 52px;
+}
+
+/* Color Variants */
+.accessible-button--primary {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.accessible-button--primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+    transform: translateY(-2px);
+}
+
+.accessible-button--primary:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.accessible-button--secondary {
+    background: rgba(139, 92, 246, 0.1);
+    color: #a78bfa;
+    border: 2px solid rgba(139, 92, 246, 0.3);
+}
+
+.accessible-button--secondary:hover:not(:disabled) {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: rgba(139, 92, 246, 0.5);
+    color: #c4b5fd;
+    transform: translateY(-2px);
+}
+
+.accessible-button--danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.accessible-button--danger:hover:not(:disabled) {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+    transform: translateY(-2px);
+}
+
+.accessible-button--ghost {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+    border: none;
+}
+
+.accessible-button--ghost:hover:not(:disabled) {
+    background: rgba(139, 92, 246, 0.1);
+    color: #fff;
+}
+
+/* Full Width */
+.accessible-button--full {
+    width: 100%;
+}
+
+/* Disabled State */
+.accessible-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(50%);
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Loading State */
+.accessible-button--loading {
+    pointer-events: none;
+}
+
+.button-spinner {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spinner-icon {
+    width: 16px;
+    height: 16px;
+    animation: spin 0.8s linear infinite;
+}
+
+.spinner-circle {
+    stroke: currentColor;
+    stroke-dasharray: 50;
+    stroke-dashoffset: 25;
+    stroke-linecap: round;
+    opacity: 0.8;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Icons */
+.button-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+}
+
+.button-icon--left {
+    margin-right: -4px;
+}
+
+.button-icon--right {
+    margin-left: -4px;
+}
+
+/* Focus State - Enhanced for accessibility */
+.accessible-button:focus-visible {
+    outline: 3px solid #8b5cf6;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(139, 92, 246, 0.2);
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .accessible-button {
+        border: 2px solid currentColor;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .accessible-button {
+        transition: none;
+    }
+
+    .spinner-icon {
+        animation: none;
+    }
+
+    .accessible-button:hover:not(:disabled) {
+        transform: none;
+    }
+}
+
+/* Touch Devices - Larger tap targets */
+@media (hover: none) and (pointer: coarse) {
+    .accessible-button--sm {
+        min-height: 44px;
+        padding: 10px 18px;
+    }
+
+    .accessible-button--md {
+        min-height: 48px;
+        padding: 14px 26px;
+    }
+
+    .accessible-button--lg {
+        min-height: 56px;
+        padding: 18px 34px;
+    }
+}

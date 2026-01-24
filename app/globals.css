@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Accessibility Styles - WCAG 2.1 AA Compliant */
+@import '../styles/accessibility.css';
+
 /* 1. BASE SETTINGS */
 :root {
   --foreground-rgb: 255, 255, 255;

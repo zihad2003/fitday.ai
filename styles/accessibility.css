@@ -1,0 +1,330 @@
+/* Accessibility Styles - WCAG 2.1 AA Compliant */
+
+/* Screen Reader Only - Visually hidden but accessible */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Skip to Content Link */
+.skip-to-content {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #8b5cf6;
+    color: #fff;
+    padding: 12px 24px;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 0 0 8px 0;
+    z-index: 10000;
+    transition: top 0.2s ease;
+}
+
+.skip-to-content:focus {
+    top: 0;
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+}
+
+/* Focus Indicators - Enhanced for visibility */
+*:focus-visible {
+    outline: 3px solid #8b5cf6;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Button Focus States */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid #8b5cf6;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    * {
+        border-color: currentColor !important;
+    }
+
+    button,
+    a {
+        outline: 2px solid currentColor;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Focus Trap Container */
+.focus-trap-container {
+    position: relative;
+}
+
+/* Keyboard Navigation Hints */
+.keyboard-hint {
+    display: none;
+}
+
+@media (hover: none) {
+    .keyboard-hint {
+        display: inline-block;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.6);
+        margin-left: 8px;
+    }
+}
+
+/* Interactive Element Minimum Size (44x44px for touch) */
+button,
+a,
+input[type="checkbox"],
+input[type="radio"] {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Exception for inline text links */
+a.inline-link {
+    min-width: auto;
+    min-height: auto;
+}
+
+/* Disabled State - Clear visual indication */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(50%);
+}
+
+/* Loading State - Accessible */
+.loading-spinner[role="status"] {
+    position: relative;
+}
+
+.loading-spinner::after {
+    content: "Loading...";
+    position: absolute;
+    left: -9999px;
+}
+
+/* Error Messages - High Contrast */
+.error-message,
+[role="alert"] {
+    background: rgba(239, 68, 68, 0.2);
+    border: 2px solid #ef4444;
+    color: #fca5a5;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 8px 0;
+}
+
+/* Success Messages */
+.success-message,
+[role="status"][data-type="success"] {
+    background: rgba(34, 197, 94, 0.2);
+    border: 2px solid #22c55e;
+    color: #86efac;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 8px 0;
+}
+
+/* Form Labels - Always visible and associated */
+label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+label.required::after {
+    content: " *";
+    color: #ef4444;
+    font-weight: 700;
+}
+
+/* Input Focus States */
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
+}
+
+/* Invalid Input States */
+input:invalid,
+select:invalid,
+textarea:invalid {
+    border-color: #ef4444;
+}
+
+input:invalid:focus,
+select:invalid:focus,
+textarea:invalid:focus {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+}
+
+/* Tooltip Accessibility */
+[role="tooltip"] {
+    position: absolute;
+    background: #1a1a2e;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+/* Modal Overlay - Prevent background interaction */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9998;
+}
+
+/* Modal Content - Proper focus management */
+.modal-content {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Landmark Regions */
+main {
+    scroll-margin-top: 80px;
+    /* Account for fixed header */
+}
+
+/* Live Region for Dynamic Content */
+[aria-live="polite"],
+[aria-live="assertive"] {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* Ensure sufficient color contrast (4.5:1 minimum) */
+.text-primary {
+    color: #ffffff;
+    /* White on dark backgrounds */
+}
+
+.text-secondary {
+    color: rgba(255, 255, 255, 0.8);
+    /* 80% opacity */
+}
+
+.text-muted {
+    color: rgba(255, 255, 255, 0.6);
+    /* 60% opacity - still meets 4.5:1 on dark bg */
+}
+
+/* Link Styles - Underlined for accessibility */
+a {
+    color: #a78bfa;
+    /* Purple-300 for good contrast */
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+
+a:hover {
+    color: #c4b5fd;
+    /* Purple-200 */
+    text-decoration-thickness: 2px;
+}
+
+/* Button Styles - Clear interactive states */
+button {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* Table Accessibility */
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th {
+    text-align: left;
+    font-weight: 600;
+    background: rgba(139, 92, 246, 0.1);
+    padding: 12px;
+}
+
+td {
+    padding: 12px;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+/* Progress Indicators */
+[role="progressbar"] {
+    position: relative;
+    height: 8px;
+    background: rgba(139, 92, 246, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+[role="progressbar"]::after {
+    content: attr(aria-valuenow) "%";
+    position: absolute;
+    left: -9999px;
+}
+
+/* Checkbox and Radio Accessibility */
+input[type="checkbox"],
+input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #8b5cf6;
+}
+
+/* Custom Focus for Complex Components */
+.custom-select:focus-within,
+.custom-dropdown:focus-within {
+    outline: 3px solid #8b5cf6;
+    outline-offset: 2px;
+}
