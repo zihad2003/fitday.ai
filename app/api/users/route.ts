@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('id')
     const email = searchParams.get('email')
-    
+
     let sql = 'SELECT * FROM users'
     let params: any[] = []
 
@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       data: userId ? (safeUsers[0] || null) : safeUsers,
       count: userId ? 1 : safeUsers.length
     })
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, name, gender, age, height, weight, goal, activity_level = 'sedentary' } = body as any
+    const { email, password, name, gender, age, height, weight, goal, activity_level = 'sedentary', experience_level = 'beginner' } = body as any
 
     if (!email || !password || !name || !age || !height || !weight || !goal) {
       return NextResponse.json({ success: false, error: 'All fields are required' }, { status: 400 })
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
 
     const existingUsers = await selectQuery('SELECT id FROM users WHERE email = ?', [email])
     if (existingUsers.length > 0) {
+      console.warn(`[API] Registration Conflict: Email '${email}' already exists.`);
       return NextResponse.json({ success: false, error: 'Email already exists' }, { status: 409 })
     }
 
@@ -77,10 +78,10 @@ export async function POST(request: NextRequest) {
     const storedPassword = `${salt}:${hashedPassword}`;
 
     const sql = `
-      INSERT INTO users (email, password, name, gender, age, height_cm, weight_kg, activity_level, goal, target_calories)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (email, password, name, gender, age, height_cm, weight_kg, activity_level, experience_level, goal, target_calories)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
-    const params = [email, storedPassword, name, gender, age, height, weight, activity_level, goal, targetCalories]
+    const params = [email, storedPassword, name, gender, age, height, weight, activity_level, experience_level, goal, targetCalories]
 
     const changes = await executeMutation(sql, params)
 

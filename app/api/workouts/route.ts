@@ -8,7 +8,7 @@ export const runtime = 'edge'
 const createWorkoutSchema = z.object({
   user_id: z.number().or(z.string().transform(Number)),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
-  type: z.string().min(3, "Workout description is too short"),
+  exercise_name: z.string().min(3, "Workout description is too short"),
   completed: z.boolean().optional().default(false),
   // Optional: Add duration/calories if your DB supports them later
   duration: z.number().min(1).optional().default(0),
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     let sql = `
       SELECT w.*, e.gif_url, e.difficulty, e.muscle_group 
       FROM workouts w 
-      LEFT JOIN exercise_library e ON w.type = e.name 
+      LEFT JOIN exercises e ON w.exercise_name = e.name 
       WHERE 1=1
     `
     const params: (string | number)[] = []
@@ -96,13 +96,13 @@ export async function POST(request: NextRequest) {
     // 3. Insert Workout
     // Note: If you add 'duration' or 'calories' columns to your DB later, add them here.
     const sql = `
-      INSERT INTO workouts (user_id, date, type, completed)
+      INSERT INTO workouts (user_id, date, exercise_name, completed)
       VALUES (?, ?, ?, ?)
     `
     const params = [
       data.user_id,
       data.date,
-      data.type,
+      data.exercise_name,
       data.completed ? 1 : 0
     ]
 

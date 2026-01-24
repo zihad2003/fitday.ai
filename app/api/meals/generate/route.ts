@@ -7,7 +7,7 @@ export async function POST(req: Request) {
   try {
     // TypeScript Error Fix: Type casting the incoming body
     const { user_id, date } = (await req.json()) as { user_id: number; date: string }
-    
+
     // ১. ইউজার প্রোফাইল ফেচ করা
     const users = await selectQuery('SELECT * FROM users WHERE id = ?', [user_id])
     const user = users[0] as any
@@ -19,13 +19,13 @@ export async function POST(req: Request) {
     // ২. মেডিকেল লজিক: ক্যালরি ক্যালকুলেশন (Mifflin-St Jeor Equation)
     let bmr = 10 * user.weight_kg + 6.25 * user.height_cm - 5 * user.age
     bmr += user.gender === 'male' ? 5 : -161
-    
-    const activityMultipliers: Record<string, number> = { 
-      sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725 
+
+    const activityMultipliers: Record<string, number> = {
+      sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725
     }
-    
+
     let targetCals = bmr * (activityMultipliers[user.activity_level] || 1.2)
-    
+
     // গোল অনুযায়ী ক্যালরি অ্যাডজাস্টমেন্ট
     if (user.goal === 'lose_weight') targetCals -= 500
     if (user.goal === 'gain_muscle') targetCals += 300
@@ -33,29 +33,29 @@ export async function POST(req: Request) {
     // ৩. খাবার সিলেকশন লজিক (Bangladeshi Context: Combo Meals)
     // We define "slots" but each slot can generate multiple items
     const mealStructure = [
-      { 
-        type: 'breakfast', 
+      {
+        type: 'breakfast',
         components: [
           { category: 'carb', min: 100, max: 300 }, // Ruti/Paratha
           { category: 'protein', min: 50, max: 150 } // Egg/Dal
         ]
       },
-      { 
-        type: 'lunch', 
+      {
+        type: 'lunch',
         components: [
           { category: 'carb', min: 200, max: 400 }, // Rice
           { category: 'protein', min: 100, max: 300 }, // Fish/Chicken
           { category: 'vegetable', min: 50, max: 150 } // Bhorta/Shak
         ]
       },
-      { 
-        type: 'snack', 
+      {
+        type: 'snack',
         components: [
           { category: 'snack', min: 50, max: 250 } // Singara/Fuchka or Fruit (fallback handled in query if needed, or update seed)
         ]
       },
-      { 
-        type: 'dinner', 
+      {
+        type: 'dinner',
         components: [
           { category: 'carb', min: 100, max: 300 }, // Ruti/Rice
           { category: 'protein', min: 100, max: 250 } // Chicken/Fish
@@ -72,16 +72,16 @@ export async function POST(req: Request) {
 
     for (const mealTime of mealStructure) {
       for (const component of mealTime.components) {
-        
+
         // Try exact category match
         let foods = await selectQuery(
           'SELECT name, calories FROM food_items WHERE category = ? AND calories BETWEEN ? AND ? ORDER BY RANDOM() LIMIT 1',
           [component.category, component.min, component.max]
         )
-        
+
         // Fallback for snacks if 'snack' category yields nothing, try 'fruit'
         if ((!foods || foods.length === 0) && component.category === 'snack') {
-           foods = await selectQuery(
+          foods = await selectQuery(
             'SELECT name, calories FROM food_items WHERE category = ? AND calories BETWEEN ? AND ? ORDER BY RANDOM() LIMIT 1',
             ['fruit', component.min, component.max]
           )
@@ -91,11 +91,11 @@ export async function POST(req: Request) {
 
         // ৪. ডাটাবেসে সেভ করা
         const insertQuery = `
-          INSERT INTO meals (user_id, date, meal_type, food, calories, completed) 
+          INSERT INTO meals (user_id, date, meal_type, food_name, calories, completed) 
           VALUES (?, ?, ?, ?, ?, 0)
         `
         await executeMutation(insertQuery, [user_id, date, mealTime.type, food.name, food.calories])
-        
+
         generatedPlan.push({ type: mealTime.type, food: food.name, calories: food.calories })
       }
     }

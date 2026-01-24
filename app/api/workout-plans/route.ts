@@ -36,7 +36,7 @@ const getWorkoutTemplates = (goal: string) => {
       { exercise_id: 54, sets: 3, reps: '12-15', weight: 20 }  // Dumbbell Shoulder Press
     ]
   }
-  
+
   return templates[goal as keyof typeof templates] || templates.maintain
 }
 
@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
     const user = users[0]
     const goal = user.goal || 'maintain'
 
-    // Clear existing workout plans for this date
-    await executeMutation('DELETE FROM workout_plans WHERE user_id = ? AND date = ?', [user_id, date])
+    // Clear existing workouts for this date
+    await executeMutation('DELETE FROM workouts WHERE user_id = ? AND date = ?', [user_id, date])
 
     // Get workout template
     const workoutTemplate = getWorkoutTemplates(goal)
@@ -69,14 +69,14 @@ export async function POST(request: NextRequest) {
     let orderIndex = 1
     for (const exercise of workoutTemplate) {
       // Get exercise details
-      const exerciseResult = await selectQuery('SELECT * FROM exercise_library WHERE id = ? LIMIT 1', [exercise.exercise_id])
+      const exerciseResult = await selectQuery('SELECT * FROM exercises WHERE id = ? LIMIT 1', [exercise.exercise_id])
       if (exerciseResult.length > 0) {
         const exerciseDetail = exerciseResult[0]
-        
-        // Insert workout plan
+
+        // Insert workout
         await executeMutation(
-          'INSERT INTO workout_plans (user_id, date, exercise_id, sets, reps, weight, order_index, is_generated) VALUES (?, ?, ?, ?, ?, ?, ?, 1)',
-          [user_id, date, exercise.exercise_id, exercise.sets, exercise.reps, exercise.weight, orderIndex]
+          'INSERT INTO workouts (user_id, date, exercise_name, sets, reps, weight, completed) VALUES (?, ?, ?, ?, ?, ?, 0)',
+          [user_id, date, exerciseDetail.name, exercise.sets, exercise.reps, exercise.weight]
         )
 
         generatedWorkouts.push({
@@ -127,26 +127,23 @@ export async function GET(request: NextRequest) {
 
     let sql = `
       SELECT 
-        wp.*,
-        e.name as exercise_name,
+        w.*,
         e.difficulty,
         e.muscle_group,
-        e.equipment_needed,
-        e.safety_instruction,
         e.gif_url
-      FROM workout_plans wp
-      JOIN exercise_library e ON wp.exercise_id = e.id
-      WHERE wp.user_id = ?
+      FROM workouts w
+      LEFT JOIN exercises e ON w.exercise_name = e.name
+      WHERE w.user_id = ?
     `
-    
+
     const params: any[] = [Number(userId)]
 
     if (date) {
-      sql += ' AND wp.date = ?'
+      sql += ' AND w.date = ?'
       params.push(date)
     }
 
-    sql += ' ORDER BY wp.date, wp.order_index'
+    sql += ' ORDER BY w.date, w.id'
 
     const workoutPlans = await selectQuery(sql, params)
 

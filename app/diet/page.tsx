@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react'
 import { format, addDays, subDays } from 'date-fns' // npm install date-fns
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { getUserSession } from '@/lib/auth'
 
 // --- Types ---
 type Meal = {
   id: number
   meal_type: string
-  food: string
+  food_name: string
   calories: number
   protein: number
   carbs: number
@@ -33,21 +35,41 @@ const calculateTotalMacros = (meals: Meal[]) => {
 }
 
 export default function DietPage() {
+  const router = useRouter()
   const [date, setDate] = useState(new Date())
   const [meals, setMeals] = useState<Meal[]>([])
   const [loading, setLoading] = useState(true)
+  const [userId, setUserId] = useState<number | null>(null)
+  const [targetCalories, setTargetCalories] = useState(2200)
 
-  const USER_ID = 1 // Replace with auth context later
   const formattedDate = format(date, 'yyyy-MM-dd')
 
   // --- Fetch Data ---
   useEffect(() => {
+    // Check authentication first
+    const session = getUserSession()
+    if (!session) {
+      router.push('/login')
+      return
+    }
+
+    setUserId(session.id)
+
     const fetchDiet = async () => {
+      if (!session.id) return
+
       setLoading(true)
       try {
-        const res = await fetch(`/api/meals?user_id=${USER_ID}&date=${formattedDate}`)
+        // Fetch user profile for target calories
+        const userRes = await fetch(`/api/users/${session.id}`)
+        const userJson = (await userRes.json()) as ApiResponse<any>
+        if (userJson.success && userJson.data.target_calories) {
+          setTargetCalories(userJson.data.target_calories)
+        }
+
+        const res = await fetch(`/api/meals?user_id=${session.id}&date=${formattedDate}`)
         const json = (await res.json()) as ApiResponse<Meal[]>
-        
+
         if (json.success && Array.isArray(json.data)) {
           setMeals(json.data)
         } else {
@@ -60,14 +82,13 @@ export default function DietPage() {
       }
     }
     fetchDiet()
-  }, [formattedDate])
+  }, [formattedDate, router])
 
   const totals = calculateTotalMacros(meals)
-  const TARGET_CALORIES = 2200 // Ideally fetched from User Profile
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans pb-20 relative selection:bg-emerald-500/30">
-      
+
       {/* Background Ambience */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-emerald-900/20 via-slate-950 to-slate-950 pointer-events-none"></div>
 
@@ -106,10 +127,10 @@ export default function DietPage() {
             <div className="relative z-10">
               <div className="text-xs text-slate-500 uppercase font-mono mb-1">Total Intake</div>
               <div className="text-4xl font-black text-white tracking-tight">{totals.calories}</div>
-              <div className="text-xs text-slate-400 mt-1">/ {TARGET_CALORIES} kcal</div>
+              <div className="text-xs text-slate-400 mt-1">/ {targetCalories} kcal</div>
             </div>
             {/* Simple progress bar background */}
-            <div className="absolute bottom-0 left-0 h-1 bg-emerald-500" style={{ width: `${Math.min((totals.calories / TARGET_CALORIES) * 100, 100)}%` }}></div>
+            <div className="absolute bottom-0 left-0 h-1 bg-emerald-500" style={{ width: `${Math.min((totals.calories / targetCalories) * 100, 100)}%` }}></div>
           </div>
 
           {/* Macro Breakdown */}
@@ -126,7 +147,7 @@ export default function DietPage() {
           </h2>
 
           {loading ? (
-             <div className="text-center py-20 text-slate-500 animate-pulse">Syncing nutrition data...</div>
+            <div className="text-center py-20 text-slate-500 animate-pulse">Syncing nutrition data...</div>
           ) : meals.length === 0 ? (
             <div className="text-center py-20 border border-dashed border-white/10 rounded-3xl bg-white/[0.02]">
               <p className="text-slate-400 mb-4">No meals logged for this date.</p>
@@ -153,7 +174,7 @@ export default function DietPage() {
                       {mealForType.map(meal => (
                         <div key={meal.id} className="flex justify-between items-center py-2 border-b border-white/5 last:border-0">
                           <div>
-                            <div className="text-slate-300 font-medium">{meal.food}</div>
+                            <div className="text-slate-300 font-medium">{meal.food_name}</div>
                             {/* Tiny Macro Pills */}
                             <div className="flex gap-2 mt-1">
                               <span className="text-[10px] text-emerald-400 bg-emerald-400/10 px-1.5 rounded">P: {meal.protein}g</span>
@@ -179,14 +200,14 @@ export default function DietPage() {
 // --- Sub Component ---
 function MacroCard({ label, value, target, color }: { label: string, value: number, target: number, color: string }) {
   const percent = Math.min((value / target) * 100, 100)
-  
+
   return (
     <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 flex flex-col justify-between">
       <div className="flex justify-between items-start">
         <span className="text-xs text-slate-500 uppercase font-mono">{label}</span>
         <span className="text-xs font-bold text-white">{value}g</span>
       </div>
-      
+
       <div className="mt-4">
         <div className="flex justify-between text-[10px] text-slate-600 mb-1">
           <span>0g</span>

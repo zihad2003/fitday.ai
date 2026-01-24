@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     // Dynamic SQL Construction
     let sql = `
-      SELECT * FROM exercise_library 
+      SELECT * FROM exercises 
       WHERE 1=1
     `
     const params: (string | number)[] = []
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     // Insert Exercise
     const sql = `
-      INSERT INTO exercise_library (name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url)
+      INSERT INTO exercises (name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url)
       VALUES (?, ?, ?, ?, ?, ?)
     `
     const params = [name, difficulty, muscle_group, equipment_needed, safety_instruction, gif_url || '']
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
 
     if (changes > 0) {
       // Fetch the newly created exercise
-      const newExercises = await selectQuery('SELECT * FROM exercise_library WHERE id = last_insert_rowid()')
+      const newExercises = await selectQuery('SELECT * FROM exercises WHERE id = last_insert_rowid()')
 
       return NextResponse.json({
         success: true,

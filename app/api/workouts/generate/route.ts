@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
     let sql = `
         SELECT name, difficulty, muscle_group 
-        FROM exercise_library 
+        FROM exercises 
         WHERE muscle_group IN (${placeholders})
     `
     const params: any[] = [...targetCategories]
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
 
     // Fallback if no specific matches (e.g. limited seed data)
     if (workoutOptions.length === 0) {
-      workoutOptions = await selectQuery('SELECT name FROM exercise_library ORDER BY RANDOM() LIMIT 3')
+      workoutOptions = await selectQuery('SELECT name FROM exercises ORDER BY RANDOM() LIMIT 3')
     }
 
     const savedWorkouts = []
@@ -80,8 +80,8 @@ export async function POST(req: Request) {
       // Check if already exists for this date to avoid dupes? 
       // User might want to regenerate. Let's just insert.
 
-      const query = 'INSERT INTO workouts (user_id, date, type, completed) VALUES (?, ?, ?, 0)'
-      const insertParams = [user_id, date, exercise.name]
+      const query = 'INSERT INTO workouts (user_id, date, exercise_name, sets, reps, weight, completed) VALUES (?, ?, ?, ?, ?, ?, 0)'
+      const insertParams = [user_id, date, exercise.name, 3, '12-15', 0]
 
       await executeMutation(query, insertParams)
       savedWorkouts.push({ exercise: exercise.name, date })

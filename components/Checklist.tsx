@@ -3,19 +3,21 @@
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns' // npm install date-fns
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { getUserSession } from '@/lib/auth'
 
 // --- Types matching your Database Schema ---
 type Meal = {
   id: number
   meal_type: string
-  food: string
+  food_name: string
   completed: number // 0 or 1
   calories: number
 }
 
 type Workout = {
   id: number
-  type: string
+  exercise_name: string
   completed: number // 0 or 1
 }
 
@@ -27,22 +29,33 @@ type ApiResponse<T> = {
 }
 
 export default function ChecklistPage() {
+  const router = useRouter()
   const [meals, setMeals] = useState<Meal[]>([])
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loading, setLoading] = useState(true)
+  const [userId, setUserId] = useState<number | null>(null)
 
-  // In a real app, get this from the auth session
-  const USER_ID = 1 
   const today = format(new Date(), 'yyyy-MM-dd')
 
   // --- 1. DATA SYNC ENGINE ---
   useEffect(() => {
+    // Check authentication first
+    const session = getUserSession()
+    if (!session) {
+      router.push('/login')
+      return
+    }
+
+    setUserId(session.id)
+
     async function fetchData() {
+      if (!session.id) return
+
       try {
         // Parallel fetching for performance
         const [mealsRes, workoutsRes] = await Promise.all([
-          fetch(`/api/meals?user_id=${USER_ID}&date=${today}`),
-          fetch(`/api/workouts?user_id=${USER_ID}&date=${today}`)
+          fetch(`/api/meals?user_id=${session.id}&date=${today}`),
+          fetch(`/api/workouts?user_id=${session.id}&date=${today}`)
         ])
 
         const mealsJson = (await mealsRes.json()) as ApiResponse<Meal[]>
@@ -57,7 +70,7 @@ export default function ChecklistPage() {
       }
     }
     fetchData()
-  }, [today])
+  }, [today, router])
 
   // --- 2. OPTIMISTIC UPDATE HANDLERS ---
   const toggleMeal = async (id: number, currentStatus: number) => {
@@ -101,7 +114,7 @@ export default function ChecklistPage() {
   // --- RENDER ---
   return (
     <div className="min-h-screen bg-slate-950 text-white selection:bg-cyan-500/30 font-sans pb-20">
-      
+
       {/* Background Grid */}
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
 
@@ -112,14 +125,14 @@ export default function ChecklistPage() {
             ← BACK TO HUB
           </Link>
           <div className="flex items-center gap-2">
-             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-             <span className="text-xs font-mono text-emerald-500 uppercase tracking-widest">Live Sync</span>
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span className="text-xs font-mono text-emerald-500 uppercase tracking-widest">Live Sync</span>
           </div>
         </div>
       </div>
 
       <main className="max-w-3xl mx-auto px-6 pt-10 relative z-10">
-        
+
         {/* Progress Card */}
         <div className="bg-gradient-to-br from-slate-900 to-slate-900/50 border border-white/10 rounded-3xl p-8 mb-12 relative overflow-hidden shadow-2xl">
           <div className="absolute top-0 left-0 w-full h-1 bg-slate-800">
@@ -149,7 +162,7 @@ export default function ChecklistPage() {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 gap-8">
-            
+
             {/* Meals Column */}
             <section className="space-y-4">
               <div className="flex items-center justify-between mb-4">
@@ -160,35 +173,33 @@ export default function ChecklistPage() {
                   {meals.filter(m => m.completed).length}/{meals.length}
                 </span>
               </div>
-              
+
               {meals.length === 0 ? (
-                 <div className="p-6 border border-dashed border-white/10 rounded-2xl text-center text-slate-500 text-sm bg-white/[0.02]">
-                   No meal plan generated. <Link href="/dashboard" className="text-cyan-400 underline">Generate now</Link>
-                 </div>
+                <div className="p-6 border border-dashed border-white/10 rounded-2xl text-center text-slate-500 text-sm bg-white/[0.02]">
+                  No meal plan generated. <Link href="/dashboard" className="text-cyan-400 underline">Generate now</Link>
+                </div>
               ) : (
                 meals.map(meal => (
-                  <div 
+                  <div
                     key={meal.id}
                     onClick={() => toggleMeal(meal.id, meal.completed)}
-                    className={`group relative p-4 rounded-2xl border cursor-pointer transition-all duration-300 overflow-hidden ${
-                      meal.completed 
-                        ? 'bg-emerald-500/5 border-emerald-500/20 opacity-50' 
+                    className={`group relative p-4 rounded-2xl border cursor-pointer transition-all duration-300 overflow-hidden ${meal.completed
+                        ? 'bg-emerald-500/5 border-emerald-500/20 opacity-50'
                         : 'bg-slate-900/50 border-white/10 hover:border-emerald-500/40 hover:bg-slate-800'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start gap-4 relative z-10">
-                      <div className={`mt-1 min-w-[20px] h-5 rounded border flex items-center justify-center transition-all ${
-                        meal.completed 
-                          ? 'bg-emerald-500 border-emerald-500 rotate-0' 
+                      <div className={`mt-1 min-w-[20px] h-5 rounded border flex items-center justify-center transition-all ${meal.completed
+                          ? 'bg-emerald-500 border-emerald-500 rotate-0'
                           : 'border-slate-600 group-hover:border-emerald-500 rotate-45 group-hover:rotate-0 rounded-md'
-                      }`}>
+                        }`}>
                         {meal.completed && <svg className="w-3 h-3 text-black font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4"><path d="M5 13l4 4L19 7" /></svg>}
                       </div>
                       <div>
                         <h3 className={`font-semibold text-sm leading-snug transition-colors ${meal.completed ? 'text-emerald-400/80 line-through decoration-emerald-500/30' : 'text-slate-200 group-hover:text-emerald-300'}`}>
                           {meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1)}
                         </h3>
-                        <p className="text-xs text-slate-400 mt-1 leading-relaxed">{meal.food}</p>
+                        <p className="text-xs text-slate-400 mt-1 leading-relaxed">{meal.food_name}</p>
                         <div className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded bg-white/5 text-[10px] font-mono text-slate-400 border border-white/5">
                           🔥 {meal.calories} kcal
                         </div>
@@ -211,31 +222,29 @@ export default function ChecklistPage() {
               </div>
 
               {workouts.length === 0 ? (
-                 <div className="p-6 border border-dashed border-white/10 rounded-2xl text-center text-slate-500 text-sm bg-white/[0.02]">
-                   Rest Day / Active Recovery
-                 </div>
+                <div className="p-6 border border-dashed border-white/10 rounded-2xl text-center text-slate-500 text-sm bg-white/[0.02]">
+                  Rest Day / Active Recovery
+                </div>
               ) : (
                 workouts.map(workout => (
-                  <div 
+                  <div
                     key={workout.id}
                     onClick={() => toggleWorkout(workout.id, workout.completed)}
-                    className={`group relative p-4 rounded-2xl border cursor-pointer transition-all duration-300 overflow-hidden ${
-                      workout.completed 
-                        ? 'bg-cyan-500/5 border-cyan-500/20 opacity-50' 
+                    className={`group relative p-4 rounded-2xl border cursor-pointer transition-all duration-300 overflow-hidden ${workout.completed
+                        ? 'bg-cyan-500/5 border-cyan-500/20 opacity-50'
                         : 'bg-slate-900/50 border-white/10 hover:border-cyan-500/40 hover:bg-slate-800'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start gap-4 relative z-10">
-                      <div className={`mt-1 min-w-[20px] h-5 rounded border flex items-center justify-center transition-all ${
-                        workout.completed 
-                          ? 'bg-cyan-500 border-cyan-500 rotate-0' 
+                      <div className={`mt-1 min-w-[20px] h-5 rounded border flex items-center justify-center transition-all ${workout.completed
+                          ? 'bg-cyan-500 border-cyan-500 rotate-0'
                           : 'border-slate-600 group-hover:border-cyan-500 rotate-45 group-hover:rotate-0 rounded-md'
-                      }`}>
+                        }`}>
                         {workout.completed && <svg className="w-3 h-3 text-black font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4"><path d="M5 13l4 4L19 7" /></svg>}
                       </div>
                       <div>
                         <h3 className={`font-semibold text-sm leading-snug transition-colors ${workout.completed ? 'text-cyan-400/80 line-through decoration-cyan-500/30' : 'text-slate-200 group-hover:text-cyan-300'}`}>
-                          {workout.type}
+                          {workout.exercise_name}
                         </h3>
                         <p className="text-xs text-slate-400 mt-1">Targeted Protocol</p>
                       </div>

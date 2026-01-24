@@ -3,22 +3,14 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
 import { saveUserSession } from '@/lib/auth'
 
 // --- 1. STRICT TYPES ---
 interface RegisterResponse {
   success: boolean
-  data?: any // In a real app, import the User type here
+  data?: any
   error?: string
-}
-
-interface InputGroupProps {
-  label: string
-  name: string
-  type: string
-  placeholder: string
-  value: string | number
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void
 }
 
 export default function Register() {
@@ -34,9 +26,11 @@ export default function Register() {
     password: '',
     age: '',
     gender: 'male',
-    height: '',
+    heightFeet: '',
+    heightInches: '',
     weight: '',
     activity_level: 'sedentary',
+    experience_level: 'beginner',
     goal: 'lose_weight'
   })
 
@@ -51,30 +45,25 @@ export default function Register() {
     setError('')
 
     try {
+      // Calculate CM from Feet/Inches
+      const ft = parseFloat(formData.heightFeet) || 0
+      const inc = parseFloat(formData.heightInches) || 0
+      const height_cm = Math.round((ft * 30.48) + (inc * 2.54))
+
       const payload = {
         ...formData,
         age: Number(formData.age),
-        height: Number(formData.height),
+        height: height_cm,
         weight: Number(formData.weight)
       }
 
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
 
-      const content = await res.text()
-      let data: RegisterResponse
-
-      try {
-        data = JSON.parse(content) as RegisterResponse
-      } catch (e) {
-        console.error('Invalid JSON response:', content)
-        setError('Server Error: Invalid Response Format')
-        setLoading(false)
-        return
-      }
+      const data = await res.json() as RegisterResponse
 
       if (data.success) {
         if (data.data) {
@@ -82,199 +71,227 @@ export default function Register() {
           router.push('/dashboard')
         }
       } else {
-        setError(data.error || 'Registration failed')
+        setError(data.error || 'Initialization failed')
         setLoading(false)
       }
     } catch (err) {
-      console.error('Registration Fetch Error:', err)
-      setError('System Error. Please check connection.')
+      setError('Connection refused by the central server.')
       setLoading(false)
     }
   }
 
-  // --- RENDER ---
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 relative overflow-hidden px-4 font-sans">
+    <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden px-4 font-inter">
 
       {/* Background Ambience */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[120px] -z-10"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-purple-600/10 rounded-full blur-[160px] -z-10" />
+      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/10 rounded-full blur-[120px] -z-10" />
 
-      <div className="w-full max-w-lg">
+      <div className="w-full max-w-lg relative z-10">
 
         {/* Logo Section */}
-        <div className="flex justify-center mb-8">
-          <div className="w-20 h-20 relative group">
-            <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-xl group-hover:bg-cyan-500/40 transition-all"></div>
-            <img
-              src="/logo.png"
-              alt="FitDay Logo"
-              className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_10px_rgba(6,182,212,0.4)]"
-              style={{ mixBlendMode: 'screen' }}
-            />
-          </div>
+        <div className="flex justify-center mb-12">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-[0_0_30px_rgba(147,51,234,0.4)] group-hover:rotate-12 transition-transform duration-500">
+              FD
+            </div>
+            <span className="text-2xl font-black font-outfit italic tracking-tighter uppercase">FitDay<span className="text-purple-500">.AI</span></span>
+          </Link>
         </div>
 
         {/* Step Indicator */}
-        <div className="flex justify-between mb-8 px-4">
-          {[1, 2, 3].map((s) => (
-            <div key={s} className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500 ${step >= s ? 'bg-cyan-500 text-black shadow-[0_0_15px_rgba(6,182,212,0.5)]' : 'bg-white/10 text-slate-500'
-                }`}>
+        <div className="flex justify-between mb-12 px-6">
+          {['AUTH', 'BIO', 'GOAL'].map((s, idx) => (
+            <div key={s} className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-[10px] font-black tracking-widest transition-all duration-700 ${step >= idx + 1 ? 'bg-purple-600 text-white shadow-[0_0_25px_rgba(147,51,234,0.4)]' : 'bg-white/5 text-zinc-700 border border-white/5'}`}>
                 {s}
               </div>
-              <div className={`h-1 w-12 rounded-full transition-all duration-500 ${step > s ? 'bg-cyan-500' : 'bg-white/10'
-                }`}></div>
+              {idx < 2 && <div className={`h-[1px] w-12 rounded-full transition-all duration-700 ${step > idx + 1 ? 'bg-purple-600' : 'bg-white/5'}`} />}
             </div>
           ))}
         </div>
 
-        {/* Main Glass Panel */}
-        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 relative overflow-hidden">
-
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-white tracking-tight uppercase">
-              {step === 1 && "Start Integration"}
-              {step === 2 && "Physical Baseline"}
-              {step === 3 && "Protocol Target"}
+        {/* Main Panel */}
+        <div className="argus-glass rounded-[2.5rem] p-12 relative overflow-hidden shadow-2xl">
+          <div className="mb-12">
+            <div className="text-[10px] text-purple-500 font-black uppercase tracking-[0.4em] mb-3">Get Started</div>
+            <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic font-outfit leading-none">
+              {step === 1 && "Create Account"}
+              {step === 2 && "Personal Details"}
+              {step === 3 && "Your Goals"}
             </h2>
-            <p className="text-slate-500 text-xs mt-1 font-mono tracking-widest uppercase">
-              {step === 1 && "Identity Authentication"}
-              {step === 2 && "Metric Calibration"}
-              {step === 3 && "Engine Goal Alignment"}
-            </p>
           </div>
 
-          {error && (
-            <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs font-mono">
-              [CRITICAL_FAILURE] {error}
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mb-10 p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-[10px] font-black uppercase tracking-widest"
+              >
+                [CRITICAL_ALERT] {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {/* STEP 1: IDENTITY */}
-          {step === 1 && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-300">
-              <InputGroup label="Full Name" name="name" type="text" placeholder="John Doe" value={formData.name} onChange={handleChange} />
-              <InputGroup label="Email Address" name="email" type="email" placeholder="john@example.com" value={formData.email} onChange={handleChange} />
-              <InputGroup label="Password" name="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleChange} />
+          <AnimatePresence mode="wait">
+            {step === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <ArgusInput label="Full Name" name="name" placeholder="John Doe" value={formData.name} onChange={handleChange} />
+                <ArgusInput label="Email Address" name="email" type="email" placeholder="john@example.com" value={formData.email} onChange={handleChange} />
+                <ArgusInput label="Password" name="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleChange} />
 
-              <button onClick={() => setStep(2)} className="w-full mt-4 bg-cyan-900/40 hover:bg-cyan-900/60 border border-cyan-500/30 text-cyan-100 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-lg">
-                Proceed to Calibration <span className="text-lg">→</span>
-              </button>
-            </div>
-          )}
+                <button onClick={() => setStep(2)} className="w-full h-16 bg-white text-black mt-8 rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-purple-600 hover:text-white transition-all btn-beam">
+                  Next Step <span className="ml-2">→</span>
+                </button>
+              </motion.div>
+            )}
 
-          {/* STEP 2: PHYSIOLOGY */}
-          {step === 2 && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-300">
-              <div className="grid grid-cols-2 gap-4">
-                <InputGroup label="Age" name="age" type="number" placeholder="25" value={formData.age} onChange={handleChange} />
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-cyan-500/60 uppercase tracking-[0.2em] ml-1">Gender</label>
-                  <div className="relative">
-                    <select name="gender" value={formData.gender} onChange={handleChange} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-cyan-500 text-white appearance-none transition-all pr-10 cursor-pointer hover:bg-white/10 select-aesthetic">
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-cyan-500">
-                      ▼
+            {step === 2 && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div className="grid grid-cols-2 gap-6">
+                  <ArgusInput label="Age" name="age" type="number" placeholder="25" value={formData.age} onChange={handleChange} />
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] ml-1">Gender</label>
+                    <div className="relative">
+                      <select name="gender" value={formData.gender} onChange={handleChange} className="w-full h-14 px-5 bg-white/5 border border-white/5 rounded-2xl outline-none focus:border-purple-500 text-white appearance-none transition-all cursor-pointer hover:bg-white/10 font-black text-[10px] uppercase tracking-widest italic">
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                      </select>
+                      <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-purple-500">▼</div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <InputGroup label="Height (cm)" name="height" type="number" placeholder="175" value={formData.height} onChange={handleChange} />
-                <InputGroup label="Weight (kg)" name="weight" type="number" placeholder="70" value={formData.weight} onChange={handleChange} />
-              </div>
 
-              <div className="flex gap-3 mt-6">
-                <button onClick={() => setStep(1)} className="flex-1 py-3 text-slate-500 hover:text-white transition font-mono text-xs tracking-widest uppercase">Recall</button>
-                <button onClick={() => setStep(3)} className="flex-[2] bg-cyan-900/40 hover:bg-cyan-900/60 border border-cyan-500/30 text-cyan-100 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-lg">
-                  Continue <span className="text-lg">→</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3: OBJECTIVES */}
-          {step === 3 && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-300">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-cyan-500/60 uppercase tracking-[0.2em] ml-1">Evolution Goal</label>
-                <div className="relative">
-                  <select name="goal" value={formData.goal} onChange={handleChange} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-cyan-500 text-white appearance-none transition-all pr-10 cursor-pointer hover:bg-white/10 select-aesthetic">
-                    <option value="lose_weight">Lose Weight (Fat Loss)</option>
-                    <option value="maintain">Maintain (Recomp)</option>
-                    <option value="gain_muscle">Build Muscle (Bulk)</option>
-                  </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-cyan-500">
-                    ▼
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] ml-1">Height (FT / IN)</label>
+                    <div className="flex gap-3">
+                      <input name="heightFeet" type="number" placeholder="Ft" value={formData.heightFeet} onChange={handleChange} className="flex-1 h-14 px-5 bg-white/5 border border-white/5 rounded-2xl outline-none focus:border-purple-500 text-white placeholder-zinc-800 transition-all font-outfit" />
+                      <input name="heightInches" type="number" placeholder="In" value={formData.heightInches} onChange={handleChange} className="flex-1 h-14 px-5 bg-white/5 border border-white/5 rounded-2xl outline-none focus:border-purple-500 text-white placeholder-zinc-800 transition-all font-outfit" />
+                    </div>
                   </div>
+                  <ArgusInput label="Weight (KG)" name="weight" type="number" placeholder="70" value={formData.weight} onChange={handleChange} />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-cyan-500/60 uppercase tracking-[0.2em] ml-1">Daily Burn Rate</label>
-                <div className="relative">
-                  <select name="activity_level" value={formData.activity_level} onChange={handleChange} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-cyan-500 text-white appearance-none transition-all pr-10 cursor-pointer hover:bg-white/10 select-aesthetic">
-                    <option value="sedentary">Sedentary (Office Job)</option>
-                    <option value="light">Lightly Active (1-2 days/week)</option>
-                    <option value="moderate">Moderately Active (3-5 days/week)</option>
-                    <option value="active">Very Active (6+ days/week)</option>
-                  </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-cyan-500">
-                    ▼
-                  </div>
+                <div className="flex gap-4 mt-8">
+                  <button onClick={() => setStep(1)} className="flex-1 h-16 text-zinc-600 hover:text-white transition font-black text-[10px] tracking-widest uppercase italic">Back</button>
+                  <button onClick={() => setStep(3)} className="flex-[2] bg-white text-black h-16 rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-purple-600 hover:text-white transition-all btn-beam">
+                    Next Step <span className="ml-2">→</span>
+                  </button>
                 </div>
-              </div>
+              </motion.div>
+            )}
 
-              <div className="flex gap-3 mt-6">
-                <button onClick={() => setStep(2)} className="flex-1 py-3 text-slate-500 hover:text-white transition font-mono text-xs tracking-widest uppercase">Recall</button>
-                <button
-                  onClick={handleRegister}
-                  disabled={loading}
-                  className="flex-[2] bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded-xl font-bold shadow-[0_0_20px_rgba(8,145,178,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {loading ? <span className="animate-pulse">SYNCHRONIZING...</span> : 'INITIALIZE PROTOCOL'}
-                </button>
-              </div>
-            </div>
-          )}
+            {step === 3 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <ArgusSelect
+                  label="Primary Goal"
+                  name="goal"
+                  value={formData.goal}
+                  onChange={handleChange}
+                  options={[
+                    { value: 'lose_weight', label: 'Lose Weight' },
+                    { value: 'maintain', label: 'Maintain Weight' },
+                    { value: 'gain_muscle', label: 'Build Muscle' }
+                  ]}
+                />
 
+                <ArgusSelect
+                  label="Fitness Level"
+                  name="experience_level"
+                  value={formData.experience_level}
+                  onChange={handleChange}
+                  options={[
+                    { value: 'beginner', label: 'Beginner' },
+                    { value: 'intermediate', label: 'Intermediate' },
+                    { value: 'pro', label: 'Advanced' }
+                  ]}
+                />
+
+                <ArgusSelect
+                  label="Activity Level"
+                  name="activity_level"
+                  value={formData.activity_level}
+                  onChange={handleChange}
+                  options={[
+                    { value: 'sedentary', label: 'Sedentary (Little to no exercise)' },
+                    { value: 'light', label: 'Lightly Active (1-3 days/week)' },
+                    { value: 'moderate', label: 'Moderately Active (3-5 days/week)' },
+                    { value: 'active', label: 'Very Active (6-7 days/week)' }
+                  ]}
+                />
+
+                <div className="flex gap-4 mt-8">
+                  <button onClick={() => setStep(2)} className="flex-1 h-16 text-zinc-600 hover:text-white transition font-black text-[10px] tracking-widest uppercase italic">Back</button>
+                  <button
+                    onClick={handleRegister}
+                    disabled={loading}
+                    className="flex-[2] bg-purple-600 hover:bg-purple-500 text-white h-16 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-[0_20px_40px_-5px_rgba(147,51,234,0.3)] transition-all btn-beam disabled:opacity-50"
+                  >
+                    {loading ? 'CREATING ACCOUNT...' : 'COMPLETE REGISTRATION'}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        <div className="text-center mt-8">
-          <Link href="/login" className="text-xs text-slate-500 hover:text-cyan-400 transition font-mono uppercase tracking-widest">
-            Existing Identity? Authorize here
+        <div className="text-center mt-12">
+          <Link href="/login" className="text-[10px] text-zinc-600 hover:text-purple-500 transition font-black uppercase tracking-[0.4em] italic mb-10 block">
+            Already have an account?
           </Link>
         </div>
-
       </div>
-
-      <style jsx>{`
-        .select-aesthetic option {
-          background-color: #020617; /* bg-slate-950 */
-          color: white;
-          padding: 10px;
-        }
-      `}</style>
     </div>
   )
 }
 
-// --- FIX: Typed Helper Component ---
-function InputGroup({ label, name, type, placeholder, value, onChange }: InputGroupProps) {
+function ArgusInput({ label, name, type = "text", placeholder, value, onChange }: any) {
   return (
-    <div className="space-y-2">
-      <label className="text-[10px] font-bold text-cyan-500/60 uppercase tracking-[0.2em] ml-1">{label}</label>
+    <div className="space-y-3">
+      <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] ml-1">{label}</label>
       <input
         name={name}
         type={type}
         required
         value={value}
         onChange={onChange}
-        className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-cyan-500 text-white placeholder-slate-700 transition-all focus:bg-white/10"
+        className="w-full h-14 px-5 bg-white/5 border border-white/5 rounded-2xl outline-none focus:border-purple-500 text-white placeholder-zinc-800 transition-all focus:bg-white/10 font-outfit"
         placeholder={placeholder}
       />
+    </div>
+  )
+}
+
+function ArgusSelect({ label, name, value, onChange, options }: any) {
+  return (
+    <div className="space-y-3">
+      <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] ml-1">{label}</label>
+      <div className="relative">
+        <select name={name} value={value} onChange={onChange} className="w-full h-14 px-5 bg-white/5 border border-white/5 rounded-2xl outline-none focus:border-purple-500 text-white appearance-none transition-all cursor-pointer hover:bg-white/10 font-black text-[10px] uppercase tracking-widest italic">
+          {options.map((o: any) => <option key={o.value} value={o.value} className="bg-zinc-950 text-white">{o.label}</option>)}
+        </select>
+        <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-purple-500">▼</div>
+      </div>
     </div>
   )
 }

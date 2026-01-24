@@ -8,13 +8,13 @@ export const runtime = 'edge';
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
-        const { email, password, name, gender, age, height, weight, goal, activity_level = 'sedentary' } = body as any
+        const { email, password, name, gender, age, height, weight, goal, activity_level = 'sedentary', experience_level = 'beginner' } = body as any
 
         if (!email || !password || !name || !age || !height || !weight || !goal) {
             return NextResponse.json({ success: false, error: 'All fields are required' }, { status: 400 })
         }
 
-// 1. Check Duplicates
+        // 1. Check Duplicates
         let existingUsers;
         try {
             existingUsers = await selectQuery('SELECT id FROM users WHERE email = ?', [email])
@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
 
         // 4. Save to DB
         const sql = `
-      INSERT INTO users (email, password, name, gender, age, height_cm, weight_kg, activity_level, goal, target_calories)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (email, password, name, gender, age, height_cm, weight_kg, activity_level, experience_level, goal, target_calories)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
         const params = [
             email,
@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
             height,
             weight,
             activity_level,
+            experience_level,
             goal,
             targetCalories
         ]
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'Failed to create user record' }, { status: 500 })
         }
 
-if (changes > 0) {
+        if (changes > 0) {
             // Fetch user to return ID (important for session)
             let userResult;
             try {

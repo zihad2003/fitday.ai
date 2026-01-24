@@ -27,16 +27,48 @@ export default function Progress() {
 
   const fetchProgress = async (uid: number) => {
     try {
-      // Fetch real progress data
-      const res = await fetch(`/api/progress?user_id=${uid}&period=week`)
-      const json = await res.json() as any
+      const today = new Date().toISOString().split('T')[0]
+      const weekAgo = new Date()
+      weekAgo.setDate(weekAgo.getDate() - 7)
+      const weekAgoStr = weekAgo.toISOString().split('T')[0]
       
-      if (json && json.success && Array.isArray(json.data)) {
-        // Transform progress data to ProgressData format
-        const transformedData = json.data.map((item: any) => ({
+      // Fetch real progress data, workouts, and meals in parallel
+      const [progressRes, workoutsRes, mealsRes] = await Promise.all([
+        fetch(`/api/progress?user_id=${uid}&period=week`),
+        fetch(`/api/workouts?user_id=${uid}`),
+        fetch(`/api/meals?user_id=${uid}`)
+      ])
+      
+      const progressJson = await progressRes.json() as any
+      const workoutsJson = await workoutsRes.json() as any
+      const mealsJson = await mealsRes.json() as any
+      
+      // Process workouts by date
+      const workoutsByDate: Record<string, number> = {}
+      if (workoutsJson.success && Array.isArray(workoutsJson.data)) {
+        workoutsJson.data.forEach((w: any) => {
+          if (w.date && w.completed === 1) {
+            workoutsByDate[w.date] = (workoutsByDate[w.date] || 0) + 1
+          }
+        })
+      }
+      
+      // Process meals by date
+      const mealsByDate: Record<string, number> = {}
+      if (mealsJson.success && Array.isArray(mealsJson.data)) {
+        mealsJson.data.forEach((m: any) => {
+          if (m.date && m.completed === 1) {
+            mealsByDate[m.date] = (mealsByDate[m.date] || 0) + 1
+          }
+        })
+      }
+      
+      if (progressJson && progressJson.success && Array.isArray(progressJson.data)) {
+        // Transform progress data to ProgressData format with real workout and meal counts
+        const transformedData = progressJson.data.map((item: any) => ({
           date: item.date,
-          workouts: 0, // TODO: Get from workouts API
-          meals: 0, // TODO: Get from meals API
+          workouts: workoutsByDate[item.date] || 0,
+          meals: mealsByDate[item.date] || 0,
           weight: item.weight_kg || 0
         }))
         

@@ -7,3 +7,10 @@ binding = "FITNESS_DB"
 database_name = "fitday-ai-db"
 database_id = "42dfee08-f14f-4e08-938d-6fdebab4700e"
 
+# For local development
+[env.development]
+[[env.development.d1_databases]]
+binding = "FITNESS_DB"
+database_name = "fitday-ai-db"
+database_id = "42dfee08-f14f-4e08-938d-6fdebab4700e"
+preview_database_id = "42dfee08-f14f-4e08-938d-6fdebab4700e"

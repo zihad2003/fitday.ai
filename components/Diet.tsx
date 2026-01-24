@@ -19,7 +19,7 @@ export default function Diet() {
   const [progress, setProgress] = useState(0)
   const [confirmMeal, setConfirmMeal] = useState<Meal | null>(null)
   const [userId, setUserId] = useState<number | null>(null)
-  
+
   const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
@@ -35,68 +35,68 @@ export default function Diet() {
   // হেল্পার ফাংশন: SQLite এর 0/1 কে boolean এ রূপান্তর করার জন্য
   const isCompleted = (val: number | boolean) => val === 1 || val === true
 
-const fetchMeals = async (uid: number) => {
-  setLoading(true);
-  try {
-    const res = await fetch(`/api/meal-plans?user_id=${uid}&date=${today}`);
-    const json = (await res.json()) as any; 
-    
-    if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
-      // Transform meal plan data to meal format
-      const transformedMeals = json.data.map((item: any) => ({
-        id: item.id,
-        meal_type: item.meal_type,
-        food: item.food_name,
-        calories: Math.round(item.total_calories),
-        completed: false
-      }));
-      
-      setMeals(transformedMeals);
-      calculateProgress(transformedMeals);
-    } else {
-      await generatePlan(uid);
-    }
-  } catch (error) {
-    console.error("Fetch Error:", error);
-  } finally {
-    setLoading(false);
-  }
-}
-const generatePlan = async (uid: number) => {
-  setLoading(true);
-  try {
-    const res = await fetch('/api/meal-plans/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: uid, date: today })
-    });
-    
-    const json = (await res.json()) as any; 
-    
-    if (json && json.success) {
-      // Handle both data and plan response formats
-      const mealsData = json.data || json.plan || [];
-      
-      if (Array.isArray(mealsData)) {
-        // Transform meal plan data to meal format
-        const newMeals = mealsData.map((item: any, index: number) => ({
-          id: index + 1, // Temporary ID for display
-          meal_type: item.meal_type || 'breakfast',
-          food: item.food || item.name,
-          calories: item.calories || Math.round(item.total_calories),
-          completed: false
+  const fetchMeals = async (uid: number) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/meals?user_id=${uid}&date=${today}`);
+      const json = (await res.json()) as any;
+
+      if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+        // Transform meal data to UI format
+        const transformedMeals = json.data.map((item: any) => ({
+          id: item.id,
+          meal_type: item.meal_type,
+          food: item.food_name,
+          calories: Math.round(item.calories),
+          completed: item.completed
         }));
-        
-        setMeals(newMeals);
-        calculateProgress(newMeals);
+
+        setMeals(transformedMeals);
+        calculateProgress(transformedMeals);
+      } else {
+        await generatePlan(uid);
       }
+    } catch (error) {
+      console.error("Fetch Error:", error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Generation Error:", error);
-  } finally {
-    setLoading(false);
   }
-}
+  const generatePlan = async (uid: number) => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/meals/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: uid, date: today })
+      });
+
+      const json = (await res.json()) as any;
+
+      if (json && json.success) {
+        // Handle both data and plan response formats
+        const mealsData = json.data || json.plan || [];
+
+        if (Array.isArray(mealsData)) {
+          // Transform meal plan data to meal format
+          const newMeals = mealsData.map((item: any, index: number) => ({
+            id: item.id || (index + 1), // Use real ID if available
+            meal_type: item.meal_type || 'breakfast',
+            food: item.food_name || item.food,
+            calories: item.calories || 0,
+            completed: item.completed || false
+          }));
+
+          setMeals(newMeals);
+          calculateProgress(newMeals);
+        }
+      }
+    } catch (error) {
+      console.error("Generation Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleCheckClick = (meal: Meal) => {
     if (isCompleted(meal.completed)) {
@@ -113,23 +113,32 @@ const generatePlan = async (uid: number) => {
     }
   }
 
-const toggleMeal = async (id: number, currentStatus: number | boolean) => {
-  const nextStatus = isCompleted(currentStatus) ? 0 : 1;
-  const updatedMeals = meals.map(m => m.id === id ? { ...m, completed: nextStatus } : m);
-  
-  setMeals(updatedMeals);
-  calculateProgress(updatedMeals);
+  const toggleMeal = async (id: number, currentStatus: number | boolean) => {
+    const nextStatus = isCompleted(currentStatus) ? 0 : 1;
+    const updatedMeals = meals.map(m => m.id === id ? { ...m, completed: nextStatus } : m);
 
-  // For now, just update local state
-  // In a real implementation, you would need to map this to meal_plans or meals table
-  try {
-    console.log(`Meal ${id} marked as ${nextStatus ? 'completed' : 'incomplete'}`);
-    // TODO: Implement proper meal logging API
-  } catch (error) {
-    console.error("Sync Error:", error);
-    if (userId) fetchMeals(userId);
+    setMeals(updatedMeals);
+    calculateProgress(updatedMeals);
+
+    // Update meal status via API
+    try {
+      const res = await fetch(`/api/meals/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: nextStatus === 1 })
+      })
+      const data = (await res.json()) as { success: boolean };
+      if (!data.success) {
+        throw new Error("Update failed")
+      }
+    } catch (error) {
+      console.error("Sync Error:", error);
+      // Revert on failure
+      setMeals(meals.map(m => m.id === id ? { ...m, completed: currentStatus } : m));
+      calculateProgress(meals);
+      if (userId) fetchMeals(userId);
+    }
   }
-}
 
   const calculateProgress = (items: Meal[]) => {
     if (items.length === 0) return setProgress(0)
@@ -152,22 +161,22 @@ const toggleMeal = async (id: number, currentStatus: number | boolean) => {
             SYNC_DATE: {today}
           </div>
         </div>
-        
+
         <div className="mt-6 h-2 bg-slate-900 rounded-full overflow-hidden relative z-10 border border-white/5">
-          <div 
-            className="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 shadow-[0_0_15px_#06b6d4] transition-all duration-1000" 
+          <div
+            className="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 shadow-[0_0_15px_#06b6d4] transition-all duration-1000"
             style={{ width: `${progress}%` }}
           ></div>
         </div>
         <p className="text-right text-[10px] text-slate-500 mt-2 font-mono uppercase tracking-widest">
-            METABOLIC SYNC: <span className="text-cyan-400">{progress}%</span>
+          METABOLIC SYNC: <span className="text-cyan-400">{progress}%</span>
         </p>
       </div>
 
       {loading && (
         <div className="flex flex-col items-center justify-center py-10 gap-3">
-            <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-xs text-cyan-500 animate-pulse font-mono uppercase tracking-widest">Decoding Bio-Signals...</p>
+          <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs text-cyan-500 animate-pulse font-mono uppercase tracking-widest">Decoding Bio-Signals...</p>
         </div>
       )}
 
@@ -187,20 +196,18 @@ const toggleMeal = async (id: number, currentStatus: number | boolean) => {
                 {items.map((meal) => {
                   const completed = isCompleted(meal.completed)
                   return (
-                    <div 
-                      key={meal.id} 
+                    <div
+                      key={meal.id}
                       onClick={() => handleCheckClick(meal)}
-                      className={`p-5 rounded-2xl border transition-all duration-300 flex items-center gap-4 group ${
-                        completed 
-                          ? 'bg-cyan-950/20 border-cyan-500/20 opacity-60' 
-                          : 'bg-slate-900/40 border-white/5 hover:border-cyan-500/40 hover:bg-slate-900/80'
-                      }`}
+                      className={`p-5 rounded-2xl border transition-all duration-300 flex items-center gap-4 group ${completed
+                        ? 'bg-cyan-950/20 border-cyan-500/20 opacity-60'
+                        : 'bg-slate-900/40 border-white/5 hover:border-cyan-500/40 hover:bg-slate-900/80'
+                        }`}
                     >
-                      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
-                        completed 
-                          ? 'bg-cyan-500 border-cyan-500 shadow-[0_0_10px_#06b6d4]' 
-                          : 'border-slate-700 group-hover:border-cyan-500/50'
-                      }`}>
+                      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${completed
+                        ? 'bg-cyan-500 border-cyan-500 shadow-[0_0_10px_#06b6d4]'
+                        : 'border-slate-700 group-hover:border-cyan-500/50'
+                        }`}>
                         {completed && <span className="text-black font-bold text-xs">✓</span>}
                       </div>
                       <div className="flex-1">
@@ -227,14 +234,14 @@ const toggleMeal = async (id: number, currentStatus: number | boolean) => {
               Mark <span className="text-cyan-400 font-bold">"{confirmMeal.food}"</span> as consumed?
             </p>
             <div className="flex gap-3">
-              <button 
-                onClick={() => setConfirmMeal(null)} 
+              <button
+                onClick={() => setConfirmMeal(null)}
                 className="flex-1 py-4 bg-slate-800 rounded-xl font-bold text-slate-400 hover:bg-slate-700 transition-colors"
               >
                 BACK
               </button>
-              <button 
-                onClick={confirmToggle} 
+              <button
+                onClick={confirmToggle}
                 className="flex-1 py-4 bg-cyan-600 rounded-xl font-bold text-white hover:bg-cyan-500 shadow-[0_0_20px_rgba(8,145,178,0.4)] transition-all"
               >
                 CONFIRM

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { format, subDays, eachDayOfInterval } from 'date-fns'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { getUserSession } from '@/lib/auth'
 
 // --- 1. STRICT TYPE DEFINITIONS ---
 
@@ -36,15 +38,26 @@ type ApiResponse<T> = {
 }
 
 export default function ProgressPage() {
+  const router = useRouter()
   const [stats, setStats] = useState<DailyStat[]>([])
   const [loading, setLoading] = useState(true)
   const [consistencyScore, setConsistencyScore] = useState(0)
-
-  const USER_ID = 1 // Replace with real auth later
+  const [userId, setUserId] = useState<number | null>(null)
 
   // --- 2. DATA FETCHING ENGINE ---
   useEffect(() => {
+    // Check authentication first
+    const session = getUserSession()
+    if (!session) {
+      router.push('/login')
+      return
+    }
+    
+    setUserId(session.id)
+    
     const fetchHistory = async () => {
+      if (!session.id) return
+      
       try {
         // Generate last 7 days array
         const today = new Date()
@@ -54,7 +67,7 @@ export default function ProgressPage() {
         })
 
         // A. Fetch User Target (Context)
-        const userRes = await fetch(`/api/users/${USER_ID}`)
+        const userRes = await fetch(`/api/users/${session.id}`)
         // FIX: Cast response to typed interface
         const userData = (await userRes.json()) as ApiResponse<UserData>
         const targetCals = userData.success ? userData.data.target_calories : 2000
@@ -64,8 +77,8 @@ export default function ProgressPage() {
           const dateStr = format(date, 'yyyy-MM-dd')
           
           const [mealRes, workoutRes] = await Promise.all([
-            fetch(`/api/meals?user_id=${USER_ID}&date=${dateStr}`),
-            fetch(`/api/workouts?user_id=${USER_ID}&date=${dateStr}`)
+            fetch(`/api/meals?user_id=${session.id}&date=${dateStr}`),
+            fetch(`/api/workouts?user_id=${session.id}&date=${dateStr}`)
           ])
 
           // FIX: Cast responses to typed interfaces
@@ -109,7 +122,7 @@ export default function ProgressPage() {
     }
 
     fetchHistory()
-  }, [])
+  }, [router])
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans pb-20 selection:bg-purple-500/30">

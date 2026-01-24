@@ -9,7 +9,7 @@ const createMealSchema = z.object({
   user_id: z.number().or(z.string().transform(Number)),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
   meal_type: z.enum(['breakfast', 'lunch', 'snack', 'dinner']),
-  food: z.string().min(2, "Food name is too short"),
+  food_name: z.string().min(2, "Food name is too short"),
   completed: z.boolean().optional().default(false),
   // Optional macro fields for manual entry
   calories: z.number().optional().default(0),
@@ -24,7 +24,7 @@ const createMealSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    
+
     // Extract Filters
     const userId = searchParams.get('user_id')
     const date = searchParams.get('date')
@@ -59,11 +59,11 @@ export async function GET(request: NextRequest) {
     sql += ' ORDER BY date DESC, CASE meal_type WHEN "breakfast" THEN 1 WHEN "lunch" THEN 2 WHEN "snack" THEN 3 WHEN "dinner" THEN 4 ELSE 5 END'
 
     const meals = await selectQuery(sql, params)
-    
-    return NextResponse.json({ 
-      success: true, 
-      count: meals.length, 
-      data: meals 
+
+    return NextResponse.json({
+      success: true,
+      count: meals.length,
+      data: meals
     })
 
   } catch (error) {
@@ -81,11 +81,11 @@ export async function POST(request: NextRequest) {
 
     // 1. Validate Input
     const validation = createMealSchema.safeParse(body)
-    
+
     if (!validation.success) {
-      return NextResponse.json({ 
-        success: false, 
-        error: validation.error.issues[0].message 
+      return NextResponse.json({
+        success: false,
+        error: validation.error.issues[0].message
       }, { status: 400 })
     }
 
@@ -99,19 +99,19 @@ export async function POST(request: NextRequest) {
 
     // 3. Insert Meal
     const sql = `
-      INSERT INTO meals (user_id, date, meal_type, food, calories, protein, carbs, fat, completed)
+      INSERT INTO meals (user_id, date, meal_type, food_name, calories, protein, carbs, fat, completed)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
-    
+
     const params = [
-      data.user_id, 
-      data.date, 
-      data.meal_type, 
-      data.food,
+      data.user_id,
+      data.date,
+      data.meal_type,
+      data.food_name,
       data.calories,
       data.protein,
       data.carbs,
-      data.fat, 
+      data.fat,
       data.completed ? 1 : 0
     ]
 
@@ -120,11 +120,11 @@ export async function POST(request: NextRequest) {
     if (changes > 0) {
       // Fetch the newly created item to return full object
       const newMeals = await selectQuery('SELECT * FROM meals WHERE id = last_insert_rowid()')
-      
-      return NextResponse.json({ 
-        success: true, 
+
+      return NextResponse.json({
+        success: true,
         message: 'Meal logged successfully',
-        data: newMeals[0] 
+        data: newMeals[0]
       }, { status: 201 })
     } else {
       return NextResponse.json({ success: false, error: 'Database insert failed' }, { status: 500 })

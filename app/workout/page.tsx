@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { getUserSession } from '@/lib/auth'
 
 // --- 1. TYPES ---
 type Exercise = {
@@ -97,13 +98,20 @@ export default function WorkoutPage() {
 
 // --- 3. FETCH DATA ---
   useEffect(() => {
+    // Check authentication first
+    const session = getUserSession()
+    if (!session) {
+      router.push('/login')
+      return
+    }
+    
     // Define async function inside useEffect
     const fetchUserAndWorkouts = async () => {
-      const USER_ID = 1 // Defined inside scope
+      if (!session.id) return
       
       try {
         // Fetch user profile
-        const userRes = await fetch(`/api/users?id=${USER_ID}`)
+        const userRes = await fetch(`/api/users/${session.id}`)
         const userJson = (await userRes.json()) as ApiResponse<UserProfile>
         
         if (userJson.success) {
@@ -112,7 +120,7 @@ export default function WorkoutPage() {
 
         // Fetch workout plans for today
         const today = new Date().toISOString().split('T')[0]
-        const workoutRes = await fetch(`/api/workout-plans?user_id=${USER_ID}&date=${today}`)
+        const workoutRes = await fetch(`/api/workout-plans?user_id=${session.id}&date=${today}`)
         const workoutJson = (await workoutRes.json()) as any
         
         if (workoutJson.success && workoutJson.data.length > 0) {
@@ -145,7 +153,7 @@ export default function WorkoutPage() {
     }
 
     fetchUserAndWorkouts()
-  }, [])
+  }, [router])
 
   // Logic to select plan based on user profile
   const currentPlan = userProfile 

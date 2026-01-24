@@ -1,248 +1,379 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState, useRef, MouseEvent, ReactNode } from 'react'
+import { useEffect, useState, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-// If you have the real auth lib, use it. Otherwise, this mock prevents crashes:
-import { getUserSession } from '@/lib/auth' 
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
+import { getUserSession } from '@/lib/auth'
+import BMIAnalyzer from '@/components/BMIAnalyzer'
 
 // ==========================================
-// 1. UI COMPONENT: Spotlight Card
+// 1. UI COMPONENT: Premium Glass Card (Argus Inspired)
 // ==========================================
-const SpotlightCard = ({ children, className = "" }: { children: ReactNode, className?: string }) => {
-  const divRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [opacity, setOpacity] = useState(0);
-
-  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    if (!divRef.current) return;
-    const rect = divRef.current.getBoundingClientRect();
-    setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  };
-
+const GlassCard = ({ children, className = "", delay = 0 }: { children: ReactNode, className?: string, delay?: number }) => {
   return (
-    <div
-      ref={divRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setOpacity(1)}
-      onMouseLeave={() => setOpacity(0)}
-      className={`relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 ${className}`}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.8, delay }}
+      className={`argus-glass rounded-[2rem] ${className}`}
     >
-      <div
-        className="pointer-events-none absolute -inset-px opacity-0 transition duration-300"
-        style={{
-          opacity,
-          background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, rgba(6,182,212,0.15), transparent 40%)`,
-        }}
-      />
-      <div className="relative h-full">{children}</div>
-    </div>
+      <div className="relative z-10">{children}</div>
+    </motion.div>
   );
 };
 
 // ==========================================
-// 2. FEATURE: Bio-Metric Quick Scanner
-// ==========================================
-const QuickScanModal = ({ onClose }: { onClose: () => void }) => {
-  const [unit, setUnit] = useState("cm")
-  const [cm, setCm] = useState("")
-  const [feet, setFeet] = useState("")
-  const [inches, setInches] = useState("")
-  const [weight, setWeight] = useState("")
-  const [result, setResult] = useState<null | { bmi: string; status: string }>(null)
-  const [isScanning, setIsScanning] = useState(false)
-
-  const handleCalculate = () => {
-    setIsScanning(true)
-    // Simulate complex calculation delay
-    setTimeout(() => {
-      let heightMeters = 0
-      if (unit === "cm") {
-        heightMeters = parseFloat(cm) / 100
-      } else {
-        heightMeters = ((parseFloat(feet) || 0) * 0.3048) + ((parseFloat(inches) || 0) * 0.0254)
-      }
-      
-      const weightKg = parseFloat(weight)
-      if (heightMeters > 0 && weightKg > 0) {
-        const bmiValue = weightKg / (heightMeters * heightMeters)
-        let status = "Optimal"
-        if (bmiValue < 18.5) status = "Underweight"
-        else if (bmiValue >= 25 && bmiValue < 30) status = "Overweight"
-        else if (bmiValue >= 30) status = "Obese"
-        
-        setResult({ bmi: bmiValue.toFixed(1), status })
-      }
-      setIsScanning(false)
-    }, 1000)
-  }
-
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl transition-opacity" onClick={onClose}></div>
-      
-      <div className="relative w-full max-w-md bg-black/80 border border-white/10 rounded-3xl overflow-hidden animate-in fade-in zoom-in duration-300 ring-1 ring-white/5">
-        {isScanning && <div className="absolute top-0 left-0 w-full h-1 bg-cyan-500 shadow-[0_0_20px_#06b6d4] animate-[scan_1.5s_ease-in-out_infinite]"></div>}
-        
-        <div className="p-8 relative z-10">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> BIO-SCANNER
-            </h3>
-            <button onClick={onClose} className="text-slate-500 hover:text-white">✕</button>
-          </div>
-
-          {!result ? (
-            <div className="space-y-4">
-               <div className="flex bg-slate-900/50 p-1 rounded-lg border border-white/5">
-                 {['cm', 'ft'].map((u) => (
-                   <button key={u} onClick={() => setUnit(u)} className={`flex-1 py-2 text-xs font-mono uppercase rounded ${unit === u ? 'bg-white/10 text-cyan-400' : 'text-slate-500'}`}>
-                     {u === 'cm' ? 'Metric' : 'Imperial'}
-                   </button>
-                 ))}
-               </div>
-               
-               <div className="grid grid-cols-2 gap-4">
-                 {unit === 'cm' ? (
-                   <input type="number" placeholder="Height (cm)" value={cm} onChange={e => setCm(e.target.value)} className="col-span-2 bg-slate-900/50 border border-white/10 rounded-lg p-3 text-white focus:border-cyan-500 outline-none transition-colors" />
-                 ) : (
-                   <>
-                     <input type="number" placeholder="Feet" value={feet} onChange={e => setFeet(e.target.value)} className="bg-slate-900/50 border border-white/10 rounded-lg p-3 text-white focus:border-cyan-500 outline-none" />
-                     <input type="number" placeholder="Inches" value={inches} onChange={e => setInches(e.target.value)} className="bg-slate-900/50 border border-white/10 rounded-lg p-3 text-white focus:border-cyan-500 outline-none" />
-                   </>
-                 )}
-                 <input type="number" placeholder="Weight (kg)" value={weight} onChange={e => setWeight(e.target.value)} className="col-span-2 bg-slate-900/50 border border-white/10 rounded-lg p-3 text-white focus:border-cyan-500 outline-none" />
-               </div>
-
-               <button onClick={handleCalculate} disabled={isScanning} className="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-4 rounded-lg font-bold transition-all disabled:opacity-50">
-                 {isScanning ? 'SCANNING...' : 'CALCULATE'}
-               </button>
-            </div>
-          ) : (
-            <div className="text-center animate-in slide-in-from-bottom-2">
-              <div className="text-xs text-slate-400 font-mono mb-2">RESULT</div>
-              <div className="text-5xl font-black text-white mb-2">{result.bmi}</div>
-              <div className={`inline-block px-3 py-1 rounded text-[10px] font-bold font-mono uppercase border ${result.status === 'Optimal' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-orange-500/10 text-orange-400 border-orange-500/20'}`}>
-                {result.status}
-              </div>
-              <button onClick={() => setResult(null)} className="block w-full mt-6 text-xs text-slate-500 hover:text-white underline">Reset</button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ==========================================
-// 3. PAGE: Landing
+// 3. MAIN PAGE
 // ==========================================
 export default function Home() {
-  const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [showScanner, setShowScanner] = useState(false)
+  const { scrollYProgress } = useScroll()
+  const backgroundY = useTransform(scrollYProgress, [0, 1], ['0%', '20%'])
 
   useEffect(() => {
-    // Check local session
     const session = getUserSession()
     if (session) setUser(session)
   }, [])
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden selection:bg-cyan-500/30 font-sans relative">
-      
-      {/* Dynamic Background */}
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
-      <div className="fixed inset-0 bg-slate-950/40 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_20%,#020617_100%)]"></div>
+    <div className="min-h-screen bg-[#000000] text-white selection:bg-purple-500/30 font-inter overflow-x-hidden">
 
-      {showScanner && <QuickScanModal onClose={() => setShowScanner(false)} />}
+      {/* Background Glows (Argus Style) */}
+      <motion.div style={{ y: backgroundY }} className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="glow-purple top-[-20%] left-[-10%] w-[60%] h-[60%] blur-[160px] opacity-20" />
+        <div className="glow-purple bottom-[-20%] right-[-10%] w-[60%] h-[60%] blur-[160px] opacity-15" />
 
-      {/* Navbar */}
-      <nav className="fixed w-full z-50 top-0 left-0 border-b border-white/5 bg-slate-950/60 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="text-xl font-bold tracking-tighter flex items-center gap-2 group cursor-pointer">
-            <div className="w-6 h-6 bg-cyan-500 rounded-sm shadow-[0_0_15px_rgba(6,182,212,0.5)] group-hover:rotate-45 transition duration-300"></div>
-            FitDay<span className="text-cyan-400">.AI</span>
-          </div>
-          <div className="flex gap-6 items-center">
+        {/* Grid overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:64px_64px]" />
+      </motion.div>
+
+      <AnimatePresence>
+        {showScanner && <BMIAnalyzer onClose={() => setShowScanner(false)} />}
+      </AnimatePresence>
+
+      {/* Floating Header */}
+      <nav className="fixed w-full z-50 top-6 left-0 px-6">
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="max-w-5xl mx-auto h-20 bg-white/[0.03] backdrop-blur-2xl border border-white/5 rounded-full flex items-center justify-between px-10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+        >
+          <Link href="/" className="text-2xl font-black font-outfit italic tracking-tighter flex items-center gap-3 group">
+            <div className="w-8 h-8 bg-purple-600 rounded-lg shadow-[0_0_20px_rgba(147,51,234,0.4)] group-hover:rotate-12 transition-transform duration-500 flex items-center justify-center text-[10px] font-black text-white">FD</div>
+            <span className="text-white">FitDay</span><span className="text-purple-500">.AI</span>
+          </Link>
+          <div className="flex items-center gap-8">
             {user ? (
-               <Link href="/dashboard" className="px-5 py-2 text-sm border border-white/20 rounded-full hover:bg-white/5 transition">Dashboard</Link>
+              <Link href="/dashboard" className="px-6 py-3 bg-white text-black rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all">Go to Dashboard</Link>
             ) : (
-              <>
-                <Link href="/login" className="text-sm font-medium text-slate-400 hover:text-white transition">Login</Link>
-                <Link href="/register" className="px-5 py-2 text-sm bg-white text-black font-bold rounded-full hover:bg-cyan-50 transition shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+              <div className="flex items-center gap-6">
+                <button
+                  onClick={() => {
+                    import('@/lib/auth').then(({ saveUserSession }) => {
+                      saveUserSession({
+                        id: 999,
+                        name: 'Demo User',
+                        email: 'demo@fitday.ai',
+                        age: 25,
+                        gender: 'male',
+                        height_cm: 175,
+                        weight_kg: 70,
+                        goal: 'maintain',
+                        activity_level: 'moderate',
+                        target_calories: 2200
+                      });
+                      window.location.href = '/dashboard';
+                    });
+                  }}
+                  className="text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-white transition-colors animate-pulse"
+                >
+                  Try Demo
+                </button>
+                <Link href="/login" className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">Login</Link>
+                <Link href="/register" className="px-8 py-3 bg-white text-black rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-purple-600 hover:text-white shadow-[0_0_30px_rgba(255,255,255,0.1)] transition-all active:scale-95">
                   Get Started
                 </Link>
-              </>
+              </div>
             )}
           </div>
-        </div>
+        </motion.div>
       </nav>
 
-      {/* Hero */}
-      <section className="relative pt-32 pb-32 lg:pt-48 lg:pb-40 px-6 max-w-7xl mx-auto text-center z-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-xs font-mono mb-8">
-           <span className="relative flex h-2 w-2">
-             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-             <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
-           </span>
-           SYSTEM V2.0 ONLINE
+      {/* Hero Section */}
+      <section className="relative pt-48 pb-20 px-6 max-w-7xl mx-auto z-10 grid lg:grid-cols-2 gap-20 items-center">
+        <motion.div
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 1 }}
+        >
+          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-white/5 bg-white/5 text-[10px] font-black mb-10 uppercase tracking-[0.3em] font-outfit italic">
+            <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse shadow-[0_0_10px_#9333ea]" />
+            Tailored for Bangladesh
+          </div>
+          <h1 className="text-7xl lg:text-[10rem] font-black leading-[0.8] mb-10 font-outfit italic tracking-tighter">
+            Smart <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-300 to-indigo-400">
+              Lifestyle
+            </span> <br />
+            Coach.
+          </h1>
+          <p className="text-xl text-zinc-400 mb-12 max-w-xl leading-relaxed font-light font-inter">
+            Your personal fitness and nutrition assistant. FitDay helps you track your health with local food logic and smart plans.
+          </p>
+          <div className="flex items-center gap-6">
+            <Link href="/register" className="h-16 px-10 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-3 shadow-[0_20px_40px_-10px_rgba(147,51,234,0.3)] hover:scale-105 active:scale-95">
+              Start Now <span className="text-xl">→</span>
+            </Link>
+            <button
+              onClick={() => setShowScanner(true)}
+              className="h-16 px-10 border border-white/10 hover:border-purple-500/30 text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all hover:bg-white/5"
+            >
+              Analyze BMI
+            </button>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.2, delay: 0.2 }}
+          className="relative aspect-square flex items-center justify-center opacity-80"
+        >
+          {/* Core Glow */}
+          <div className="absolute w-[60%] h-[60%] bg-purple-600/20 rounded-full blur-[100px] animate-pulse" />
+
+          {/* Orbital Rings CSS Animation */}
+          <div className="relative w-[300px] h-[300px] md:w-[400px] md:h-[400px] flex items-center justify-center">
+            {/* Ring 1 */}
+            <div className="absolute inset-0 border border-purple-500/20 rounded-full animate-[spin_10s_linear_infinite]"
+              style={{ borderStyle: 'dashed', borderWidth: '1px' }} />
+
+            {/* Ring 2 */}
+            <div className="absolute inset-[10%] border border-cyan-500/10 rounded-full animate-[spin_15s_linear_infinite_reverse]"
+              style={{ borderTopColor: 'transparent', borderLeftColor: 'transparent' }} />
+
+            {/* Ring 3 */}
+            <div className="absolute inset-[20%] border border-white/10 rounded-full animate-[spin_20s_linear_infinite]" />
+
+            {/* Central Hologram Interface */}
+            <div className="absolute inset-[30%] bg-zinc-900/50 backdrop-blur-md border border-white/5 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(168,85,247,0.2)]">
+              <div className="w-[60%] h-[60%] bg-purple-500 rounded-full relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-tr from-purple-800 to-cyan-400 opacity-60 mix-blend-overlay animate-[pulse_4s_ease-in-out_infinite]" />
+
+                {/* Data Lines */}
+                <div className="absolute inset-0 flex flex-col justify-between p-2 opacity-30">
+                  <div className="w-full h-[1px] bg-white/50" />
+                  <div className="w-full h-[1px] bg-white/50" />
+                  <div className="w-full h-[1px] bg-white/50" />
+                </div>
+              </div>
+            </div>
+
+            {/* Satellite Particles */}
+            <div className="absolute w-full h-full animate-[spin_8s_linear_infinite]">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-cyan-400 rounded-full shadow-[0_0_15px_#22d3ee]" />
+            </div>
+            <div className="absolute w-[80%] h-[80%] animate-[spin_12s_linear_infinite_reverse]">
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-purple-400 rounded-full shadow-[0_0_15px_#c084fc]" />
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Feature Bento Grid */}
+      <section className="py-40 px-6 max-w-7xl mx-auto z-10 relative">
+        <div className="text-center mb-24">
+          <h2 className="text-xs font-black text-purple-500 uppercase tracking-[0.6em] mb-4">Core Features</h2>
+          <p className="text-4xl lg:text-6xl font-black font-outfit tracking-tighter italic uppercase text-white">Engineered for You.</p>
         </div>
 
-        <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-8 leading-[0.9] text-white">
-          Upgrade Your <br/>
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-500 to-purple-600">
-            Biological Engine
-          </span>
-        </h1>
+        <div className="grid md:grid-cols-12 gap-6 auto-rows-[300px]">
+          <GlassCard className="md:col-span-8 p-12 flex flex-col justify-end overflow-hidden" delay={0.1}>
+            <div className="absolute top-0 right-0 p-12 opacity-5"><span className="text-[200px] font-black italic">BN</span></div>
+            <h3 className="text-4xl font-black font-outfit italic text-white mb-4 uppercase">Localized Nutrition</h3>
+            <p className="text-zinc-400 max-w-sm mb-6 uppercase text-[10px] font-black tracking-widest leading-loose">Accurate calorie counts for Bangladeshi cuisine. Rice, Lentils, Fish, and other local favorites.</p>
+            <div className="flex gap-2">
+              {['RICE', 'LENTIL', 'FISH'].map(t => <span key={t} className="px-3 py-1 bg-white/5 rounded-full text-[8px] font-black uppercase tracking-widest border border-white/5">{t}</span>)}
+            </div>
+          </GlassCard>
 
-        <p className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
-          Advanced AI nutrition metrics tailored for <span className="text-slate-200 font-semibold">Bangladeshi physiology</span>. 
-          Precision tracking, real-time macro analysis, and adaptive protocols.
-        </p>
-        
-        
+          <GlassCard className="md:col-span-4 p-12 flex flex-col items-center justify-center text-center group" delay={0.2}>
+            <div className="w-20 h-20 bg-purple-500/10 rounded-full flex items-center justify-center mb-8 border border-purple-500/20 group-hover:scale-110 transition-transform">
+              <span className="text-4xl">🧬</span>
+            </div>
+            <h3 className="text-xl font-black font-outfit uppercase italic mb-4">Smart Profiling</h3>
+            <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Adjusted for your specific body type.</p>
+          </GlassCard>
 
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <Link href="/register" className="group relative px-8 py-4 bg-white text-black rounded-lg font-bold text-lg overflow-hidden">
-            <span className="relative z-10 group-hover:-translate-y-1 block transition-transform">Start Protocol</span>
-            <div className="absolute inset-0 bg-cyan-200 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-          </Link>
-          
-          <button 
-            onClick={() => setShowScanner(true)}
-            className="group px-8 py-4 bg-transparent border border-white/10 text-white rounded-lg font-bold text-lg hover:border-cyan-500/50 hover:bg-cyan-950/30 transition flex items-center justify-center gap-2 backdrop-blur-sm"
-          >
-            <span className="text-cyan-400 group-hover:scale-110 transition duration-300">⚡</span> Quick Bio-Scan
-          </button>
+          <GlassCard className="md:col-span-4 p-12 flex flex-col justify-between" delay={0.3}>
+            <span className="text-3xl">🛡️</span>
+            <div>
+              <h3 className="text-xl font-black font-outfit italic text-white uppercase mb-2">Fast & Secure</h3>
+              <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest leading-relaxed">Runs on global infrastructure. Zero latency responses.</p>
+            </div>
+          </GlassCard>
+
+          <GlassCard className="md:col-span-8 p-12 flex items-center gap-10" delay={0.4}>
+            <div className="h-full w-48 bg-white/5 rounded-2xl order-last overflow-hidden relative">
+              <div className="absolute inset-0 bg-gradient-to-t from-purple-500/20 to-transparent" />
+              <div className="p-4 space-y-2">
+                <div className="h-2 w-full bg-white/10 rounded-full" />
+                <div className="h-2 w-[60%] bg-white/10 rounded-full" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-3xl font-black font-outfit italic text-white mb-4 uppercase">AI Intelligence Hub</h3>
+              <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest leading-loose max-w-sm">Powered by Gemini 1.5. Real-time nutritional reconstruction with 98% accuracy on plate scans.</p>
+            </div>
+          </GlassCard>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-24 relative border-t border-white/5 bg-black/20 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              { icon: '🧬', title: 'Local Bio-Data', desc: 'Calibrated for Rice, Dal, and Fish. No generic western data sets.' },
-              { icon: '⚡', title: 'Edge Compute', desc: 'Built on Cloudflare Workers. Zero latency generation.' },
-              { icon: '🛡️', title: 'Medical Grade', desc: 'Mifflin-St Jeor formulas optimized for South Asian genetics.' }
-            ].map((f, i) => (
-              <SpotlightCard key={i} className="p-8 group">
-                <div className="w-12 h-12 bg-slate-900 border border-white/10 rounded-lg flex items-center justify-center text-2xl mb-6 text-white shadow-inner group-hover:scale-110 transition duration-300 group-hover:border-cyan-500/30">
-                  {f.icon}
+      {/* Performance Visualizer */}
+      <section className="py-40 bg-white/[0.02] border-y border-white/5 relative z-10 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+          <div>
+            <h2 className="text-5xl lg:text-8xl font-black font-outfit italic leading-[0.85] tracking-tighter mb-10 text-white uppercase">
+              Total <br /> <span className="text-purple-500">Lifestyle </span> <br /> Control.
+            </h2>
+            <div className="space-y-8">
+              {[
+                { t: 'METABOLIC SYNC', d: 'Your metrics updated in real-time with every meal.' },
+                { t: 'ADAPTIVE TRAINING', d: 'Plans that adapt to your progress.' },
+                { t: 'SMART RECOVERY', d: 'Sleep and hydration tracking integrated.' }
+              ].map((item, i) => (
+                <div key={i} className="group cursor-default">
+                  <div className="text-[10px] font-black text-zinc-500 group-hover:text-purple-400 transition-colors uppercase tracking-[0.4em] mb-2">{item.t}</div>
+                  <p className="text-lg text-zinc-400 font-light">{item.d}</p>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2 font-mono tracking-tight">{f.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{f.desc}</p>
-              </SpotlightCard>
-            ))}
+              ))}
+            </div>
+          </div>
+
+          <div className="relative p-10 bg-zinc-900/50 border border-white/10 rounded-[3rem] shadow-2xl backdrop-blur-xl group hover:border-purple-500/30 transition-all duration-500">
+            <div className="flex justify-between items-center mb-10 border-b border-white/10 pb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full bg-purple-500 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-widest font-outfit">Performance Stream</span>
+              </div>
+              <div className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest italic">Live Analyzer</div>
+            </div>
+
+            <div className="space-y-10">
+              <div>
+                <div className="flex justify-between mb-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Total Output</span>
+                  <span className="text-[10px] font-black text-purple-400 italic">SYNCED _ 88.4%</span>
+                </div>
+                <div className="h-6 bg-zinc-950 rounded-full border border-white/5 overflow-hidden p-1">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: '88%' }}
+                    className="h-full bg-purple-500 rounded-full shadow-[0_0_15px_#9333ea]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="p-6 bg-white/5 rounded-3xl border border-white/5">
+                  <div className="text-[10px] font-black text-zinc-600 mb-2 uppercase tracking-widest">Efficiency</div>
+                  <div className="text-4xl font-black text-white italic">0.96</div>
+                </div>
+                <div className="p-6 bg-white/5 rounded-3xl border border-white/5">
+                  <div className="text-[10px] font-black text-zinc-600 mb-2 uppercase tracking-widest">Intensity</div>
+                  <div className="text-4xl font-black text-purple-400 italic">HIGH</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-12 p-6 bg-purple-500/10 rounded-3xl border border-purple-500/20">
+              <div className="flex items-start gap-4">
+                <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-black font-black text-xs shrink-0">AI</div>
+                <p className="text-[10px] text-purple-200 font-black uppercase tracking-widest leading-loose">"Metabolic rate is trending higher. Recommend 200kcal increase to sustain performance."</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <footer className="border-t border-white/5 py-12 text-center bg-slate-950">
-        <p className="text-slate-600 font-mono text-xs uppercase tracking-widest">
-          © 2026 FitDay AI. <span className="text-cyan-900">System Status: Optimal</span>
-        </p>
+      {/* Final Call */}
+      <section className="py-60 text-center relative z-10 px-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1 }}
+        >
+          <h2 className="text-5xl lg:text-[10rem] font-black mb-16 font-outfit italic tracking-tighter leading-none text-white uppercase">
+            Start Your <br /> <span className="text-white/20">Journey Now.</span>
+          </h2>
+          <Link href="/register" className="inline-flex h-24 px-20 bg-white text-black rounded-full font-black uppercase italic text-sm tracking-[0.4em] hover:bg-purple-600 hover:scale-110 active:scale-95 transition-all shadow-[0_0_100px_rgba(255,255,255,0.1)]">
+            Get Started
+          </Link>
+          <p className="mt-12 text-zinc-600 font-mono text-[10px] uppercase tracking-[0.5em]">Join the fitness revolution</p>
+        </motion.div>
+      </section>
+
+      {/* Footer */}
+      <footer className="pt-20 pb-10 border-t border-white/5 bg-[#000000] relative z-10 px-6 font-inter text-zinc-400">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12 mb-16">
+
+          {/* Brand & Mission */}
+          <div className="md:col-span-1">
+            <Link href="/" className="text-2xl font-black font-outfit italic tracking-tighter mb-6 block text-white">
+              FitDay<span className="text-purple-500">.AI</span>
+            </Link>
+            <p className="text-xs leading-relaxed mb-6">
+              The first AI-powered fitness assistant tailored for the Bangladeshi lifestyle. We combine local nutrition data with advanced metabolic profiling to help you reach your goals.
+            </p>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-6 font-outfit">Platform</h4>
+            <ul className="space-y-4 text-xs font-medium">
+              <li><Link href="/dashboard" className="hover:text-purple-400 transition-colors">Dashboard</Link></li>
+              <li><Link href="/register" className="hover:text-purple-400 transition-colors">Create Account</Link></li>
+              <li><Link href="/login" className="hover:text-purple-400 transition-colors">Login</Link></li>
+              <li><button onClick={() => setShowScanner(true)} className="hover:text-purple-400 transition-colors">BMI Calculator</button></li>
+            </ul>
+          </div>
+
+          {/* Resources */}
+          <div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-6 font-outfit">Resources</h4>
+            <ul className="space-y-4 text-xs font-medium">
+              <li className="hover:text-purple-400 transition-colors cursor-pointer">Local Food Database</li>
+              <li className="hover:text-purple-400 transition-colors cursor-pointer">Workout Library</li>
+              <li className="hover:text-purple-400 transition-colors cursor-pointer">Success Stories</li>
+              <li className="hover:text-purple-400 transition-colors cursor-pointer">Community</li>
+            </ul>
+          </div>
+
+          {/* Legal & Contact */}
+          <div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-6 font-outfit">Contact & Legal</h4>
+            <ul className="space-y-4 text-xs font-medium">
+              <li className="hover:text-purple-400 transition-colors cursor-pointer">support@fitday.ai</li>
+              <li className="hover:text-purple-400 transition-colors cursor-pointer">Privacy Policy</li>
+              <li className="hover:text-purple-400 transition-colors cursor-pointer">Terms of Service</li>
+              <li className="hover:text-purple-400 transition-colors cursor-pointer">Cookie Settings</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="max-w-7xl mx-auto pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] uppercase tracking-widest font-mono">
+          <p>© 2026 FitDay AI. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <span className="hover:text-white cursor-pointer transition-colors">Twitter</span>
+            <span className="hover:text-white cursor-pointer transition-colors">Instagram</span>
+            <span className="hover:text-white cursor-pointer transition-colors">LinkedIn</span>
+          </div>
+        </div>
       </footer>
     </div>
   )
