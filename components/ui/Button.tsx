@@ -5,7 +5,7 @@ import { VisuallyHidden } from '@/lib/accessibility'
 import './Button.css'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
+    variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline'
     size?: 'sm' | 'md' | 'lg'
     loading?: boolean
     loadingText?: string

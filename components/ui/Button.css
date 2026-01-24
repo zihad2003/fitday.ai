@@ -90,6 +90,18 @@
     color: #fff;
 }
 
+.accessible-button--outline {
+    background: transparent;
+    color: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.accessible-button--outline:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
 /* Full Width */
 .accessible-button--full {
     width: 100%;
