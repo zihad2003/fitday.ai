@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserSession } from '@/lib/auth'
 import { getDb } from '@/lib/db'
+import { generateWorkoutPlan } from '@/lib/workout-generator'
+import { generateMealPlan } from '@/lib/meal-generator'
 
 export async function POST(request: NextRequest) {
     try {
@@ -213,156 +215,7 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// Helper function to generate workout plan
-async function generateWorkoutPlan(data: any) {
-    const { fitness_goal, workout_days_per_week, available_equipment, workout_duration_preference } = data
-
-    // Define workout templates based on goal
-    const workoutTemplates: any = {
-        build_muscle: {
-            split: workout_days_per_week >= 5 ? 'push_pull_legs' : workout_days_per_week >= 3 ? 'upper_lower' : 'full_body',
-            focus: 'hypertrophy',
-            rep_range: '8-12',
-            sets: 3 - 4,
-        },
-        lose_weight: {
-            split: 'circuit',
-            focus: 'fat_loss',
-            rep_range: '12-15',
-            sets: 3,
-            cardio_minutes: 20,
-        },
-        improve_endurance: {
-            split: 'cardio_focused',
-            focus: 'endurance',
-            cardio_minutes: 30,
-        },
-        increase_strength: {
-            split: workout_days_per_week >= 4 ? 'powerlifting' : 'full_body',
-            focus: 'strength',
-            rep_range: '4-6',
-            sets: 5,
-        },
-        maintain_fitness: {
-            split: 'balanced',
-            focus: 'maintenance',
-            rep_range: '10-12',
-            sets: 3,
-        },
-    }
-
-    const template = workoutTemplates[fitness_goal] || workoutTemplates.maintain_fitness
-
-    // Generate weekly schedule
-    const weeklySchedule = []
-    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-
-    for (let i = 0; i < workout_days_per_week; i++) {
-        weeklySchedule.push({
-            day: daysOfWeek[i],
-            workout_type: getWorkoutType(template.split, i),
-            duration_minutes: workout_duration_preference || 60,
-            exercises: [], // Will be populated from exercise library
-        })
-    }
-
-    return {
-        goal: fitness_goal,
-        template: template.split,
-        weekly_schedule: weeklySchedule,
-        equipment: available_equipment,
-        duration_weeks: 12,
-        progression_plan: 'Progressive overload every 2 weeks',
-    }
-}
-
-// Helper function to generate meal plan
-async function generateMealPlan(data: any) {
-    const { target_calories, dietary_preference, food_allergies } = data
-
-    // Calculate macro distribution based on goal
-    const macros = calculateMacros(target_calories, data.fitness_goal)
-
-    return {
-        daily_calories: target_calories,
-        macros: macros,
-        meal_count: 4, // breakfast, lunch, snack, dinner
-        dietary_restrictions: {
-            preference: dietary_preference,
-            allergies: food_allergies || [],
-        },
-        sample_day: {
-            breakfast: {
-                calories: Math.round(target_calories * 0.25),
-                protein: Math.round(macros.protein * 0.25),
-                carbs: Math.round(macros.carbs * 0.30),
-                fats: Math.round(macros.fats * 0.20),
-            },
-            lunch: {
-                calories: Math.round(target_calories * 0.35),
-                protein: Math.round(macros.protein * 0.35),
-                carbs: Math.round(macros.carbs * 0.35),
-                fats: Math.round(macros.fats * 0.35),
-            },
-            snack: {
-                calories: Math.round(target_calories * 0.15),
-                protein: Math.round(macros.protein * 0.15),
-                carbs: Math.round(macros.carbs * 0.15),
-                fats: Math.round(macros.fats * 0.15),
-            },
-            dinner: {
-                calories: Math.round(target_calories * 0.25),
-                protein: Math.round(macros.protein * 0.25),
-                carbs: Math.round(macros.carbs * 0.20),
-                fats: Math.round(macros.fats * 0.30),
-            },
-        },
-    }
-}
-
-function calculateMacros(calories: number, goal: string) {
-    let proteinPercentage, carbsPercentage, fatsPercentage
-
-    switch (goal) {
-        case 'build_muscle':
-            proteinPercentage = 0.30
-            carbsPercentage = 0.45
-            fatsPercentage = 0.25
-            break
-        case 'lose_weight':
-            proteinPercentage = 0.35
-            carbsPercentage = 0.35
-            fatsPercentage = 0.30
-            break
-        case 'increase_strength':
-            proteinPercentage = 0.30
-            carbsPercentage = 0.50
-            fatsPercentage = 0.20
-            break
-        default:
-            proteinPercentage = 0.25
-            carbsPercentage = 0.45
-            fatsPercentage = 0.30
-    }
-
-    return {
-        protein: Math.round((calories * proteinPercentage) / 4), // 4 cal per gram
-        carbs: Math.round((calories * carbsPercentage) / 4),
-        fats: Math.round((calories * fatsPercentage) / 9), // 9 cal per gram
-    }
-}
-
-function getWorkoutType(split: string, dayIndex: number): string {
-    const splits: any = {
-        push_pull_legs: ['Push', 'Pull', 'Legs', 'Push', 'Pull', 'Legs', 'Rest'],
-        upper_lower: ['Upper', 'Lower', 'Rest', 'Upper', 'Lower', 'Rest', 'Rest'],
-        full_body: ['Full Body', 'Rest', 'Full Body', 'Rest', 'Full Body', 'Rest', 'Rest'],
-        circuit: ['Circuit', 'Circuit', 'Rest', 'Circuit', 'Circuit', 'Rest', 'Rest'],
-    }
-
-    return splits[split]?.[dayIndex] || 'Full Body'
-}
-
+// Helper function to determine difficulty level
 function getDifficultyLevel(activityLevel: string): string {
     switch (activityLevel) {
         case 'sedentary':
