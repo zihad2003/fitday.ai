@@ -168,27 +168,27 @@ Transform FitDay AI into a complete, intelligent fitness companion that guides u
 ### 3.2 Intelligent Notification System
 
 #### Features to Implement
-- [ ] **Workout Reminders**
+- [x] **Workout Reminders**
   - Based on preferred workout time
   - Pre-workout preparation notifications
-  - Missed workout follow-ups
+  - Missed workout follow-ups (Handled via smart tone)
 
-- [ ] **Meal Reminders**
+- [x] **Meal Reminders**
   - Breakfast, lunch, dinner, snack times
   - Meal prep reminders
   - Macro tracking alerts
 
-- [ ] **Water Reminders**
+- [x] **Water Reminders**
   - Hourly hydration prompts
-  - Customizable frequency
+  - Customizable frequency (Linked to wake/sleep)
   - Progress-based encouragement
 
-- [ ] **Sleep Reminders**
+- [x] **Sleep Reminders**
   - Bedtime notifications
   - Wind-down routine suggestions
-  - Sleep quality tracking prompts
+  - Sleep quality tracking prompts (Morning check-in pending)
 
-- [ ] **Motivational Messages**
+- [x] **Motivational Messages**
   - Goal progress updates
   - Streak celebrations
   - Personalized encouragement
@@ -310,7 +310,7 @@ Transform FitDay AI into a complete, intelligent fitness companion that guides u
 
 ### Short Term (Week 3-4)
 1. [ ] Build daily tracking system
-2. [ ] Implement notification service
+2. [x] Implement notification service
 3. [ ] Create quick logging widgets
 4. [x] Add water tracker
 

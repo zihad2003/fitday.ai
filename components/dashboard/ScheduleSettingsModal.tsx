@@ -9,9 +9,10 @@ interface ScheduleSettingsProps {
     onClose: () => void
     onSave: (prefs: any) => void
     currentPrefs: any
+    onEnableNotifications?: () => void
 }
 
-export default function ScheduleSettingsModal({ isOpen, onClose, onSave, currentPrefs }: ScheduleSettingsProps) {
+export default function ScheduleSettingsModal({ isOpen, onClose, onSave, currentPrefs, onEnableNotifications }: ScheduleSettingsProps) {
     const [prefs, setPrefs] = useState({
         wakeTime: '07:00',
         workoutTime: '18:00',
@@ -98,6 +99,16 @@ export default function ScheduleSettingsModal({ isOpen, onClose, onSave, current
                                     />
                                 </div>
                             </div>
+
+                            {onEnableNotifications && (
+                                <button
+                                    onClick={onEnableNotifications}
+                                    className="w-full flex items-center justify-center gap-2 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs font-bold uppercase tracking-wider text-zinc-300 transition-colors mb-3"
+                                >
+                                    <Icons.Sparkles size={16} className="text-purple-400" />
+                                    Enable Smart Alerts
+                                </button>
+                            )}
 
                             <button
                                 onClick={handleSave}

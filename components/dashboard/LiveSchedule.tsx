@@ -25,6 +25,15 @@ export default function LiveSchedule({ schedule, onOpenSettings }: LiveScheduleP
     const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set())
     const scrollRef = useRef<HTMLDivElement>(null)
 
+    // Load completed tasks on mount
+    useEffect(() => {
+        const today = new Date().toDateString()
+        const stored = localStorage.getItem(`completed_tasks_${today}`)
+        if (stored) {
+            setCompletedTasks(new Set(JSON.parse(stored)))
+        }
+    }, [])
+
     // Update time every minute
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 60000)
@@ -38,6 +47,11 @@ export default function LiveSchedule({ schedule, onOpenSettings }: LiveScheduleP
             const next = new Set(prev)
             if (next.has(id)) next.delete(id)
             else next.add(id)
+
+            // Save to localStorage
+            const today = new Date().toDateString()
+            localStorage.setItem(`completed_tasks_${today}`, JSON.stringify(Array.from(next)))
+
             return next
         })
     }

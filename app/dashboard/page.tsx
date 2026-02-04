@@ -14,6 +14,7 @@ import MobileNav from '@/components/dashboard/MobileNav'
 import ScheduleSettingsModal from '@/components/dashboard/ScheduleSettingsModal'
 import { generateDailySchedule, getFullDailyPlan, ScheduleItem } from '@/lib/schedule-engine'
 import { getRecommendedWorkout } from '@/lib/exercise-db'
+import { useNotificationSystem } from '@/hooks/useNotificationSystem'
 import NutritionDashboard from '@/components/NutritionDashboard'
 import Icons from '@/components/icons/Icons'
 import {
@@ -82,6 +83,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [schedulePrefs, setSchedulePrefs] = useState<any>(null)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const { requestPermission } = useNotificationSystem(dailySchedule)
 
   // Load prefs on mount
   useEffect(() => {
@@ -264,6 +266,7 @@ export default function Dashboard() {
         onClose={() => setIsSettingsOpen(false)}
         onSave={handleSavePrefs}
         currentPrefs={schedulePrefs}
+        onEnableNotifications={requestPermission}
       />
     </PageTransition>
   )
