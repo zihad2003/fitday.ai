@@ -13,6 +13,8 @@ import WorkoutCard from '@/components/dashboard/WorkoutCard'
 import MobileNav from '@/components/dashboard/MobileNav'
 import { generateDailySchedule, getFullDailyPlan, ScheduleItem } from '@/lib/schedule-engine'
 import { getRecommendedWorkout } from '@/lib/exercise-db'
+import NutritionDashboard from '@/components/NutritionDashboard'
+import Icons from '@/components/icons/Icons'
 import {
   PageTransition,
   FadeIn,
@@ -154,60 +156,34 @@ export default function Dashboard() {
               {/* ROW 1: CALORIES + MEAL PLAN */}
               <StaggerItem className="col-span-12 lg:col-span-8">
                 <HoverScale scale={1.005} className="h-full">
-                  <div className="stat-card flex flex-col md:flex-row items-center gap-10 md:gap-16 overflow-hidden relative min-h-[380px] p-8 md:p-12">
-                    <div className="absolute top-0 right-[-10%] opacity-[0.02] text-[200px] font-black italic select-none pointer-events-none">KC</div>
+                  <NutritionDashboard userId={user.id} />
+                </HoverScale>
+              </StaggerItem>
 
-                    {/* Circular Calorie Gauge */}
-                    <div className="relative shrink-0">
-                      <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ type: 'spring', damping: 20, delay: 0.2 }}
-                        className="liquid-meta-blob flex items-center justify-center relative w-48 h-48 md:w-56 md:h-56"
-                      >
-                        <div className="text-center z-10">
-                          <motion.span
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5 }}
-                            className="text-5xl md:text-6xl font-black font-outfit italic"
-                          >
-                            {user.target_calories}
-                          </motion.span>
-                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 mt-2">Daily Intake</p>
-                        </div>
-                        {/* Decorative Rings */}
-                        <div className="absolute inset-0 border-4 border-white/5 rounded-full scale-110" />
-                        <div className="absolute inset-0 border border-white/10 rounded-full scale-125 border-dashed animate-spin-slow" />
-                      </motion.div>
+              {/* QUICK ACTIONS ROW */}
+              <StaggerItem className="col-span-12 flex gap-4 overflow-x-auto no-scrollbar pb-2">
+                <Link href="/dashboard/shopping-list" className="flex-1 min-w-[200px]">
+                  <div className="glass-card p-4 flex items-center gap-4 hover:bg-white/5 transition-colors cursor-pointer group">
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                      <Icons.ShoppingCart size={20} />
                     </div>
-
-                    <div className="flex-1 w-full">
-                      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
-                        <div>
-                          <h3 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.6em] mb-4">Metabolic Protocol</h3>
-                          <div className="flex items-baseline gap-3">
-                            <span className="text-4xl font-black italic font-outfit uppercase tracking-tighter">Goal Matrix</span>
-                            <div className="px-3 py-1 bg-purple-600/20 border border-purple-500/30 rounded-full">
-                              <span className="text-purple-400 font-black text-[9px] uppercase tracking-widest">{user.goal.replace('_', ' ')}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-left md:text-right border-l md:border-l-0 md:border-r border-white/10 pl-6 md:pl-0 md:pr-6">
-                          <div className="text-[10px] text-zinc-500 font-black uppercase mb-2 tracking-widest">Body Mass Index</div>
-                          <div className={`text-3xl font-black italic font-outfit ${bmiData.color}`}>{bmiData.value}</div>
-                          <div className="text-[9px] font-mono text-zinc-600 uppercase mt-1">{bmiData.status} Range</div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-4 md:gap-6">
-                        <MacroStat label="Protein" value={macros.protein} color="bg-purple-500" />
-                        <MacroStat label="Carbs" value={macros.carbs} color="bg-indigo-500" />
-                        <MacroStat label="Lipids" value={macros.fat} color="bg-cyan-500" />
-                      </div>
+                    <div>
+                      <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Groceries</div>
+                      <div className="font-black font-outfit text-white">Shopping List</div>
                     </div>
                   </div>
-                </HoverScale>
+                </Link>
+                <Link href="/dashboard/tracking/water" className="flex-1 min-w-[200px]">
+                  <div className="glass-card p-4 flex items-center gap-4 hover:bg-white/5 transition-colors cursor-pointer group">
+                    <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                      <Icons.Water size={20} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Hydration</div>
+                      <div className="font-black font-outfit text-white">Log Water</div>
+                    </div>
+                  </div>
+                </Link>
               </StaggerItem>
 
               <StaggerItem className="col-span-12 lg:col-span-4 translate-y-0 lg:h-[380px]">

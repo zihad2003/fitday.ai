@@ -6,16 +6,23 @@ import Icons from '@/components/icons/Icons'
 import { ShoppingListGenerator } from '@/lib/shopping-list-generator'
 
 interface ShoppingListProps {
-    planData?: any // Should be the meal plan object containing schedule
+    planData?: any
+    initialList?: any
 }
 
-export default function ShoppingList({ planData }: ShoppingListProps) {
-    const [list, setList] = useState<any>(null)
-    const [generated, setGenerated] = useState(false)
+export default function ShoppingList({ planData, initialList }: ShoppingListProps) {
+    const [list, setList] = useState<any>(initialList || null)
+    const [generated, setGenerated] = useState(!!initialList)
     const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set())
 
     // Mock generation on load if planData exists
     useEffect(() => {
+        if (initialList) {
+            setList(initialList)
+            setGenerated(true)
+            return
+        }
+
         if (planData && !generated) {
             // Assuming planData has a daily_plan array
             // If passing the raw API response structure, adjust path
@@ -101,13 +108,13 @@ export default function ShoppingList({ planData }: ShoppingListProps) {
                                         layout
                                         onClick={() => toggleItem(item.id)}
                                         className={`flex items-center p-3 rounded-xl cursor-pointer transition-all border ${checkedItems.has(item.id)
-                                                ? 'bg-emerald-900/10 border-emerald-500/20 opacity-50'
-                                                : 'bg-zinc-800/30 border-transparent hover:bg-zinc-800/50'
+                                            ? 'bg-emerald-900/10 border-emerald-500/20 opacity-50'
+                                            : 'bg-zinc-800/30 border-transparent hover:bg-zinc-800/50'
                                             }`}
                                     >
                                         <div className={`w-5 h-5 rounded-md border flex items-center justify-center mr-4 transition-colors ${checkedItems.has(item.id)
-                                                ? 'bg-emerald-500 border-emerald-500'
-                                                : 'border-zinc-600'
+                                            ? 'bg-emerald-500 border-emerald-500'
+                                            : 'border-zinc-600'
                                             }`}>
                                             {checkedItems.has(item.id) && <Icons.Check size={12} className="text-black" strokeWidth={4} />}
                                         </div>
