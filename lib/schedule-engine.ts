@@ -132,92 +132,164 @@ export function getFullDailyPlan(user: UserProfile) {
     }
 }
 
-export function generateDailySchedule(user: UserProfile): ScheduleItem[] {
-    const schedule: ScheduleItem[] = []
-    let currentTime = setMinutes(setHours(new Date(), 7), 0) // Start at 7:00 AM
+export interface SchedulePreferences {
+    wakeTime: string // "07:00"
+    bedTime: string // "23:00"
+    workoutTime: string // "18:00"
+}
 
-    // 1. Morning Routine
+export function generateDailySchedule(user: UserProfile, prefs?: SchedulePreferences): ScheduleItem[] {
+    const schedule: ScheduleItem[] = []
+
+    // Defaults
+    const wakeTimeStr = prefs?.wakeTime || "07:00"
+    const bedTimeStr = prefs?.bedTime || "23:00"
+    const workoutTimeStr = prefs?.workoutTime || "18:00"
+
+    const today = new Date()
+    const wakeDate = parse(wakeTimeStr, 'HH:mm', today)
+    const bedDate = parse(bedTimeStr, 'HH:mm', today)
+    const workoutDate = parse(workoutTimeStr, 'HH:mm', today)
+
+    // Helper to format
+    const fmt = (d: Date) => format(d, 'HH:mm')
+
+    // 1. Wake Up Routine
     schedule.push({
-        id: 'bio-1',
-        time: format(currentTime, 'HH:mm'),
+        id: 'bio-wake',
+        time: fmt(wakeDate),
         type: 'bio',
         title: 'Metabolic Wake-Up',
-        description: 'Drink 500ml water + pinch of salt + lemon. Stretch for 5 mins.'
+        description: 'Hydrate immediately: 500ml water + pinch of salt. 5 mins light mobility.'
     })
 
-    // 2. Breakfast (8:00 AM)
-    currentTime = addMinutes(currentTime, 60)
+    // 2. Schedule Workout
+    // We add workout now so we can schedule meals around it
+    const workoutDurationMins = 60
+    const workoutEnd = addMinutes(workoutDate, workoutDurationMins)
+
+    schedule.push({
+        id: 'workout-main',
+        time: fmt(workoutDate),
+        type: 'workout',
+        title: WORKOUTS[user.goal]?.title || "Daily Training",
+        description: WORKOUTS[user.goal]?.desc || "Complete your assigned workout session."
+    })
+
+    // 3. Smart Meal Scheduling
+    // Strategy: Breakfast 45m after wake. Lunch 4h after. Dinner 3h before bed.
+
+    let breakfastTime = addMinutes(wakeDate, 45)
+    let lunchTime = addMinutes(breakfastTime, 240) // +4 hours
+    let dinnerTime = addMinutes(bedDate, -150) // -2.5 hours before bed
+
+    // Conflict Resolution: Workout vs Meals
+    // Pre-Workout: Ensure fed 1.5h before workout if possible
+    const preWorkoutTarget = addMinutes(workoutDate, -90)
+
+    // Post-Workout: Ensure fed within 45 mins
+    const postWorkoutTarget = addMinutes(workoutEnd, 30)
+
+    // -- MEAL PLACEMENT --
+
+    // Breakfast
     const bMeal = BANGLA_MEALS.breakfast[Math.floor(Math.random() * BANGLA_MEALS.breakfast.length)]
     schedule.push({
-        id: 'meal-1',
-        time: format(currentTime, 'HH:mm'),
+        id: 'meal-breakfast',
+        time: fmt(breakfastTime),
         type: 'meal',
-        title: 'Breakfast Protocol',
+        title: 'Breakfast',
         description: bMeal.desc,
         calories: bMeal.cal,
         protein: bMeal.p
     })
 
-    // 3. Hydration (11:00 AM)
-    currentTime = addMinutes(currentTime, 180) // 3 hours later
-    schedule.push({
-        id: 'hydro-1',
-        time: format(currentTime, 'HH:mm'),
-        type: 'hydration',
-        title: 'Hydration Check',
-        description: 'Drink 500ml water. Essential for cognitive function.'
-    })
-
-    // 4. Lunch (1:30 PM)
-    currentTime = addMinutes(currentTime, 150)
+    // Lunch
     const lMeal = BANGLA_MEALS.lunch[Math.floor(Math.random() * BANGLA_MEALS.lunch.length)]
     schedule.push({
-        id: 'meal-2', // Lunch
-        time: "13:30",
+        id: 'meal-lunch',
+        time: fmt(lunchTime),
         type: 'meal',
-        title: 'Nutrient Reload (Lunch)',
+        title: 'Lunch',
         description: lMeal.desc,
         calories: lMeal.cal,
         protein: lMeal.p
     })
 
-    // 5. Afternoon Snack (4:30 PM)
-    schedule.push({
-        id: 'meal-3', // Snack
-        time: "16:30",
-        type: 'meal',
-        title: 'Energy Bridge',
-        description: BANGLA_MEALS.snack[Math.floor(Math.random() * BANGLA_MEALS.snack.length)].desc,
-        calories: 150
-    })
+    // Afternoon/Pre-Workout Snack
+    // If lunch is far from workout (>3h), add snack
+    const minutesLunchToWorkout = (workoutDate.getTime() - lunchTime.getTime()) / 60000
 
-    // 6. Workout (6:00 PM)
-    schedule.push({
-        id: 'workout-1',
-        time: "18:00",
-        type: 'workout',
-        title: WORKOUTS[user.goal].title,
-        description: WORKOUTS[user.goal].desc
-    })
+    if (minutesLunchToWorkout > 180) {
+        // Add Pre-workout snack
+        const sMeal = BANGLA_MEALS.snack[Math.floor(Math.random() * BANGLA_MEALS.snack.length)]
+        schedule.push({
+            id: 'meal-snack',
+            time: fmt(addMinutes(workoutDate, -60)), // 1 hour before
+            type: 'meal',
+            title: 'Pre-Workout Fuel',
+            description: sMeal.desc,
+            calories: sMeal.cal
+        })
+    }
 
-    // 7. Dinner (8:30 PM)
+    // Dinner / Post-Workout
+    // If workout is late evening, Dinner IS the post workout
+    // If workout is early (e.g. morning), Dinner is separate
+
+    // Check gap between Workout End and Dinner
+    const minutesWorkoutToDinner = (dinnerTime.getTime() - workoutEnd.getTime()) / 60000
+
     const dMeal = BANGLA_MEALS.dinner[Math.floor(Math.random() * BANGLA_MEALS.dinner.length)]
-    schedule.push({
-        id: 'meal-4', // Dinner
-        time: "20:30",
-        type: 'meal',
-        title: 'Recovery Meal (Dinner)',
-        description: dMeal.desc,
-        calories: dMeal.cal
-    })
 
-    // 8. Sleep Prep (11:00 PM)
+    if (minutesWorkoutToDinner > 90) {
+        // Gap is big, need immediate post-workout recovery
+        schedule.push({
+            id: 'bio-recovery',
+            time: fmt(addMinutes(workoutEnd, 15)),
+            type: 'bio',
+            title: 'Post-Workout Recovery',
+            description: 'Protein Shake or 3 egg whites immediately.'
+        })
+        schedule.push({
+            id: 'meal-dinner',
+            time: fmt(dinnerTime),
+            type: 'meal',
+            title: 'Dinner',
+            description: dMeal.desc,
+            calories: dMeal.cal
+        })
+    } else {
+        // Dinner serves as post-workout
+        schedule.push({
+            id: 'meal-dinner',
+            time: fmt(dinnerTime < workoutEnd ? addMinutes(workoutEnd, 30) : dinnerTime), // Ensure it's after workout
+            type: 'meal',
+            title: 'Dinner (Recovery)',
+            description: dMeal.desc,
+            calories: dMeal.cal
+        })
+    }
+
+    // Hydration Reminders (Slot into gaps)
+    const midMorning = addMinutes(breakfastTime, 120) // 2h after breakfast
+    if (Math.abs(midMorning.getTime() - workoutDate.getTime()) > 3600000) { // Don't clash with workout
+        schedule.push({
+            id: 'hydro-mid',
+            time: fmt(midMorning),
+            type: 'hydration',
+            title: 'Hydration',
+            description: 'Drink 500ml water.'
+        })
+    }
+
+    // Sleep
     schedule.push({
-        id: 'sleep-1',
-        time: "23:00",
+        id: 'bio-sleep',
+        time: fmt(bedDate),
         type: 'sleep',
-        title: 'System Shutdown',
-        description: 'No screens. Dark room. ensure 7-8h sleep for muscle recovery.'
+        title: 'Sleep Protocol',
+        description: 'Screens off. Dark room.'
     })
 
     return schedule.sort((a, b) => a.time.localeCompare(b.time))

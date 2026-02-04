@@ -11,6 +11,7 @@ import LiveSchedule from '@/components/dashboard/LiveSchedule'
 import MealCard from '@/components/dashboard/MealCard'
 import WorkoutCard from '@/components/dashboard/WorkoutCard'
 import MobileNav from '@/components/dashboard/MobileNav'
+import ScheduleSettingsModal from '@/components/dashboard/ScheduleSettingsModal'
 import { generateDailySchedule, getFullDailyPlan, ScheduleItem } from '@/lib/schedule-engine'
 import { getRecommendedWorkout } from '@/lib/exercise-db'
 import NutritionDashboard from '@/components/NutritionDashboard'
@@ -79,6 +80,22 @@ export default function Dashboard() {
   const [dailySchedule, setDailySchedule] = useState<ScheduleItem[]>([])
   const [detailedPlan, setDetailedPlan] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [schedulePrefs, setSchedulePrefs] = useState<any>(null)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
+  // Load prefs on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('schedulePrefs')
+      if (stored) setSchedulePrefs(JSON.parse(stored))
+    }
+  }, [])
+
+  useEffect(() => {
+    if (user) {
+      setDailySchedule(generateDailySchedule(user as any, schedulePrefs))
+    }
+  }, [user, schedulePrefs])
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -103,7 +120,7 @@ export default function Dashboard() {
         }
 
         setUser(userData)
-        setDailySchedule(generateDailySchedule(userData as any))
+        // Schedule is updated in separate effect dependency on user/prefs
 
         const staticPlan = getFullDailyPlan(userData as any)
 
@@ -127,6 +144,11 @@ export default function Dashboard() {
     }
     fetchUserData()
   }, [router])
+
+  const handleSavePrefs = (newPrefs: any) => {
+    setSchedulePrefs(newPrefs)
+    localStorage.setItem('schedulePrefs', JSON.stringify(newPrefs))
+  }
 
   if (loading) return <DashboardSkeleton />
   if (!user) return null
@@ -192,7 +214,7 @@ export default function Dashboard() {
 
               {/* ROW 2: LIVE SCHEDULE + WORKOUT PLAN */}
               <StaggerItem className="col-span-12 lg:col-span-8 min-h-[500px]">
-                <LiveSchedule schedule={dailySchedule} />
+                <LiveSchedule schedule={dailySchedule} onOpenSettings={() => setIsSettingsOpen(true)} />
               </StaggerItem>
 
               <StaggerItem className="col-span-12 lg:col-span-4 min-h-[500px] flex flex-col gap-8">
@@ -237,6 +259,12 @@ export default function Dashboard() {
           </FadeIn>
         </main>
       </div>
+      <ScheduleSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onSave={handleSavePrefs}
+        currentPrefs={schedulePrefs}
+      />
     </PageTransition>
   )
 }

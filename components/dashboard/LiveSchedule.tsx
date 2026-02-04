@@ -7,6 +7,7 @@ import { ScheduleItem } from '@/lib/schedule-engine'
 
 interface LiveScheduleProps {
     schedule: ScheduleItem[]
+    onOpenSettings?: () => void
 }
 
 const getIcon = (type: string) => {
@@ -19,7 +20,7 @@ const getIcon = (type: string) => {
     }
 }
 
-export default function LiveSchedule({ schedule }: LiveScheduleProps) {
+export default function LiveSchedule({ schedule, onOpenSettings }: LiveScheduleProps) {
     const [now, setNow] = useState(new Date())
     const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set())
     const scrollRef = useRef<HTMLDivElement>(null)
@@ -48,6 +49,11 @@ export default function LiveSchedule({ schedule }: LiveScheduleProps) {
                 <div>
                     <h3 className="text-2xl font-black font-outfit uppercase italic text-white flex items-center gap-3">
                         Timeline
+                        {onOpenSettings && (
+                            <button onClick={onOpenSettings} className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors">
+                                <Clock size={14} />
+                            </button>
+                        )}
                         <span className="flex h-2 w-2 relative">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
@@ -75,10 +81,10 @@ export default function LiveSchedule({ schedule }: LiveScheduleProps) {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
                             className={`group relative rounded-3xl p-4 transition-all duration-300 border ${isNext
-                                    ? 'bg-gradient-to-r from-purple-900/20 to-transparent border-purple-500/50 shadow-[0_0_30px_rgba(147,51,234,0.1)]'
-                                    : isCompleted
-                                        ? 'bg-zinc-900/30 border-white/5 opacity-60'
-                                        : 'bg-white/5 border-white/5 hover:border-white/10'
+                                ? 'bg-gradient-to-r from-purple-900/20 to-transparent border-purple-500/50 shadow-[0_0_30px_rgba(147,51,234,0.1)]'
+                                : isCompleted
+                                    ? 'bg-zinc-900/30 border-white/5 opacity-60'
+                                    : 'bg-white/5 border-white/5 hover:border-white/10'
                                 }`}
                         >
                             {/* Connector Line */}
@@ -90,10 +96,10 @@ export default function LiveSchedule({ schedule }: LiveScheduleProps) {
                                 {/* Time & Icon Column */}
                                 <div className="flex flex-col items-center gap-2">
                                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all ${isNext
-                                            ? 'bg-purple-600 border-purple-400 text-white shadow-[0_0_15px_#9333ea]'
-                                            : isCompleted
-                                                ? 'bg-emerald-900/20 border-emerald-500/20 text-emerald-500'
-                                                : 'bg-black border-white/10 text-zinc-500'
+                                        ? 'bg-purple-600 border-purple-400 text-white shadow-[0_0_15px_#9333ea]'
+                                        : isCompleted
+                                            ? 'bg-emerald-900/20 border-emerald-500/20 text-emerald-500'
+                                            : 'bg-black border-white/10 text-zinc-500'
                                         }`}>
                                         {isCompleted ? <Check size={20} className="stroke-[3]" /> : getIcon(item.type)}
                                     </div>
@@ -121,8 +127,8 @@ export default function LiveSchedule({ schedule }: LiveScheduleProps) {
                                         <button
                                             onClick={() => toggleTask(item.id)}
                                             className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all ${isCompleted
-                                                    ? 'bg-emerald-500 border-emerald-500 text-black'
-                                                    : 'border-white/20 hover:border-white text-transparent hover:bg-white/10'
+                                                ? 'bg-emerald-500 border-emerald-500 text-black'
+                                                : 'border-white/20 hover:border-white text-transparent hover:bg-white/10'
                                                 }`}
                                         >
                                             <Check size={14} className="stroke-[4]" />
