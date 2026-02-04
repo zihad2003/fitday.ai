@@ -148,91 +148,242 @@ export default function Home() {
             transition={{ duration: 1.2, delay: 0.2 }}
             className="relative aspect-square flex items-center justify-center"
           >
-            {/* Ambient Background Pulse */}
+            {/* Ambient Background Glow */}
             <motion.div
               animate={{
-                scale: [1, 1.2, 1],
-                opacity: [0.1, 0.2, 0.1]
+                scale: [1, 1.3, 1],
+                opacity: [0.15, 0.25, 0.15]
               }}
               transition={{
-                duration: 4,
+                duration: 5,
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
-              className="absolute w-full h-full bg-purple-600/30 rounded-full blur-[120px]"
+              className="absolute w-full h-full bg-gradient-to-br from-purple-600/30 via-cyan-500/20 to-indigo-600/30 rounded-full blur-[140px]"
             />
 
-            {/* Main Fitness Visual (Health Core) */}
-            <div className="relative w-[80%] h-[80%] flex items-center justify-center">
-              <motion.div
-                animate={{
-                  y: [0, -20, 0],
-                  scale: [1, 1.05, 1]
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-                className="relative z-10 w-full h-full"
-              >
-                <img
-                  src="/health-core.png"
-                  alt="FitDay AI Health Core"
-                  className="w-full h-full object-contain drop-shadow-[0_0_50px_rgba(147,51,234,0.4)]"
-                  style={{ mixBlendMode: 'screen' }}
+            {/* Main Fitness Visualization */}
+            <div className="relative w-[85%] h-[85%] flex items-center justify-center">
+
+              {/* Activity Rings (Apple Watch Style) */}
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 400">
+                {/* Outer Ring - Move */}
+                <motion.circle
+                  cx="200"
+                  cy="200"
+                  r="160"
+                  fill="none"
+                  stroke="rgba(147, 51, 234, 0.1)"
+                  strokeWidth="20"
+                  strokeLinecap="round"
                 />
+                <motion.circle
+                  cx="200"
+                  cy="200"
+                  r="160"
+                  fill="none"
+                  stroke="url(#gradient-purple)"
+                  strokeWidth="20"
+                  strokeLinecap="round"
+                  strokeDasharray="1005"
+                  initial={{ strokeDashoffset: 1005 }}
+                  animate={{ strokeDashoffset: 200 }}
+                  transition={{ duration: 2, delay: 0.5, ease: "easeOut" }}
+                />
+
+                {/* Middle Ring - Exercise */}
+                <motion.circle
+                  cx="200"
+                  cy="200"
+                  r="130"
+                  fill="none"
+                  stroke="rgba(6, 182, 212, 0.1)"
+                  strokeWidth="20"
+                  strokeLinecap="round"
+                />
+                <motion.circle
+                  cx="200"
+                  cy="200"
+                  r="130"
+                  fill="none"
+                  stroke="url(#gradient-cyan)"
+                  strokeWidth="20"
+                  strokeLinecap="round"
+                  strokeDasharray="817"
+                  initial={{ strokeDashoffset: 817 }}
+                  animate={{ strokeDashoffset: 150 }}
+                  transition={{ duration: 2, delay: 0.7, ease: "easeOut" }}
+                />
+
+                {/* Inner Ring - Stand */}
+                <motion.circle
+                  cx="200"
+                  cy="200"
+                  r="100"
+                  fill="none"
+                  stroke="rgba(236, 72, 153, 0.1)"
+                  strokeWidth="20"
+                  strokeLinecap="round"
+                />
+                <motion.circle
+                  cx="200"
+                  cy="200"
+                  r="100"
+                  fill="none"
+                  stroke="url(#gradient-pink)"
+                  strokeWidth="20"
+                  strokeLinecap="round"
+                  strokeDasharray="628"
+                  initial={{ strokeDashoffset: 628 }}
+                  animate={{ strokeDashoffset: 100 }}
+                  transition={{ duration: 2, delay: 0.9, ease: "easeOut" }}
+                />
+
+                {/* Gradients */}
+                <defs>
+                  <linearGradient id="gradient-purple" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#a855f7" />
+                    <stop offset="100%" stopColor="#6366f1" />
+                  </linearGradient>
+                  <linearGradient id="gradient-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#06b6d4" />
+                    <stop offset="100%" stopColor="#3b82f6" />
+                  </linearGradient>
+                  <linearGradient id="gradient-pink" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ec4899" />
+                    <stop offset="100%" stopColor="#f43f5e" />
+                  </linearGradient>
+                </defs>
+              </svg>
+
+              {/* Center Stats Display */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 1.2 }}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                <div className="text-center">
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    className="text-6xl font-black font-outfit italic mb-2 text-transparent bg-clip-text bg-gradient-to-br from-purple-400 via-cyan-400 to-pink-400"
+                  >
+                    2.2K
+                  </motion.div>
+                  <div className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">
+                    Daily Cal
+                  </div>
+                </div>
               </motion.div>
 
-              {/* Floating Data Icons */}
+              {/* Floating Metric Cards */}
               {[
-                { icon: "🥗", label: "Nutrient", delay: 0, pos: "top-0 left-0" },
-                { icon: "⚡", label: "Energy", delay: 1, pos: "top-20 right-0" },
-                { icon: "❤️", label: "Vitality", delay: 2, pos: "bottom-10 left-20" },
-                { icon: "🔥", label: "Metabolism", delay: 3, pos: "bottom-0 right-10" }
+                { icon: "💪", label: "Strength", value: "85%", color: "purple", delay: 0.3, pos: "top-0 left-0" },
+                { icon: "🏃", label: "Cardio", value: "12K", color: "cyan", delay: 0.5, pos: "top-0 right-0" },
+                { icon: "🔥", label: "Burn", value: "450", color: "pink", delay: 0.7, pos: "bottom-0 left-0" },
+                { icon: "⚡", label: "Energy", value: "92%", color: "indigo", delay: 0.9, pos: "bottom-0 right-0" }
               ].map((item, idx) => (
                 <motion.div
                   key={idx}
-                  initial={{ opacity: 0 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{
                     opacity: 1,
-                    y: [0, -15, 0],
-                    x: [0, 10, 0]
+                    y: [0, -10, 0],
                   }}
                   transition={{
-                    duration: 4,
-                    delay: item.delay,
-                    repeat: Infinity,
-                    ease: "easeInOut"
+                    opacity: { duration: 0.6, delay: item.delay },
+                    y: {
+                      duration: 3,
+                      delay: item.delay,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }
                   }}
-                  className={`absolute ${item.pos} z-20 flex flex-col items-center gap-2`}
+                  className={`absolute ${item.pos} z-20`}
                 >
-                  <div className="w-14 h-14 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center justify-center text-2xl shadow-xl">
-                    {item.icon}
+                  <div className="glass-card p-4 rounded-2xl min-w-[100px] hover:scale-110 transition-transform cursor-default">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">{item.icon}</span>
+                      <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500">
+                        {item.label}
+                      </span>
+                    </div>
+                    <div className={`text-2xl font-black italic font-outfit text-${item.color}-400`}>
+                      {item.value}
+                    </div>
                   </div>
-                  <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500 bg-black/50 px-2 py-1 rounded-full border border-white/5">
-                    {item.label}
-                  </span>
                 </motion.div>
               ))}
 
-              {/* Heartbeat Pulse Line (Animated SVG) */}
-              <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 400 400">
+              {/* Animated Heartbeat Line */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 400">
                 <motion.path
-                  d="M0,200 L100,200 L120,150 L140,250 L160,200 L400,200"
+                  d="M50,200 L150,200 L165,170 L175,230 L185,200 L350,200"
                   fill="none"
-                  stroke="rgba(147, 51, 234, 0.5)"
-                  strokeWidth="2"
+                  stroke="rgba(147, 51, 234, 0.3)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
                   initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 1 }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  animate={{
+                    pathLength: [0, 1, 1, 0],
+                    opacity: [0, 1, 1, 0]
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    times: [0, 0.3, 0.7, 1]
+                  }}
                 />
               </svg>
+
+              {/* Pulse Dots */}
+              {[0, 1, 2, 3, 4].map((i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-2 h-2 bg-purple-500 rounded-full"
+                  style={{
+                    top: '50%',
+                    left: '50%',
+                    marginTop: '-4px',
+                    marginLeft: '-4px'
+                  }}
+                  animate={{
+                    scale: [0, 2, 2, 0],
+                    opacity: [0, 1, 0, 0],
+                    x: [0, Math.cos(i * 72 * Math.PI / 180) * 150],
+                    y: [0, Math.sin(i * 72 * Math.PI / 180) * 150],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    delay: i * 0.6,
+                    ease: "easeOut"
+                  }}
+                />
+              ))}
             </div>
 
-            {/* Outer Decorative Circles */}
-            <div className="absolute inset-0 border border-white/5 rounded-full animate-spin-slow opacity-20" />
-            <div className="absolute inset-[15%] border border-purple-500/10 rounded-full animate-reverse-spin-slow opacity-20" />
+            {/* Rotating Outer Ring */}
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-0 border border-white/5 rounded-full"
+              style={{
+                background: 'conic-gradient(from 0deg, transparent 0deg, rgba(147, 51, 234, 0.1) 90deg, transparent 180deg)'
+              }}
+            />
+
+            {/* Counter Rotating Inner Ring */}
+            <motion.div
+              animate={{ rotate: -360 }}
+              transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-[10%] border border-cyan-500/10 rounded-full"
+              style={{
+                background: 'conic-gradient(from 0deg, transparent 0deg, rgba(6, 182, 212, 0.1) 120deg, transparent 240deg)'
+              }}
+            />
           </motion.div>
         </section>
 
