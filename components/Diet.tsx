@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { getUserSession } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Magnetic, Reveal } from './animations/AdvancedAnimations'
 
 interface Meal {
   id: number
@@ -151,7 +153,12 @@ export default function Diet() {
   return (
     <div className="min-h-screen bg-slate-950 text-white p-4 pb-24 font-sans">
       {/* Futuristic Header */}
-      <div className="glass-panel p-6 rounded-3xl mb-8 relative overflow-hidden border border-white/10 bg-white/5 backdrop-blur-md">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="glass-panel p-6 rounded-3xl mb-8 relative overflow-hidden border border-white/10 bg-white/5 backdrop-blur-md"
+      >
         <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-cyan-600/10 to-transparent w-full"></div>
         <div className="flex justify-between items-center relative z-10">
           <h1 className="text-2xl font-black tracking-tighter italic uppercase">
@@ -163,15 +170,17 @@ export default function Diet() {
         </div>
 
         <div className="mt-6 h-2 bg-slate-900 rounded-full overflow-hidden relative z-10 border border-white/5">
-          <div
-            className="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 shadow-[0_0_15px_#06b6d4] transition-all duration-1000"
-            style={{ width: `${progress}%` }}
-          ></div>
+          <motion.div
+            className="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 shadow-[0_0_15px_#06b6d4]"
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+          ></motion.div>
         </div>
         <p className="text-right text-[10px] text-slate-500 mt-2 font-mono uppercase tracking-widest">
           METABOLIC SYNC: <span className="text-cyan-400">{progress}%</span>
         </p>
-      </div>
+      </motion.div>
 
       {loading && (
         <div className="flex flex-col items-center justify-center py-10 gap-3">
@@ -187,69 +196,118 @@ export default function Diet() {
           if (items.length === 0 && !loading) return null
 
           return (
-            <div key={type} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <motion.div
+              key={type}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            >
               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-3">
                 <span className="w-8 h-[1px] bg-slate-800"></span>
                 {type}
               </h3>
               <div className="grid gap-3">
-                {items.map((meal) => {
+                {items.map((meal, index) => {
                   const completed = isCompleted(meal.completed)
                   return (
-                    <div
+                    <motion.div
                       key={meal.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{
+                        duration: 0.4,
+                        delay: index * 0.1,
+                        ease: [0.22, 1, 0.36, 1]
+                      }}
+                      whileHover={{ scale: 1.02, x: 4 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => handleCheckClick(meal)}
-                      className={`p-5 rounded-2xl border transition-all duration-300 flex items-center gap-4 group ${completed
+                      className={`p-5 rounded-2xl border transition-all duration-300 flex items-center gap-4 group cursor-pointer ${completed
                         ? 'bg-cyan-950/20 border-cyan-500/20 opacity-60'
                         : 'bg-slate-900/40 border-white/5 hover:border-cyan-500/40 hover:bg-slate-900/80'
                         }`}
                     >
-                      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${completed
-                        ? 'bg-cyan-500 border-cyan-500 shadow-[0_0_10px_#06b6d4]'
-                        : 'border-slate-700 group-hover:border-cyan-500/50'
-                        }`}>
-                        {completed && <span className="text-black font-bold text-xs">✓</span>}
-                      </div>
+                      <motion.div
+                        className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${completed
+                          ? 'bg-cyan-500 border-cyan-500 shadow-[0_0_10px_#06b6d4]'
+                          : 'border-slate-700 group-hover:border-cyan-500/50'
+                          }`}
+                        whileHover={{ rotate: completed ? 0 : 180 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {completed && (
+                          <motion.span
+                            className="text-black font-bold text-xs"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+                          >
+                            ✓
+                          </motion.span>
+                        )}
+                      </motion.div>
                       <div className="flex-1">
                         <p className={`font-bold text-sm transition-all ${completed ? 'text-slate-500 line-through' : 'text-slate-100'}`}>
                           {meal.food}
                         </p>
                         <p className="text-[10px] font-mono text-cyan-500/70 mt-1">{meal.calories} KCAL</p>
                       </div>
-                    </div>
+                    </motion.div>
                   )
                 })}
               </div>
-            </div>
+            </motion.div>
           )
         })}
       </div>
 
       {/* Confirmation Modal */}
-      {confirmMeal && (
-        <div className="fixed inset-0 bg-slate-950/90 z-[100] flex items-center justify-center p-6 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-slate-900 border border-white/10 rounded-3xl p-8 w-full max-w-sm shadow-2xl">
-            <h3 className="text-xl font-bold text-white text-center mb-2">Confirm Log</h3>
-            <p className="text-slate-400 text-sm text-center mb-8">
-              Mark <span className="text-cyan-400 font-bold">"{confirmMeal.food}"</span> as consumed?
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmMeal(null)}
-                className="flex-1 py-4 bg-slate-800 rounded-xl font-bold text-slate-400 hover:bg-slate-700 transition-colors"
-              >
-                BACK
-              </button>
-              <button
-                onClick={confirmToggle}
-                className="flex-1 py-4 bg-cyan-600 rounded-xl font-bold text-white hover:bg-cyan-500 shadow-[0_0_20px_rgba(8,145,178,0.4)] transition-all"
-              >
-                CONFIRM
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {confirmMeal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-slate-950/90 z-[100] flex items-center justify-center p-6 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="bg-slate-900 border border-white/10 rounded-3xl p-8 w-full max-w-sm shadow-2xl"
+            >
+              <h3 className="text-xl font-bold text-white text-center mb-2">Confirm Log</h3>
+              <p className="text-slate-400 text-sm text-center mb-8">
+                Mark <span className="text-cyan-400 font-bold">"{confirmMeal.food}"</span> as consumed?
+              </p>
+              <div className="flex gap-3">
+                <Magnetic strength={0.2}>
+                  <motion.button
+                    onClick={() => setConfirmMeal(null)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex-1 py-4 bg-slate-800 rounded-xl font-bold text-slate-400 hover:bg-slate-700 transition-colors"
+                  >
+                    BACK
+                  </motion.button>
+                </Magnetic>
+                <Magnetic strength={0.2}>
+                  <motion.button
+                    onClick={confirmToggle}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex-1 py-4 bg-cyan-600 rounded-xl font-bold text-white hover:bg-cyan-500 shadow-[0_0_20px_rgba(8,145,178,0.4)] transition-all"
+                  >
+                    CONFIRM
+                  </motion.button>
+                </Magnetic>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "dev:debug": "next dev -p 3000 --hostname 127.0.0.1",
+    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=8192 next dev",
+    "dev:debug": "cross-env NODE_OPTIONS=--max-old-space-size=8192 next dev -p 3000 --hostname 127.0.0.1",
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 next build",
     "pages:build": "npx @cloudflare/next-on-pages",
     "deploy": "npm run pages:build && wrangler pages deploy .vercel/output/static",

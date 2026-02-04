@@ -191,10 +191,11 @@ async function cacheFirstStrategy(request, cacheName) {
 async function staleWhileRevalidateStrategy(request, cacheName) {
   const cachedResponse = await caches.match(request)
 
-  const fetchPromise = fetch(request).then((networkResponse) => {
+  const fetchPromise = fetch(request).then(async (networkResponse) => {
     if (networkResponse.ok) {
-      const cache = caches.open(cacheName)
-      cache.then((c) => c.put(request, networkResponse.clone()))
+      const responseToCache = networkResponse.clone()
+      const cache = await caches.open(cacheName)
+      await cache.put(request, responseToCache)
     }
     return networkResponse
   }).catch(() => cachedResponse)

@@ -57,7 +57,7 @@ export default function ProfilePage() {
       try {
         const meRes = await fetch('/api/auth/me')
         if (!meRes.ok) { router.push('/login'); return }
-        const sessionJson = (await meRes.json()) as { success: boolean, data: UserProfile }
+        const sessionJson: any = await meRes.json()
 
         if (sessionJson.success) {
           const userData = sessionJson.data
@@ -99,7 +99,7 @@ export default function ProfilePage() {
         })
       })
 
-      const json = (await res.json()) as ApiResponse<UserProfile>
+      const json: any = await res.json()
       if (json.success) {
         setUser(json.data)
         setIsEditing(false)

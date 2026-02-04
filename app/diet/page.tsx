@@ -85,13 +85,13 @@ export default function DietPage() {
     setLoading(true)
     try {
       const userRes = await fetch(`/api/users/${uid}`)
-      const userJson = (await userRes.json()) as ApiResponse<any>
+      const userJson: any = await userRes.json()
       if (userJson.success && userJson.data.target_calories) {
         setTargetCalories(userJson.data.target_calories || 2200)
       }
 
       const res = await fetch(`/api/meals?user_id=${uid}&date=${formattedDate}`)
-      const json = (await res.json()) as ApiResponse<Meal[]>
+      const json: any = await res.json()
 
       if (json.success && Array.isArray(json.data)) {
         setMeals(json.data)
@@ -116,7 +116,7 @@ export default function DietPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId })
       })
-      const json = await res.json() as { success: boolean; data: any }
+      const json: any = await res.json()
 
       if (json.success) {
         // Here you would typically save these to the database

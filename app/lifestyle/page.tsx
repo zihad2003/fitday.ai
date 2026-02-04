@@ -57,7 +57,7 @@ export default function LifestylePage() {
     setLoading(true)
     try {
       const res = await fetch(`/api/ai/suggestions?user_id=${uid}&type=lifestyle`)
-      const json = await res.json() as { success?: boolean; data?: LifestyleData }
+      const json: any = await res.json()
 
       if (json.success && json.data) {
         setLifestyleData(json.data)

@@ -31,7 +31,7 @@ export default function Login() {
         body: JSON.stringify(formData)
       })
 
-      const data = (await res.json()) as LoginResponse
+      const data: any = await res.json()
 
       if (data.success) {
         router.push('/dashboard')

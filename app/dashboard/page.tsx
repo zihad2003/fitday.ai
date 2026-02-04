@@ -86,7 +86,7 @@ export default function Dashboard() {
           router.push('/login')
           return
         }
-        const sessionJson = (await meRes.json()) as { success: boolean, data: UserProfile }
+        const sessionJson: any = await meRes.json()
         if (!sessionJson.success) {
           router.push('/login')
           return
@@ -96,7 +96,7 @@ export default function Dashboard() {
 
         const res = await fetch(`/api/users/${userData.id}`)
         if (res.ok) {
-          const json = (await res.json()) as ApiResponse<UserProfile>
+          const json: any = await res.json()
           if (json.success) userData = json.data
         }
 

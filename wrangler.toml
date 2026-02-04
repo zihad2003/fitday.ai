@@ -3,9 +3,10 @@ compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
 [[d1_databases]]
-binding = "FITNESS_DB"
+binding = "FITNESS_DB" # This might be slightly different in your file, don't change it
 database_name = "fitday-ai-db"
 database_id = "42dfee08-f14f-4e08-938d-6fdebab4700e"
+migrations_dir = "db/migrations"  # <--- ADD THIS LINE
 
 # For local development
 [env.development]

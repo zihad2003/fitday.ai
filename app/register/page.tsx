@@ -63,7 +63,7 @@ export default function Register() {
         body: JSON.stringify(payload)
       })
 
-      const data = await res.json() as RegisterResponse
+      const data: any = await res.json()
 
       if (data.success) {
         // Server sets cookie automatically

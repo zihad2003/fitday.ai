@@ -146,47 +146,124 @@ export default function Home() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.2, delay: 0.2 }}
-            className="relative aspect-square flex items-center justify-center opacity-80"
+            className="relative aspect-square flex items-center justify-center"
           >
-            {/* Core Glow */}
-            <div className="absolute w-[60%] h-[60%] bg-purple-600/20 rounded-full blur-[100px] animate-pulse" />
+            {/* Ambient Background Pulse */}
+            <motion.div
+              animate={{
+                scale: [1, 1.2, 1],
+                opacity: [0.1, 0.2, 0.1]
+              }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="absolute w-full h-full bg-purple-600/30 rounded-full blur-[120px]"
+            />
 
-            {/* Orbital Rings CSS Animation */}
-            <div className="relative w-[300px] h-[300px] md:w-[400px] md:h-[400px] flex items-center justify-center">
-              {/* Ring 1 */}
-              <div className="absolute inset-0 border border-purple-500/20 rounded-full animate-[spin_10s_linear_infinite]"
-                style={{ borderStyle: 'dashed', borderWidth: '1px' }} />
+            {/* Main Fitness Visual (Health Core) */}
+            <div className="relative w-[80%] h-[80%] flex items-center justify-center">
+              <motion.div
+                animate={{
+                  y: [0, -20, 0],
+                  scale: [1, 1.05, 1]
+                }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+                className="relative z-10 w-full h-full"
+              >
+                <img
+                  src="/health-core.png"
+                  alt="FitDay AI Health Core"
+                  className="w-full h-full object-contain drop-shadow-[0_0_50px_rgba(147,51,234,0.4)]"
+                  style={{ mixBlendMode: 'screen' }}
+                />
+              </motion.div>
 
-              {/* Ring 2 */}
-              <div className="absolute inset-[10%] border border-cyan-500/10 rounded-full animate-[spin_15s_linear_infinite_reverse]"
-                style={{ borderTopColor: 'transparent', borderLeftColor: 'transparent' }} />
+              {/* Floating Data Icons */}
+              {[
+                { icon: "🥗", label: "Nutrient", delay: 0, pos: "top-0 left-0" },
+                { icon: "⚡", label: "Energy", delay: 1, pos: "top-20 right-0" },
+                { icon: "❤️", label: "Vitality", delay: 2, pos: "bottom-10 left-20" },
+                { icon: "🔥", label: "Metabolism", delay: 3, pos: "bottom-0 right-10" }
+              ].map((item, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0 }}
+                  animate={{
+                    opacity: 1,
+                    y: [0, -15, 0],
+                    x: [0, 10, 0]
+                  }}
+                  transition={{
+                    duration: 4,
+                    delay: item.delay,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                  className={`absolute ${item.pos} z-20 flex flex-col items-center gap-2`}
+                >
+                  <div className="w-14 h-14 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center justify-center text-2xl shadow-xl">
+                    {item.icon}
+                  </div>
+                  <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500 bg-black/50 px-2 py-1 rounded-full border border-white/5">
+                    {item.label}
+                  </span>
+                </motion.div>
+              ))}
 
-              {/* Ring 3 */}
-              <div className="absolute inset-[20%] border border-white/10 rounded-full animate-[spin_20s_linear_infinite]" />
+              {/* Heartbeat Pulse Line (Animated SVG) */}
+              <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 400 400">
+                <motion.path
+                  d="M0,200 L100,200 L120,150 L140,250 L160,200 L400,200"
+                  fill="none"
+                  stroke="rgba(147, 51, 234, 0.5)"
+                  strokeWidth="2"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                />
+              </svg>
+            </div>
 
-              {/* Central Hologram Interface */}
-              <div className="absolute inset-[30%] bg-zinc-900/50 backdrop-blur-md border border-white/5 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(168,85,247,0.2)]">
-                <div className="w-[60%] h-[60%] bg-purple-500 rounded-full relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-purple-800 to-cyan-400 opacity-60 mix-blend-overlay animate-[pulse_4s_ease-in-out_infinite]" />
+            {/* Outer Decorative Circles */}
+            <div className="absolute inset-0 border border-white/5 rounded-full animate-spin-slow opacity-20" />
+            <div className="absolute inset-[15%] border border-purple-500/10 rounded-full animate-reverse-spin-slow opacity-20" />
+          </motion.div>
+        </section>
 
-                  {/* Data Lines */}
-                  <div className="absolute inset-0 flex flex-col justify-between p-2 opacity-30">
-                    <div className="w-full h-[1px] bg-white/50" />
-                    <div className="w-full h-[1px] bg-white/50" />
-                    <div className="w-full h-[1px] bg-white/50" />
+        {/* STATS SECTION */}
+        <section className="relative py-24 border-y border-white/5 bg-white/[0.01] overflow-hidden">
+          <div className="absolute inset-0 bg-noise opacity-[0.02]" />
+          <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12 relative z-10">
+            {[
+              { label: "Active Biometrics", val: "10K+", icon: "🔋", color: "text-purple-500" },
+              { label: "Local Food Logs", val: "2.5M+", icon: "🍱", color: "text-cyan-500" },
+              { label: "Neural Workouts", val: "800+", icon: "🦾", color: "text-indigo-500" },
+              { label: "AI Prediction", val: "99.2%", icon: "📉", color: "text-emerald-500" }
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.8 }}
+                className="group cursor-default"
+              >
+                <div className="flex flex-col items-center">
+                  <div className={`text-4xl font-black font-outfit italic ${stat.color} mb-3 tracking-tighter group-hover:scale-110 transition-transform`}>{stat.val}</div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg opacity-40">{stat.icon}</span>
+                    <div className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em]">{stat.label}</div>
                   </div>
                 </div>
-              </div>
-
-              {/* Satellite Particles */}
-              <div className="absolute w-full h-full animate-[spin_8s_linear_infinite]">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-cyan-400 rounded-full shadow-[0_0_15px_#22d3ee]" />
-              </div>
-              <div className="absolute w-[80%] h-[80%] animate-[spin_12s_linear_infinite_reverse]">
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-purple-400 rounded-full shadow-[0_0_15px_#c084fc]" />
-              </div>
-            </div>
-          </motion.div>
+              </motion.div>
+            ))}
+          </div>
         </section>
 
         {/* Feature Bento Grid */}
@@ -197,12 +274,21 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-12 gap-6 auto-rows-[300px]">
-            <GlassCard className="md:col-span-8 p-12 flex flex-col justify-end overflow-hidden" delay={0.1}>
+            <GlassCard className="md:col-span-8 p-12 flex flex-col justify-end overflow-hidden group" delay={0.1}>
               <div className="absolute top-0 right-0 p-12 opacity-5"><span className="text-[200px] font-black italic">BN</span></div>
-              <h3 className="text-4xl font-black font-outfit italic text-white mb-4 uppercase">Localized Nutrition</h3>
-              <p className="text-zinc-400 max-w-sm mb-6 uppercase text-[10px] font-black tracking-widest leading-loose">Accurate calorie counts for Bangladeshi cuisine. Rice, Lentils, Fish, and other local favorites.</p>
-              <div className="flex gap-2">
-                {['RICE', 'LENTIL', 'FISH'].map(t => <span key={t} className="px-3 py-1 bg-white/5 rounded-full text-[8px] font-black uppercase tracking-widest border border-white/5">{t}</span>)}
+              <motion.img
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                src="/app-mockup.png"
+                className="absolute top-0 right-[-10%] w-[60%] opacity-20 group-hover:opacity-60 transition-opacity duration-700 pointer-events-none drop-shadow-2xl"
+                style={{ transform: 'rotate(-5deg)', mixBlendMode: 'screen' }}
+              />
+              <div className="relative z-10">
+                <h3 className="text-4xl lg:text-5xl font-black font-outfit italic text-white mb-6 uppercase leading-none">Localized <br /><span className="text-purple-500">Nutrition</span></h3>
+                <p className="text-zinc-400 max-w-sm mb-8 uppercase text-[10px] font-black tracking-[0.3em] leading-loose">Accurate calorie counts for Bangladeshi cuisine. Engineered for the local palate.</p>
+                <div className="flex gap-4">
+                  {['RICE', 'LENTIL', 'FISH'].map(t => <span key={t} className="px-3 py-1 bg-white/5 rounded-full text-[8px] font-black uppercase tracking-widest border border-white/5">{t}</span>)}
+                </div>
               </div>
             </GlassCard>
 

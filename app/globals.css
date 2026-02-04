@@ -148,3 +148,7 @@
 .sidebar-mask {
   mask-image: radial-gradient(60px at 100% 50%, transparent 100%, black 100%);
 }
+@keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes reverse-spin-slow { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+.animate-spin-slow { animation: spin-slow 20s linear infinite; }
+.animate-reverse-spin-slow { animation: reverse-spin-slow 25s linear infinite; }
