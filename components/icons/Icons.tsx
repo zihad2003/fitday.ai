@@ -152,6 +152,22 @@ export const ChartIcon = ({ className = '', size = 24, color = 'currentColor', s
     </svg>
 )
 
+export const ShoppingCartIcon = ({ className = '', size = 24, color = 'currentColor', strokeWidth = 2 }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+        <circle cx="8" cy="21" r="1" stroke={color} strokeWidth={strokeWidth} />
+        <circle cx="19" cy="21" r="1" stroke={color} strokeWidth={strokeWidth} />
+        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+)
+
+export const DownloadIcon = ({ className = '', size = 24, color = 'currentColor', strokeWidth = 2 }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+        <polyline points="7 10 12 15 17 10" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+        <line x1="12" y1="15" x2="12" y2="3" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+)
+
 // Export all icons as a collection
 export const Icons = {
     Strength: StrengthIcon,
@@ -175,6 +191,8 @@ export const Icons = {
     Brain: BrainIcon,
     Rocket: RocketIcon,
     Chart: ChartIcon,
+    ShoppingCart: ShoppingCartIcon,
+    Download: DownloadIcon,
 }
 
 export default Icons

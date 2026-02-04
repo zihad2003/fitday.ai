@@ -3,6 +3,13 @@
  * Provides intelligent food suggestions based on meal type, macros, and preferences
  */
 
+interface Ingredient {
+    name: string
+    quantity: number
+    unit: string
+    category: 'Produce' | 'Meat & Fish' | 'Dairy & Eggs' | 'Pantry' | 'Spices' | 'Bakery' | 'Supplements' | 'Beverages' | 'Other'
+}
+
 interface FoodOption {
     name: string
     bengali_name?: string
@@ -16,6 +23,7 @@ interface FoodOption {
     meal_types: string[]
     tags: string[]
     availability: 'common' | 'seasonal' | 'specialty'
+    ingredients?: Ingredient[]
 }
 
 interface MealSuggestion {
@@ -46,6 +54,13 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['breakfast'],
         tags: ['traditional', 'protein-rich', 'filling'],
         availability: 'common',
+        ingredients: [
+            { name: 'Flour (Atta)', quantity: 100, unit: 'g', category: 'Pantry' },
+            { name: 'Eggs', quantity: 2, unit: 'pcs', category: 'Dairy & Eggs' },
+            { name: 'Oil', quantity: 10, unit: 'ml', category: 'Pantry' },
+            { name: 'Onion', quantity: 0.5, unit: 'pcs', category: 'Produce' },
+            { name: 'Green Chili', quantity: 1, unit: 'pcs', category: 'Produce' }
+        ]
     },
     {
         name: 'Oats with Banana and Nuts',
@@ -60,6 +75,12 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['breakfast', 'mid_morning_snack'],
         tags: ['healthy', 'quick', 'fiber-rich'],
         availability: 'common',
+        ingredients: [
+            { name: 'Oats', quantity: 50, unit: 'g', category: 'Pantry' },
+            { name: 'Banana', quantity: 1, unit: 'pcs', category: 'Produce' },
+            { name: 'Mixed Nuts', quantity: 30, unit: 'g', category: 'Pantry' },
+            { name: 'Milk', quantity: 200, unit: 'ml', category: 'Dairy & Eggs' }
+        ]
     },
     {
         name: 'Roti with Vegetable Curry',
@@ -74,6 +95,12 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['breakfast', 'lunch', 'dinner'],
         tags: ['traditional', 'vegetarian', 'fiber-rich'],
         availability: 'common',
+        ingredients: [
+            { name: 'Whole Wheat Flour', quantity: 80, unit: 'g', category: 'Pantry' },
+            { name: 'Mixed Vegetables', quantity: 200, unit: 'g', category: 'Produce' },
+            { name: 'Spices', quantity: 5, unit: 'g', category: 'Pantry' },
+            { name: 'Oil', quantity: 5, unit: 'ml', category: 'Pantry' }
+        ]
     },
 
     // Protein Sources
@@ -90,6 +117,12 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['lunch', 'dinner', 'post_workout'],
         tags: ['high-protein', 'lean', 'muscle-building'],
         availability: 'common',
+        ingredients: [
+            { name: 'Chicken Breast', quantity: 150, unit: 'g', category: 'Meat & Fish' },
+            { name: 'Lemon', quantity: 0.5, unit: 'pcs', category: 'Produce' },
+            { name: 'Spices', quantity: 5, unit: 'g', category: 'Pantry' },
+            { name: 'Olive Oil', quantity: 5, unit: 'ml', category: 'Pantry' }
+        ]
     },
     {
         name: 'Hilsa Fish Curry',
@@ -104,6 +137,12 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['lunch', 'dinner'],
         tags: ['traditional', 'omega-3', 'protein-rich'],
         availability: 'seasonal',
+        ingredients: [
+            { name: 'Hilsa Fish', quantity: 150, unit: 'g', category: 'Meat & Fish' },
+            { name: 'Mustard Oil', quantity: 10, unit: 'ml', category: 'Pantry' },
+            { name: 'Mustard Seeds', quantity: 5, unit: 'g', category: 'Pantry' },
+            { name: 'Green Chili', quantity: 2, unit: 'pcs', category: 'Produce' }
+        ]
     },
     {
         name: 'Boiled Eggs',
@@ -118,6 +157,9 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['breakfast', 'mid_morning_snack', 'post_workout'],
         tags: ['quick', 'protein-rich', 'convenient'],
         availability: 'common',
+        ingredients: [
+            { name: 'Eggs', quantity: 3, unit: 'pcs', category: 'Dairy & Eggs' }
+        ]
     },
     {
         name: 'Lentil Dal',
@@ -132,6 +174,12 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['lunch', 'dinner'],
         tags: ['vegetarian', 'protein-rich', 'traditional'],
         availability: 'common',
+        ingredients: [
+            { name: 'Red Lentils (Masoor Dal)', quantity: 80, unit: 'g', category: 'Pantry' },
+            { name: 'Garlic', quantity: 2, unit: 'cloves', category: 'Produce' },
+            { name: 'Onion', quantity: 0.5, unit: 'pcs', category: 'Produce' },
+            { name: 'Spices', quantity: 5, unit: 'g', category: 'Pantry' }
+        ]
     },
     {
         name: 'Paneer Curry',
@@ -146,6 +194,12 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['lunch', 'dinner'],
         tags: ['vegetarian', 'protein-rich', 'filling'],
         availability: 'common',
+        ingredients: [
+            { name: 'Paneer', quantity: 150, unit: 'g', category: 'Dairy & Eggs' },
+            { name: 'Tomato', quantity: 1, unit: 'pcs', category: 'Produce' },
+            { name: 'Cream', quantity: 20, unit: 'ml', category: 'Dairy & Eggs' },
+            { name: 'Spices', quantity: 5, unit: 'g', category: 'Pantry' }
+        ]
     },
 
     // Carb Sources
@@ -162,6 +216,9 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['lunch', 'dinner', 'post_workout'],
         tags: ['traditional', 'staple', 'energy'],
         availability: 'common',
+        ingredients: [
+            { name: 'Rice', quantity: 80, unit: 'g', category: 'Pantry' }
+        ]
     },
     {
         name: 'Brown Rice',
@@ -176,6 +233,9 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['lunch', 'dinner'],
         tags: ['healthy', 'fiber-rich', 'slow-digesting'],
         availability: 'common',
+        ingredients: [
+            { name: 'Brown Rice', quantity: 80, unit: 'g', category: 'Pantry' }
+        ]
     },
     {
         name: 'Sweet Potato',
@@ -190,6 +250,9 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['lunch', 'dinner', 'pre_workout'],
         tags: ['healthy', 'nutrient-dense', 'slow-digesting'],
         availability: 'common',
+        ingredients: [
+            { name: 'Sweet Potato', quantity: 200, unit: 'g', category: 'Produce' }
+        ]
     },
     {
         name: 'Whole Wheat Bread',
@@ -204,6 +267,9 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['breakfast', 'mid_morning_snack'],
         tags: ['quick', 'convenient', 'fiber-rich'],
         availability: 'common',
+        ingredients: [
+            { name: 'Whole Wheat Bread', quantity: 2, unit: 'slices', category: 'Bakery' }
+        ]
     },
 
     // Snacks
@@ -220,6 +286,12 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['mid_morning_snack', 'evening_snack'],
         tags: ['healthy', 'protein-rich', 'fiber-rich'],
         availability: 'common',
+        ingredients: [
+            { name: 'Chickpeas (Boiled)', quantity: 150, unit: 'g', category: 'Pantry' },
+            { name: 'Cucumber', quantity: 0.5, unit: 'pcs', category: 'Produce' },
+            { name: 'Tomato', quantity: 0.5, unit: 'pcs', category: 'Produce' },
+            { name: 'Lemon', quantity: 0.25, unit: 'pcs', category: 'Produce' }
+        ]
     },
     {
         name: 'Mixed Nuts',
@@ -234,6 +306,9 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['mid_morning_snack', 'evening_snack'],
         tags: ['quick', 'healthy-fats', 'convenient'],
         availability: 'common',
+        ingredients: [
+            { name: 'Mixed Nuts', quantity: 30, unit: 'g', category: 'Pantry' }
+        ]
     },
     {
         name: 'Banana with Peanut Butter',
@@ -248,6 +323,10 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['mid_morning_snack', 'pre_workout'],
         tags: ['quick', 'energy', 'convenient'],
         availability: 'common',
+        ingredients: [
+            { name: 'Banana', quantity: 1, unit: 'pcs', category: 'Produce' },
+            { name: 'Peanut Butter', quantity: 32, unit: 'g', category: 'Pantry' }
+        ]
     },
     {
         name: 'Yogurt with Fruits',
@@ -262,6 +341,10 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['breakfast', 'mid_morning_snack', 'evening_snack'],
         tags: ['healthy', 'probiotic', 'refreshing'],
         availability: 'common',
+        ingredients: [
+            { name: 'Yogurt', quantity: 200, unit: 'g', category: 'Dairy & Eggs' },
+            { name: 'Mixed Fruits', quantity: 100, unit: 'g', category: 'Produce' }
+        ]
     },
 
     // Vegetables
@@ -278,6 +361,11 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['lunch', 'dinner'],
         tags: ['vegetarian', 'fiber-rich', 'nutrient-dense'],
         availability: 'common',
+        ingredients: [
+            { name: 'Mixed Vegetables', quantity: 300, unit: 'g', category: 'Produce' },
+            { name: 'Spices', quantity: 5, unit: 'g', category: 'Pantry' },
+            { name: 'Oil', quantity: 5, unit: 'ml', category: 'Pantry' }
+        ]
     },
     {
         name: 'Spinach Bhaji',
@@ -292,6 +380,11 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['lunch', 'dinner'],
         tags: ['vegetarian', 'iron-rich', 'low-calorie'],
         availability: 'common',
+        ingredients: [
+            { name: 'Spinach', quantity: 200, unit: 'g', category: 'Produce' },
+            { name: 'Garlic', quantity: 2, unit: 'cloves', category: 'Produce' },
+            { name: 'Oil', quantity: 5, unit: 'ml', category: 'Pantry' }
+        ]
     },
 
     // Post-Workout Specific
@@ -308,6 +401,10 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['post_workout'],
         tags: ['quick', 'high-protein', 'fast-absorbing'],
         availability: 'common',
+        ingredients: [
+            { name: 'Whey Protein', quantity: 1, unit: 'scoop', category: 'Supplements' },
+            { name: 'Banana', quantity: 1, unit: 'pcs', category: 'Produce' }
+        ]
     },
     {
         name: 'Chicken Rice Bowl',
@@ -322,6 +419,11 @@ const FOOD_DATABASE: FoodOption[] = [
         meal_types: ['lunch', 'post_workout'],
         tags: ['high-protein', 'balanced', 'muscle-building'],
         availability: 'common',
+        ingredients: [
+            { name: 'Chicken Breast', quantity: 150, unit: 'g', category: 'Meat & Fish' },
+            { name: 'Rice', quantity: 80, unit: 'g', category: 'Pantry' },
+            { name: 'Cucumber', quantity: 0.5, unit: 'pcs', category: 'Produce' }
+        ]
     },
 ];
 
@@ -501,4 +603,4 @@ export function getFoodSuggestions(
 }
 
 // Export food database for other uses
-export { FOOD_DATABASE, type FoodOption, type MealSuggestion }
+export { FOOD_DATABASE, type FoodOption, type MealSuggestion, type Ingredient }

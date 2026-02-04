@@ -113,18 +113,19 @@ Transform FitDay AI into a complete, intelligent fitness companion that guides u
     - Optimized based on wake/sleep/workout times
     - Specific pre/post workout nutrition
 
-- [ ] **Shopping List Generation** (Next Step)
-  - Weekly grocery lists
-  - Quantity calculations
-  - Cost estimation
+- [x] **Shopping List Generation**
+  - [x] Weekly grocery lists from meal plan
+  - [x] Quantity aggregation & categorization
+  - [x] Cost estimation (BDT context)
 
 #### Files to Create
 - `lib/meal-generator.ts` - Core meal planning logic (Created)
 - `lib/meal-timing-scheduler.ts` - Smart timing logic (Created)
 - `lib/smart-food-suggester.ts` - Food suggestion engine (Created)
+- `lib/shopping-list-generator.ts` - Ingredient Aggregator (Created)
 - `app/api/plans/meal/generate/route.ts` - API endpoint (Created)
 - `components/NutritionDashboard.tsx` - Display meal plans (Created)
-- `components/ShoppingList.tsx` - Generated shopping lists
+- `components/ShoppingList.tsx` - Generated shopping lists (Created)
 
 ---
 
