@@ -9,6 +9,7 @@ export interface Exercise {
     movement_pattern?: 'push' | 'pull' | 'squat' | 'hinge' | 'lunge' | 'carry'
     description?: string
     gif_url?: string // Optional placeholder for future
+    instructions?: string[]
 }
 
 export const EXERCISE_DATABASE: Exercise[] = [
@@ -262,4 +263,28 @@ export function getIsolationExercise(muscle: string): Exercise | undefined {
     )
     if (candidates.length === 0) return undefined
     return candidates[Math.floor(Math.random() * candidates.length)]
+}
+
+export async function getRecommendedWorkout(goal: string): Promise<any> {
+    const isStrength = goal.includes('strength') || goal === 'gain_muscle'
+
+    // Pick 3-4 exercises
+    const main = getCompoundExercise(isStrength ? 'legs' : 'full_body', 'squat') || EXERCISE_DATABASE[0]
+    const push = getCompoundExercise('chest', 'push') || EXERCISE_DATABASE[1]
+    const pull = getCompoundExercise('back', 'pull') || EXERCISE_DATABASE[5]
+    const acc = getIsolationExercise('arms') || EXERCISE_DATABASE[8]
+
+    return {
+        title: isStrength ? "Strength Primer" : "Metabolic Conditioning",
+        focus: isStrength ? "Full Body Power" : "Fat Loss / Endurance",
+        duration: "45 Min",
+        exercises: [main, push, pull, acc].map(ex => ({
+            name: ex.name,
+            sets: isStrength ? "4" : "3",
+            reps: isStrength ? "6-8" : "12-15",
+            rest: isStrength ? "90s" : "60s",
+            tags: [ex.target_muscle, ex.difficulty],
+            gif: null
+        }))
+    }
 }

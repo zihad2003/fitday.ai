@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Dumbbell, Clock, Flame, PlayCircle, Minimize2, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
 import { HoverScale } from '@/components/animations/Transitions'
 
 // Types (re-defined or imported)
@@ -43,9 +44,9 @@ export default function WorkoutCard({ workout }: { workout: WorkoutRoutine }) {
                             <span className="flex items-center gap-1.5"><Flame size={11} className="text-purple-500" /> {workout.focus}</span>
                         </div>
                     </div>
-                    <div className="w-12 h-12 bg-purple-900/10 rounded-[1rem] flex items-center justify-center text-purple-500 border border-purple-500/20 group-hover:scale-110 group-hover:-rotate-6 transition-transform">
-                        <Dumbbell size={20} />
-                    </div>
+                    <Link href="/dashboard/workout/active" className="w-12 h-12 bg-purple-600 hover:bg-purple-500 rounded-[1rem] flex items-center justify-center text-white shadow-lg shadow-purple-600/20 group-hover:scale-110 transition-all z-20 cursor-pointer">
+                        <PlayCircle size={24} className="fill-current" />
+                    </Link>
                 </div>
 
                 {/* Exercise List */}

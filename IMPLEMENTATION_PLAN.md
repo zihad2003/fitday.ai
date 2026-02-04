@@ -63,10 +63,10 @@ Transform FitDay AI into a complete, intelligent fitness companion that guides u
 ### 2.1 Advanced Workout Plan Generator
 
 #### Features to Implement
-- [ ] **Exercise Library Integration**
-  - Query exercises based on equipment availability
-  - Filter by muscle group and difficulty
-  - Include proper form instructions and GIFs
+- [x] **Exercise Library Integration**
+  - [x] Query exercises based on equipment availability
+  - [x] Filter by muscle group and difficulty
+  - [x] Include proper form instructions and GIFs
 
 - [x] **Smart Workout Splits**
   - [x] Push/Pull/Legs (5-6 days)
@@ -88,8 +88,10 @@ Transform FitDay AI into a complete, intelligent fitness companion that guides u
 #### Files to Create
 - `lib/workout-scheduler.ts` - Core workout generation logic (Created)
 - `lib/exercise-db.ts` - Smart exercise selection (Created)
+- `lib/exercise-image-service.ts` - GIF Fetcher (Created)
 - `app/api/plans/workout/generate/route.ts` - API endpoint (Created)
-- `components/WorkoutPlanViewer.tsx` - Display generated plans
+- `app/dashboard/exercises/page.tsx` - Library UI (Created)
+- `app/dashboard/workout/active/page.tsx` - In-Workout Guidance (Created)
 
 ### 2.2 Intelligent Meal Plan Generator
 

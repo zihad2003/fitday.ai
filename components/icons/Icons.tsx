@@ -193,6 +193,19 @@ export const Icons = {
     Chart: ChartIcon,
     ShoppingCart: ShoppingCartIcon,
     Download: DownloadIcon,
+    Minimize: ({ className = '', size = 24, color = 'currentColor', strokeWidth = 2 }: IconProps) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+            <polyline points="4 14 10 14 10 20" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+            <polyline points="20 10 14 10 14 4" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="14" y1="10" x2="21" y2="3" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="3" y1="21" x2="10" y2="14" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    ),
+    ChevronRight: ({ className = '', size = 24, color = 'currentColor', strokeWidth = 2 }: IconProps) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+            <polyline points="9 18 15 12 9 6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    ),
 }
 
 export default Icons
