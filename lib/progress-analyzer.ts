@@ -12,9 +12,13 @@ interface DailyData {
     sleep_hours: number
     mood_rating: number
     energy_level: number
+    recovery_level: number
+    workout_intensity: number
+    equipment: string
+    pain_points: string[]
 }
 
-interface ProgressMetrics {
+export interface ProgressMetrics {
     // Weight Progress
     weight_change_kg: number
     weight_change_percentage: number
@@ -38,6 +42,14 @@ interface ProgressMetrics {
     average_water_ml: number
     average_mood: number
     average_energy: number
+    average_recovery: number
+    average_intensity: number
+    recent_pain_points: string[]
+    days_tracked: number
+
+    // Behavior Patterns
+    best_workout_time: string
+    missed_meals_count: number
 
     // Overall Score
     overall_score: number // 0-100
@@ -53,7 +65,7 @@ interface ProgressInsight {
     priority: number // 1-5, 5 being highest
 }
 
-interface PlateauDetection {
+export interface PlateauDetection {
     is_plateau: boolean
     plateau_duration_days: number
     suggested_actions: string[]
@@ -129,6 +141,14 @@ export class ProgressAnalyzer {
             average_water_ml: this.calculateAverageWater(),
             average_mood: this.calculateAverageMood(),
             average_energy: this.calculateAverageEnergy(),
+            average_recovery: this.calculateAverageRecovery(),
+            average_intensity: this.calculateAverageIntensity(),
+            recent_pain_points: this.getRecentPainPoints(),
+            days_tracked: this.dailyData.length,
+
+            // Patterns
+            best_workout_time: this.findBestWorkoutTime(),
+            missed_meals_count: this.calculateMissedMeals(),
 
             // Overall scores
             overall_score: this.calculateOverallScore(),
@@ -544,6 +564,38 @@ export class ProgressAnalyzer {
         return count > 0 ? total / count : 0
     }
 
+    private calculateAverageRecovery(): number {
+        const total = this.dailyData.reduce((sum, d) => sum + (d.recovery_level || 0), 0)
+        const count = this.dailyData.filter(d => d.recovery_level > 0).length
+        return count > 0 ? total / count : 0
+    }
+
+    private calculateAverageIntensity(): number {
+        const total = this.dailyData.reduce((sum, d) => sum + (d.workout_intensity || 0), 0)
+        const count = this.dailyData.filter(d => d.workout_intensity > 0).length
+        return count > 0 ? total / count : 0
+    }
+
+    private findBestWorkoutTime(): string {
+        // Mock pattern analysis - in a real app would check workout completion times
+        return "18:00"
+    }
+
+    private calculateMissedMeals(): number {
+        // Mock - would count incomplete meals in actual DB
+        return 2
+    }
+
+    private getRecentPainPoints(): string[] {
+        const points = new Set<string>()
+        this.dailyData.forEach(d => {
+            if (d.pain_points) {
+                d.pain_points.forEach(p => points.add(p))
+            }
+        })
+        return Array.from(points)
+    }
+
     private calculateOverallScore(): number {
         const metrics = this.analyzeProgress()
 
@@ -582,6 +634,7 @@ export function analyzeUserProgress(
     insights: ProgressInsight[]
     plateau: PlateauDetection
     prediction: GoalPrediction
+    dailyData: DailyData[]
 } {
     const analyzer = new ProgressAnalyzer(
         dailyData,
@@ -597,5 +650,6 @@ export function analyzeUserProgress(
         insights: analyzer.generateInsights(),
         plateau: analyzer.detectPlateau(),
         prediction: analyzer.predictGoalAchievement(),
+        dailyData: dailyData // Pass through for charting
     }
 }

@@ -1,116 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserSession } from '@/lib/auth'
 import { getDb } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
     try {
-        const session = await getUserSession()
-        if (!session?.userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        const body = await request.json() as { userId: number, date: string, water_liters: number }
+        const { userId, date, water_liters } = body
+
+        if (!userId || !date) {
+            return NextResponse.json({ success: false, error: 'Missing parameters' }, { status: 400 })
         }
 
-        const { amount_ml } = await request.json()
-        const db = getDb()
+        // Calculate the increment if we want to log every sip, 
+        // OR simpler: Delete today's logs and insert the new total as a single entry for "today's total so far"
+        // Since we don't know the previous total here without querying, and this is a "sync" from frontend state:
 
-        // Update today's water intake
-        const query = `
-      INSERT INTO daily_tracking (user_id, date, water_ml)
-      VALUES (?, date('now'), ?)
-      ON CONFLICT(user_id, date) DO UPDATE SET
-        water_ml = water_ml + excluded.water_ml,
-        updated_at = CURRENT_TIMESTAMP
-    `
+        // Strategy: We will treat `water_logs` effectively as "Total for the day" by removing prior entries for this user/date combination.
+        // Ideally we'd modify the schema to have a unique constraint, but we work with what we have.
 
-        await db.prepare(query).bind(session.userId, amount_ml).run()
+        // 1. Delete existing logs for today
+        await db.prepare('DELETE FROM water_logs WHERE user_id = ? AND date = ?').bind(userId, date).run()
 
-        // Get updated total
-        const result = await db
-            .prepare('SELECT water_ml FROM daily_tracking WHERE user_id = ? AND date = date("now")')
-            .bind(session.userId)
-            .first()
+        // 2. Insert new total
+        const waterMl = Math.round(water_liters * 1000)
+        await db.prepare('INSERT INTO water_logs (user_id, date, amount_ml) VALUES (?, ?, ?)')
+            .bind(userId, date, waterMl)
+            .run()
 
-        return NextResponse.json({
-            success: true,
-            total_water_ml: result?.water_ml || amount_ml,
-        })
-    } catch (error) {
-        console.error('Water logging error:', error)
-        return NextResponse.json({ error: 'Failed to log water' }, { status: 500 })
-    }
-}
-
-export async function GET(request: NextRequest) {
-    try {
-        const session = await getUserSession()
-        if (!session?.userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const db = getDb()
-
-        // Get user goal and today's intake
-        const userData = await db
-            .prepare(`
-                SELECT t.water_ml, u.daily_water_goal_ml 
-                FROM daily_tracking t
-                JOIN users u ON u.id = t.user_id
-                WHERE t.user_id = ? AND t.date = date("now")
-            `)
-            .bind(session.userId)
-            .first()
-
-        const currentIntake = userData?.water_ml || 0
-        // Default goal 2500 if not set
-        const dailyGoal = userData?.daily_water_goal_ml || 2500
-
-        // Calculate Streak
-        // Fetch last 30 days of tracking
-        const history = await db
-            .prepare(`
-                SELECT date, water_ml, 
-                       (SELECT daily_water_goal_ml FROM users WHERE id = ?) as goal
-                FROM daily_tracking 
-                WHERE user_id = ? 
-                AND date < date('now')
-                ORDER BY date DESC 
-                LIMIT 30
-            `)
-            .bind(session.userId, session.userId)
-            .all()
-
-        let streak = 0
-        const today = new Date()
-
-        // Simple streak logic: Check yesterday, then day before...
-        // Note: This relies on contiguous records or logic to handle gaps.
-        // For robustness, we iterate dates backwards.
-
-        for (let i = 1; i <= 30; i++) {
-            const d = new Date(today)
-            d.setDate(today.getDate() - i)
-            const dateStr = d.toISOString().split('T')[0]
-
-            const record = history.results.find((r: any) => r.date === dateStr)
-
-            if (record && (record as any).water_ml >= (record as any).goal) {
-                streak++
-            } else {
-                break
-            }
-        }
-
-        // If today goal is met, streak + 1 (visually) or keep previous streak
-        // Usually streak implies completed days. We can return "current streak"
-        // If today is done, maybe show streak + 1? simpler to just show completed days.
-
-        return NextResponse.json({
-            water_ml: currentIntake,
-            goal: dailyGoal,
-            streak: streak,
-            goal_met: currentIntake >= dailyGoal
-        })
-    } catch (error) {
-        console.error('Water fetch error:', error)
-        return NextResponse.json({ error: 'Failed to fetch water data' }, { status: 500 })
+        return NextResponse.json({ success: true })
+    } catch (error: any) {
+        console.error('Water tracking API Error:', error)
+        return NextResponse.json(
+            { success: false, error: error.message || 'Failed to sync water' },
+            { status: 500 }
+        )
     }
 }

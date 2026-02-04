@@ -5,15 +5,15 @@ import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Calendar, Activity, Bot, User } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-export default function MobileNav() {
+export default function MobileNav({ activePage }: { activePage?: string }) {
     const pathname = usePathname()
-    const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/')
+    const isActive = (path: string) => activePage ? activePage === path.replace('/', '') : (pathname === path || pathname.startsWith(path + '/'))
 
     const navItems = [
         { icon: LayoutDashboard, href: '/dashboard', label: 'Home' },
-        { icon: Calendar, href: '/diet', label: 'Diet' },
+        { icon: Calendar, href: '/plans', label: 'Plans' },
         { icon: Bot, href: '/chat', label: 'Coach' },
-        { icon: Activity, href: '/workout', label: 'Workout' },
+        { icon: Activity, href: '/progress', label: 'Analytics' },
         { icon: User, href: '/profile', label: 'Profile' },
     ]
 

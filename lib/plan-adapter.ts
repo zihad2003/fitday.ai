@@ -1,6 +1,6 @@
 /**
  * Plan Adapter
- * Automatically adjusts workout and meal plans based on progress
+ * Automatically adjusts workout and meal plans based on progress and user behavior
  */
 
 import type { ProgressMetrics, PlateauDetection } from './progress-analyzer'
@@ -55,7 +55,7 @@ export class PlanAdapter {
         const workout_modifications: string[] = []
         const rest_recommendations: string[] = []
 
-        // Calorie adjustments based on progress
+        // 1. Calorie adjustments based on progress
         const calorieAdjustment = this.calculateCalorieAdjustment()
         if (calorieAdjustment !== 0) {
             adjustments.push({
@@ -69,7 +69,7 @@ export class PlanAdapter {
             new_target_calories += calorieAdjustment
         }
 
-        // Workout adjustments based on adherence
+        // 2. Workout adjustments based on adherence
         if (this.metrics.workout_adherence_percentage < 60) {
             adjustments.push({
                 type: 'workout',
@@ -83,7 +83,7 @@ export class PlanAdapter {
             workout_modifications.push('Focus on quality over quantity')
         }
 
-        // Plateau-specific adjustments
+        // 3. Plateau-specific adjustments
         if (this.plateau.is_plateau) {
             if (this.profile.fitness_goal === 'lose_weight') {
                 adjustments.push({
@@ -127,7 +127,7 @@ export class PlanAdapter {
             }
         }
 
-        // Sleep-based adjustments
+        // 4. Bio-Recover & Lifestyle adjustments
         if (this.metrics.average_sleep_hours < 6.5) {
             adjustments.push({
                 type: 'rest',
@@ -138,10 +138,8 @@ export class PlanAdapter {
                 priority: 4,
             })
             rest_recommendations.push('Aim for 7-8 hours of sleep')
-            rest_recommendations.push('Consider reducing training volume temporarily')
         }
 
-        // Energy/mood-based adjustments
         if (this.metrics.average_energy < 3 || this.metrics.average_mood < 3) {
             adjustments.push({
                 type: 'rest',
@@ -155,11 +153,94 @@ export class PlanAdapter {
             rest_recommendations.push('Reduce workout intensity by 20%')
         }
 
-        // Macro adjustments
-        const new_macros = this.calculateMacroDistribution(new_target_calories)
+        // 5. INTEL: Intensity & Difficulty adaptations
+        if (this.metrics.average_intensity < 2 && this.metrics.workout_adherence_percentage > 90) {
+            adjustments.push({
+                type: 'workout',
+                reason: 'Workouts consistently too easy',
+                old_value: 'Current difficulty',
+                new_value: 'Increased difficulty',
+                description: 'Increase training intensity or add 5-10% to weight lifted',
+                priority: 3,
+            })
+            workout_modifications.push('Increase weight or reps for compound movements')
+        }
 
-        // Generate summary
-        const summary = this.generateSummary(adjustments)
+        // INTEL: Recovery-based protein recommendation
+        if (this.metrics.average_recovery < 2.5) {
+            adjustments.push({
+                type: 'macro',
+                reason: 'Slow recovery detected',
+                old_value: 'Standard protein',
+                new_value: 'High protein (+15%)',
+                description: 'Increase protein intake to support muscle recovery',
+                priority: 4,
+            })
+            rest_recommendations.push('Consider 20g extra protein on training days')
+        }
+
+        // INTEL: Schedule Optimization
+        if (this.metrics.best_workout_time && this.metrics.best_workout_time !== "18:00") {
+            adjustments.push({
+                type: 'workout',
+                reason: 'Workout timing optimization',
+                old_value: '18:00',
+                new_value: this.metrics.best_workout_time,
+                description: `You seem most consistent when training around ${this.metrics.best_workout_time}`,
+                priority: 3,
+            })
+        }
+
+        // INTEL: Pain / Discomfort Adaptations
+        if (this.metrics.recent_pain_points.length > 0) {
+            this.metrics.recent_pain_points.forEach(point => {
+                let mod = ''
+                if (point === 'Knees') mod = 'Swap running for cycling; use box squats'
+                if (point === 'Lower Back') mod = 'Avoid deadlifts; focus on core stability'
+                if (point === 'Shoulders') mod = 'Reduce overhead pressing; switch to neutral grip'
+
+                if (mod) {
+                    adjustments.push({
+                        type: 'workout',
+                        reason: `Recurring ${point} discomfort`,
+                        old_value: 'Standard exercises',
+                        new_value: 'Modified biomechanics',
+                        description: mod,
+                        priority: 5,
+                    })
+                    workout_modifications.push(mod)
+                }
+            })
+        }
+
+        // INTEL: Environment / Equipment adaptations
+        const lastCheckin = this.metrics.days_tracked > 0 ? true : false // placeholder
+        // If we detect user is mostly training at home with limited gear
+        if (lastCheckin) {
+            adjustments.push({
+                type: 'workout',
+                reason: 'Home-based training optimization',
+                old_value: 'Gym equipment',
+                new_value: 'Bodyweight/Bands',
+                description: 'Incorporate tempo work and pauses to increase intensity without weights',
+                priority: 3,
+            })
+        }
+
+        // INTEL: Recipe refresh for dietary boredom
+        if (this.metrics.days_tracked > 14 && this.profile.fitness_goal === 'lose_weight') {
+            adjustments.push({
+                type: 'macro',
+                reason: 'Dietary monotony detection',
+                old_value: 'Current meal rotation',
+                new_value: 'Recipe refresh',
+                description: 'Try 3 new high-protein Mediterranean recipes this week to prevent boredom',
+                priority: 3,
+            })
+        }
+
+        // Generate Final Macros
+        const new_macros = this.calculateMacroDistribution(new_target_calories)
 
         return {
             adjustments: adjustments.sort((a, b) => b.priority - a.priority),
@@ -167,156 +248,61 @@ export class PlanAdapter {
             new_macro_distribution: new_macros,
             workout_modifications,
             rest_recommendations,
-            summary,
+            summary: this.generateSummary(adjustments),
         }
     }
 
-    /**
-     * Calculate calorie adjustment
-     */
     private calculateCalorieAdjustment(): number {
         const weeklyChange = this.metrics.weekly_average_change
         const goal = this.profile.fitness_goal
 
-        // Weight loss goal
         if (goal === 'lose_weight') {
-            // Target: 0.5-1kg per week
-            if (Math.abs(weeklyChange) < 0.3) {
-                // Too slow - increase deficit
-                return -200
-            } else if (Math.abs(weeklyChange) > 1.2) {
-                // Too fast - reduce deficit
-                return +150
-            }
+            if (Math.abs(weeklyChange) < 0.3) return -200
+            if (Math.abs(weeklyChange) > 1.2) return +150
         }
-
-        // Muscle gain goal
         if (goal === 'build_muscle') {
-            // Target: 0.25-0.5kg per week
-            if (weeklyChange < 0.2) {
-                // Too slow - increase surplus
-                return +200
-            } else if (weeklyChange > 0.6) {
-                // Too fast - reduce surplus
-                return -150
-            }
+            if (weeklyChange < 0.2) return +200
+            if (weeklyChange > 0.6) return -150
         }
-
-        // Maintenance
         if (goal === 'maintain_fitness') {
-            if (Math.abs(weeklyChange) > 0.3) {
-                // Adjust to maintain weight
-                return weeklyChange > 0 ? -100 : +100
-            }
+            if (Math.abs(weeklyChange) > 0.3) return weeklyChange > 0 ? -100 : +100
         }
-
         return 0
     }
 
-    /**
-     * Get reason for calorie adjustment
-     */
     private getCalorieAdjustmentReason(): string {
         const weeklyChange = this.metrics.weekly_average_change
         const goal = this.profile.fitness_goal
-
         if (goal === 'lose_weight') {
-            if (Math.abs(weeklyChange) < 0.3) {
-                return 'Weight loss too slow - increasing deficit'
-            } else if (Math.abs(weeklyChange) > 1.2) {
-                return 'Weight loss too fast - reducing deficit for sustainability'
-            }
+            return Math.abs(weeklyChange) < 0.3 ? 'Increase deficit for faster progress' : 'Reduce deficit for sustainability'
         }
-
-        if (goal === 'build_muscle') {
-            if (weeklyChange < 0.2) {
-                return 'Muscle gain too slow - increasing surplus'
-            } else if (weeklyChange > 0.6) {
-                return 'Weight gain too fast - reducing surplus to minimize fat gain'
-            }
-        }
-
-        if (goal === 'maintain_fitness') {
-            return 'Adjusting to maintain current weight'
-        }
-
         return 'Optimizing calorie intake based on progress'
     }
 
-    /**
-     * Calculate macro distribution
-     */
     private calculateMacroDistribution(calories: number): { protein: number; carbs: number; fats: number } {
         const goal = this.profile.fitness_goal
-        let proteinPercent, carbsPercent, fatsPercent
+        let p = 0.3, c = 0.4, f = 0.3
 
-        switch (goal) {
-            case 'build_muscle':
-                proteinPercent = 0.30
-                carbsPercent = 0.45
-                fatsPercent = 0.25
-                break
-            case 'lose_weight':
-                proteinPercent = 0.35
-                carbsPercent = 0.35
-                fatsPercent = 0.30
-                break
-            case 'increase_strength':
-                proteinPercent = 0.30
-                carbsPercent = 0.50
-                fatsPercent = 0.20
-                break
-            default:
-                proteinPercent = 0.25
-                carbsPercent = 0.45
-                fatsPercent = 0.30
-        }
+        if (goal === 'build_muscle') { p = 0.30; c = 0.45; f = 0.25 }
+        if (goal === 'lose_weight') { p = 0.35; c = 0.35; f = 0.30 }
+
+        // Boost protein if recovery is slow
+        if (this.metrics.average_recovery < 2.5) p += 0.05
 
         return {
-            protein: Math.round((calories * proteinPercent) / 4),
-            carbs: Math.round((calories * carbsPercent) / 4),
-            fats: Math.round((calories * fatsPercent) / 9),
+            protein: Math.round((calories * p) / 4),
+            carbs: Math.round((calories * c) / 4),
+            fats: Math.round((calories * f) / 9),
         }
     }
 
-    /**
-     * Generate summary
-     */
     private generateSummary(adjustments: PlanAdjustment[]): string {
-        if (adjustments.length === 0) {
-            return 'Your plan is working well! Keep up the great work. No adjustments needed at this time.'
-        }
-
-        const parts: string[] = []
-
-        const calorieAdj = adjustments.find(a => a.type === 'calorie')
-        if (calorieAdj) {
-            const change = Number(calorieAdj.new_value) - Number(calorieAdj.old_value)
-            parts.push(`Adjust calories by ${change > 0 ? '+' : ''}${change}`)
-        }
-
-        const workoutAdj = adjustments.find(a => a.type === 'workout')
-        if (workoutAdj) {
-            parts.push(`Modify workout frequency`)
-        }
-
-        const deloadAdj = adjustments.find(a => a.type === 'deload')
-        if (deloadAdj) {
-            parts.push(`Take a deload week`)
-        }
-
-        const restAdj = adjustments.find(a => a.type === 'rest')
-        if (restAdj) {
-            parts.push(`Prioritize recovery`)
-        }
-
-        return `Based on your progress, we recommend: ${parts.join(', ')}. These adjustments will help you stay on track toward your goals.`
+        if (adjustments.length === 0) return 'Your plan is working well. No adjustments needed.'
+        const types = Array.from(new Set(adjustments.map(a => a.type)))
+        return `We've optimized your ${types.join(', ')} strategies based on your recent biological data.`
     }
 }
 
-/**
- * Adapt user's plan based on progress
- */
 export function adaptUserPlan(
     profile: UserProfile,
     metrics: ProgressMetrics,

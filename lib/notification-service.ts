@@ -88,7 +88,7 @@ export class NotificationService {
                     badge: '/badge-72.png',
                     vibrate: [200, 100, 200],
                     ...options,
-                })
+                } as any)
             } else {
                 // Fallback to regular notification
                 new Notification(title, {
@@ -260,6 +260,23 @@ export class NotificationService {
     }
 
     /**
+     * Calculate smart timing for a notification
+     * Ensures notifications don't fire during sleep or right after activity
+     */
+    private getSmartTiming(baseTime: string, profile: UserProfile): string {
+        const [hour, minute] = baseTime.split(':').map(Number)
+        const wakeHour = parseInt(profile.wake_up_time?.split(':')[0] || '7')
+        const sleepHour = parseInt(profile.sleep_time?.split(':')[0] || '23')
+
+        // If time is during sleep, push to 30 mins after wake
+        if (hour < wakeHour || hour >= sleepHour) {
+            return `${wakeHour.toString().padStart(2, '0')}:30`
+        }
+
+        return baseTime
+    }
+
+    /**
      * Adjust time by minutes
      */
     private adjustTime(time: string, minutesOffset: number): string {
@@ -300,7 +317,7 @@ export class NotificationService {
                 { action: 'view', title: 'View Workout' },
                 { action: 'dismiss', title: 'Dismiss' },
             ],
-        })
+        } as any)
     }
 
     /**
@@ -314,7 +331,7 @@ export class NotificationService {
                 { action: 'log', title: 'Log Meal' },
                 { action: 'dismiss', title: 'Dismiss' },
             ],
-        })
+        } as any)
     }
 
     /**
@@ -329,7 +346,7 @@ export class NotificationService {
                 { action: 'log-water', title: 'Log Water' },
                 { action: 'dismiss', title: 'Dismiss' },
             ],
-        })
+        } as any)
     }
 
     /**

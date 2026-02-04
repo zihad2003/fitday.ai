@@ -1,10 +1,10 @@
-import OnboardingFlow from '@/components/OnboardingFlow'
+import OnboardingFlowRedesign from '@/components/onboarding/OnboardingFlowRedesign'
 
 export const metadata = {
-    title: 'Get Started - FitDay AI',
-    description: 'Complete your profile to get personalized fitness and nutrition plans',
+    title: 'Initialize Evolution - FitDay AI',
+    description: 'Sync your biological parameters for personalized neural coaching',
 }
 
 export default function OnboardingPage() {
-    return <OnboardingFlow />
+    return <OnboardingFlowRedesign />
 }

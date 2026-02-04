@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     const users = await selectQuery(sql, params)
     const safeUsers = users.map((u: any) => {
-      const { password, salt, ...userWithoutPassword } = u
+      const { password_hash, ...userWithoutPassword } = u
       return userWithoutPassword
     })
 
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, name, gender, age, height, weight, goal, activity_level = 'sedentary', experience_level = 'beginner' } = body as any
+    const { email, password, name, gender, age, height, weight, goal, activity_level = 'sedentary' } = body as any
 
     if (!email || !password || !name || !age || !height || !weight || !goal) {
       return NextResponse.json({ success: false, error: 'All fields are required' }, { status: 400 })
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     // Nutrition Calculation
     let targetCalories = 2000;
-    let macros = null;
+    let macros: any = null;
     try {
       const bmr = calculateBMR(gender, weight, height, age)
       const tdee = calculateTDEE(bmr, activity_level)
@@ -78,17 +78,25 @@ export async function POST(request: NextRequest) {
     const storedPassword = `${salt}:${hashedPassword}`;
 
     const sql = `
-      INSERT INTO users (email, password, name, gender, age, height_cm, weight_kg, activity_level, experience_level, goal, target_calories)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (
+        email, password_hash, name, gender, age, height, weight, 
+        activity_level, primary_goal, daily_calorie_goal, 
+        daily_protein_goal, daily_carbs_goal, daily_fats_goal
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
-    const params = [email, storedPassword, name, gender, age, height, weight, activity_level, experience_level, goal, targetCalories]
+    const params = [
+      email, storedPassword, name, gender, age, height, weight,
+      activity_level, goal, targetCalories,
+      macros?.proteinGrams || 0, macros?.carbsGrams || 0, macros?.fatGrams || 0
+    ]
 
     const changes = await executeMutation(sql, params)
 
     if (changes > 0) {
       const newUsers = await selectQuery('SELECT * FROM users WHERE email = ?', [email])
       if (newUsers && newUsers.length > 0) {
-        const { password, salt, ...safeUser } = newUsers[0]
+        const { password_hash, ...safeUser } = newUsers[0]
         return NextResponse.json({ success: true, data: safeUser, nutrition_profile: macros }, { status: 201 })
       }
       return NextResponse.json({ success: true, message: "User created" }, { status: 201 })

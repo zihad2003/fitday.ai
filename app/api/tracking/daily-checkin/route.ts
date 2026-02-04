@@ -9,40 +9,44 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { weight_kg, mood, energy, sleep_hours, sleep_quality, stress_level } = await request.json()
+        const body = await request.json() as {
+            weight_kg?: number,
+            mood?: number,
+            energy?: number,
+            sleep_hours?: number,
+            sleep_quality?: string,
+            stress_level?: number
+        }
+        const { weight_kg, mood, energy, sleep_hours, sleep_quality, stress_level } = body
         const db = getDb()
 
         // Insert or update daily check-in
-        const query = `
-      INSERT INTO daily_tracking (
-        user_id,
-        date,
-        weight_kg,
-        mood_rating,
-        energy_level,
-        sleep_hours,
-        sleep_quality,
-        stress_level
-      ) VALUES (?, date('now'), ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(user_id, date) DO UPDATE SET
-        weight_kg = COALESCE(excluded.weight_kg, weight_kg),
-        mood_rating = COALESCE(excluded.mood_rating, mood_rating),
-        energy_level = COALESCE(excluded.energy_level, energy_level),
-        sleep_hours = COALESCE(excluded.sleep_hours, sleep_hours),
-        sleep_quality = COALESCE(excluded.sleep_quality, sleep_quality),
-        stress_level = COALESCE(excluded.stress_level, stress_level),
-        updated_at = CURRENT_TIMESTAMP
-    `
+        // Map input to progress_logs
+        // We will store mood, energy, sleep in 'notes' as JSON because schema doesn't have columns for them
+        const additionalMetrics = {
+            mood_rating: mood,
+            energy_level: energy,
+            sleep_hours: sleep_hours,
+            sleep_quality: sleep_quality,
+            stress_level: stress_level
+        }
+        const notesJson = JSON.stringify(additionalMetrics)
 
-        await db.prepare(query).bind(
-            session.userId,
-            weight_kg || null,
-            mood || null,
-            energy || null,
-            sleep_hours || null,
-            sleep_quality || null,
-            stress_level || null
-        ).run()
+        // Check if log exists for today
+        const existingLog = await db.prepare('SELECT id FROM progress_logs WHERE user_id = ? AND log_date = date("now")').bind(session.userId).first()
+
+        if (existingLog) {
+            await db.prepare(`
+                UPDATE progress_logs 
+                SET weight = COALESCE(?, weight), notes = ? 
+                WHERE id = ?
+             `).bind(weight_kg || null, notesJson, existingLog.id).run()
+        } else {
+            await db.prepare(`
+                INSERT INTO progress_logs (user_id, log_date, weight, notes)
+                VALUES (?, date('now'), ?, ?)
+             `).bind(session.userId, weight_kg || null, notesJson).run()
+        }
 
         // Update user's current weight if provided
         if (weight_kg) {
@@ -52,9 +56,18 @@ export async function POST(request: NextRequest) {
                 .run()
         }
 
+        // Trigger Gamification Engine: Update Streak and check achievements
+        const { GamificationService } = await import('@/lib/gamification')
+        const streak = await GamificationService.updateStreak(parseInt(session.userId))
+
+        // Check for specific achievements
+        if (weight_kg) await GamificationService.checkAchievements(parseInt(session.userId), 'weight_sync', 1)
+        if (sleep_hours) await GamificationService.checkAchievements(parseInt(session.userId), 'sleep_sync', 1)
+
         return NextResponse.json({
             success: true,
             message: 'Daily check-in completed',
+            streak
         })
     } catch (error) {
         console.error('Daily check-in error:', error)
@@ -72,19 +85,35 @@ export async function GET(request: NextRequest) {
         const db = getDb()
 
         // Check if user has completed today's check-in
+        // Check if user has completed today's check-in
         const result = await db
             .prepare(`
         SELECT 
-          weight_kg,
-          mood_rating,
-          energy_level,
-          sleep_hours,
-          sleep_quality
-        FROM daily_tracking 
-        WHERE user_id = ? AND date = date('now')
+          weight,
+          notes
+        FROM progress_logs 
+        WHERE user_id = ? AND log_date = date('now')
       `)
             .bind(session.userId)
             .first()
+
+        let formattedResult = null
+        if (result) {
+            let notesData = {}
+            try {
+                notesData = result.notes ? JSON.parse(result.notes) : {}
+            } catch (e) { }
+
+            formattedResult = {
+                weight_kg: result.weight,
+                ...notesData
+            }
+        }
+
+        return NextResponse.json({
+            completed: !!result,
+            data: formattedResult,
+        })
 
         return NextResponse.json({
             completed: !!result,

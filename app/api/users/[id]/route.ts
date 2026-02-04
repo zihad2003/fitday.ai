@@ -9,12 +9,19 @@ export const runtime = 'edge'
 // .partial() allows the frontend to send just "weight" without sending everything else
 const updateUserSchema = z.object({
   name: z.string().min(2).optional(),
-  gender: z.enum(['male', 'female']).optional(),
+  gender: z.enum(['male', 'female', 'other']).optional(),
   age: z.number().min(10).max(120).optional(),
-  height: z.number().min(50).max(300).optional(), // Maps to height_cm
-  weight: z.number().min(20).max(300).optional(), // Maps to weight_kg
+  height: z.number().min(50).max(300).optional(),
+  weight: z.number().min(20).max(300).optional(),
+  target_weight: z.number().min(20).max(300).optional(),
   activity_level: z.enum(['sedentary', 'light', 'moderate', 'active', 'very_active']).optional(),
-  goal: z.enum(['lose', 'maintain', 'gain']).optional(),
+  primary_goal: z.enum(['muscle_building', 'fat_loss', 'maintenance', 'endurance', 'strength']).optional(),
+  dietary_preference: z.string().optional(),
+  workout_days_per_week: z.number().min(1).max(7).optional(),
+  preferred_workout_time: z.enum(['morning', 'afternoon', 'evening']).optional(),
+  wake_time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/).optional(),
+  sleep_time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/).optional(),
+  daily_water_goal: z.number().min(1).max(50).optional(),
 }).partial()
 
 // ==================================================================
@@ -33,13 +40,13 @@ export async function GET(
     }
 
     const users = await selectQuery('SELECT * FROM users WHERE id = ?', [userId])
-    
+
     if (users.length === 0) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
     }
 
-    // Security: Remove password/salt before returning
-    const { password, salt, ...safeUser } = users[0]
+    // Security: Remove password before returning
+    const { password_hash, ...safeUser } = users[0]
 
     return NextResponse.json({ success: true, data: safeUser })
 
@@ -69,9 +76,9 @@ export async function PUT(
     const validation = updateUserSchema.safeParse(body)
 
     if (!validation.success) {
-      return NextResponse.json({ 
-        success: false, 
-        error: validation.error.issues[0].message 
+      return NextResponse.json({
+        success: false,
+        error: validation.error.issues[0].message
       }, { status: 400 })
     }
 
@@ -88,44 +95,55 @@ export async function PUT(
     const name = updates.name ?? currentUser.name
     const gender = updates.gender ?? currentUser.gender
     const age = updates.age ?? currentUser.age
-    // Handle specific mapping: frontend 'height' -> db 'height_cm'
-    const height = updates.height ?? currentUser.height_cm 
-    const weight = updates.weight ?? currentUser.weight_kg
-    const goal = updates.goal ?? currentUser.goal
+    const height = updates.height ?? currentUser.height
+    const weight = updates.weight ?? currentUser.weight
+    const target_weight = updates.target_weight ?? currentUser.target_weight
+    const primary_goal = updates.primary_goal ?? currentUser.primary_goal ?? 'maintenance'
     const activity_level = updates.activity_level ?? currentUser.activity_level ?? 'sedentary'
+    const dietary_preference = updates.dietary_preference ?? currentUser.dietary_preference ?? 'none'
+    const workout_days_per_week = updates.workout_days_per_week ?? currentUser.workout_days_per_week ?? 3
+    const preferred_workout_time = updates.preferred_workout_time ?? currentUser.preferred_workout_time ?? 'morning'
+    const wake_time = updates.wake_time ?? currentUser.wake_time ?? '07:00'
+    const sleep_time = updates.sleep_time ?? currentUser.sleep_time ?? '23:00'
+    const daily_water_goal = updates.daily_water_goal ?? currentUser.daily_water_goal ?? 8
 
     // D. Intelligence: Recalculate Nutrition
-    // We strictly use the helper functions from lib/nutrition
-    const bmr = calculateBMR(gender, weight, height, age)
+    const bmr = calculateBMR(gender as any, weight, height, age)
     const tdee = calculateTDEE(bmr, activity_level)
-    const macros = calculateMacros(tdee, goal)
-    const targetCalories = macros.targetCalories
+    const macros = calculateMacros(tdee, primary_goal)
+    const daily_calorie_goal = macros.targetCalories
 
     // E. Execute Update
     const sql = `
       UPDATE users
-      SET name = ?, gender = ?, age = ?, height_cm = ?, weight_kg = ?, activity_level = ?, goal = ?, target_calories = ?, updated_at = CURRENT_TIMESTAMP
+      SET
+        name = ?, gender = ?, age = ?, height = ?, weight = ?, target_weight = ?,
+        primary_goal = ?, activity_level = ?, dietary_preference = ?,
+        workout_days_per_week = ?, preferred_workout_time = ?,
+        wake_time = ?, sleep_time = ?, daily_water_goal = ?,
+        daily_calorie_goal = ?, daily_protein_goal = ?, daily_carbs_goal = ?, daily_fats_goal = ?,
+        updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `
-    const paramsList = [name, gender, age, height, weight, activity_level, goal, targetCalories, userId]
-    
+    const paramsList = [
+      name, gender, age, height, weight, target_weight,
+      primary_goal, activity_level, dietary_preference,
+      workout_days_per_week, preferred_workout_time,
+      wake_time, sleep_time, daily_water_goal,
+      daily_calorie_goal, macros.proteinGrams, macros.carbsGrams, macros.fatGrams,
+      userId
+    ]
+
     const changes = await executeMutation(sql, paramsList)
 
     if (changes > 0) {
-      // Return updated profile + the new calculated macros
-      const { password, salt, ...updatedProfile } = currentUser // reuse safe fields
-      
-      // Update the safe profile object with new values before returning
-      // (saves a database round-trip read)
-      const newResponseData = {
-        ...updatedProfile,
-        name, gender, age, height_cm: height, weight_kg: weight, activity_level, goal, target_calories: targetCalories
-      }
+      const updatedUsers = await selectQuery('SELECT * FROM users WHERE id = ?', [userId])
+      const { password_hash, ...newResponseData } = updatedUsers[0]
 
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         data: newResponseData,
-        new_plan: macros // 
+        new_plan: macros
       })
     } else {
       return NextResponse.json({ success: false, error: 'Update failed' }, { status: 500 })

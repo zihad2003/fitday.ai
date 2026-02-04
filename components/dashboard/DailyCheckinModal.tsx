@@ -19,7 +19,11 @@ export default function DailyCheckinModal({ isOpen, onClose, onSave }: DailyChec
         mood: 3,
         energy: 3,
         sleep_hours: 8,
-        notes: ''
+        notes: '',
+        workout_intensity: 3, // 1: Easy, 5: Max Effort
+        recovery_level: 3, // 1: Very Sore, 5: Fully Recovered
+        equipment: 'home', // 'home' or 'gym'
+        pain_points: [] as string[]
     })
 
     const handleSave = () => {
@@ -133,16 +137,70 @@ export default function DailyCheckinModal({ isOpen, onClose, onSave }: DailyChec
                                             </div>
                                         </div>
 
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-4 block">Recovery State</label>
+                                                <div className="flex gap-2">
+                                                    {[1, 2, 3, 4, 5].map(val => (
+                                                        <button
+                                                            key={val}
+                                                            onClick={() => setData({ ...data, recovery_level: val })}
+                                                            className={`flex-1 h-12 rounded-xl text-xs font-bold transition-all ${data.recovery_level === val ? 'bg-blue-600 text-white' : 'bg-zinc-900 text-zinc-600'}`}
+                                                        >
+                                                            {val}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-4 block">Last Workout Intensity</label>
+                                                <div className="flex gap-2">
+                                                    {[1, 2, 3, 4, 5].map(val => (
+                                                        <button
+                                                            key={val}
+                                                            onClick={() => setData({ ...data, workout_intensity: val })}
+                                                            className={`flex-1 h-12 rounded-xl text-xs font-bold transition-all ${data.workout_intensity === val ? 'bg-orange-600 text-white' : 'bg-zinc-900 text-zinc-600'}`}
+                                                        >
+                                                            {val}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div>
-                                            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-4 block">Energy Intensity</label>
-                                            <div className="grid grid-cols-5 gap-3">
-                                                {[1, 2, 3, 4, 5].map(val => (
+                                            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-4 block">Environment</label>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <button
+                                                    onClick={() => setData({ ...data, equipment: 'home' })}
+                                                    className={`py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${data.equipment === 'home' ? 'bg-white text-black' : 'bg-zinc-900 text-zinc-600'}`}
+                                                >
+                                                    🏠 Home (Limited)
+                                                </button>
+                                                <button
+                                                    onClick={() => setData({ ...data, equipment: 'gym' })}
+                                                    className={`py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${data.equipment === 'gym' ? 'bg-white text-black' : 'bg-zinc-900 text-zinc-600'}`}
+                                                >
+                                                    🏋️ Full Gym
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-4 block">Physical Discomfort (Pain)</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {['Knees', 'Lower Back', 'Shoulders', 'Wrists', 'Ankles', 'Neck'].map(point => (
                                                     <button
-                                                        key={val}
-                                                        onClick={() => setData({ ...data, energy: val })}
-                                                        className={`h-16 rounded-2xl flex items-center justify-center text-xl transition-all ${data.energy === val ? 'bg-purple-600 shadow-[0_0_20px_#9333ea] scale-105 border-purple-400' : 'bg-zinc-900 border border-white/5 opacity-40 hover:opacity-100'}`}
+                                                        key={point}
+                                                        onClick={() => {
+                                                            const newPoints = data.pain_points.includes(point)
+                                                                ? data.pain_points.filter(p => p !== point)
+                                                                : [...data.pain_points, point]
+                                                            setData({ ...data, pain_points: newPoints })
+                                                        }}
+                                                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${data.pain_points.includes(point) ? 'bg-red-600 text-white' : 'bg-zinc-900 text-zinc-600 border border-white/5'}`}
                                                     >
-                                                        {val === 1 ? '🔋' : val === 5 ? '⚡' : val}
+                                                        {point}
                                                     </button>
                                                 ))}
                                             </div>

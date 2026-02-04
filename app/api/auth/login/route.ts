@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     const user = users[0] as any
-    const storedPassword = user.password // Expected format "salt:hash"
+    const storedPassword = user.password_hash // Expected format "salt:hash"
 
     // 2. Verify Password
     const isValid = await verifyPassword(password, storedPassword);

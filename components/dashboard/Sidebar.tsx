@@ -28,9 +28,9 @@ const NavIcon = ({ icon: Icon, active, href, label }: { icon: any, active?: bool
     </HoverScale>
 );
 
-export default function Sidebar() {
+export default function Sidebar({ activePage }: { activePage?: string }) {
     const pathname = usePathname()
-    const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/')
+    const isActive = (path: string) => activePage ? activePage === path.replace('/', '') : (pathname === path || pathname.startsWith(path + '/'))
 
     return (
         <aside className="shrink-0 hidden md:flex h-screen sticky top-0 flex-col py-10 pl-6 pr-5 border-r border-white/5 bg-black/40 backdrop-blur-3xl z-[100]">
@@ -48,9 +48,8 @@ export default function Sidebar() {
 
             <nav className="flex-1 flex flex-col gap-8 items-center" aria-label="Main Navigation">
                 <NavIcon icon={LayoutDashboard} active={isActive('/dashboard')} href="/dashboard" label="Intelligence" />
-                <NavIcon icon={Calendar} active={isActive('/diet')} href="/diet" label="Nutrition" />
-                <NavIcon icon={Activity} active={isActive('/workout')} href="/workout" label="Training" />
-                <NavIcon icon={Map} active={isActive('/progress')} href="/progress" label="Analytics" />
+                <NavIcon icon={Calendar} active={isActive('/plans')} href="/plans" label="Protocols" />
+                <NavIcon icon={Activity} active={isActive('/progress')} href="/progress" label="Analytics" />
                 <NavIcon icon={Bot} active={isActive('/chat')} href="/chat" label="AI Coach" />
                 <NavIcon icon={Play} active={isActive('/videos')} href="/videos" label="Archives" />
             </nav>

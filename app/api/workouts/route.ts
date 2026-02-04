@@ -1,128 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { selectQuery, executeMutation } from '@/lib/d1'
-import { z } from 'zod'
+import { getDb } from '@/lib/db'
+import { WorkoutPlanner } from '@/lib/workout-planner'
 
-export const runtime = 'edge'
-
-// --- 1. Validation Schema ---
-const createWorkoutSchema = z.object({
-  user_id: z.number().or(z.string().transform(Number)),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
-  exercise_name: z.string().min(3, "Workout description is too short"),
-  completed: z.boolean().optional().default(false),
-  // Optional: Add duration/calories if your DB supports them later
-  duration: z.number().min(1).optional().default(0),
-  calories: z.number().min(1).optional().default(0)
-})
-
-// ==================================================================
-// GET: Fetch Workouts (Filtered)
-// ==================================================================
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-
-    // Extract Filters
     const userId = searchParams.get('user_id')
     const date = searchParams.get('date')
-    const completed = searchParams.get('completed')
 
-    // Dynamic SQL Construction
-    let sql = `
-      SELECT w.*, e.gif_url, e.difficulty, e.muscle_group 
-      FROM workouts w 
-      LEFT JOIN exercises e ON w.exercise_name = e.name 
-      WHERE 1=1
-    `
-    const params: (string | number)[] = []
-
-    if (userId) {
-      sql += ' AND w.user_id = ?'
-      params.push(parseInt(userId))
+    if (!userId || !date) {
+      return NextResponse.json({ success: false, error: 'Missing parameters' }, { status: 400 })
     }
 
-    if (date) {
-      sql += ' AND w.date = ?'
-      params.push(date)
-    }
-
-    if (completed !== null) {
-      sql += ' AND w.completed = ?'
-      params.push(completed === 'true' ? 1 : 0)
-    }
-
-    // Default Sorting: Newest dates first
-    sql += ' ORDER BY w.date DESC, w.created_at DESC'
-
-    const workouts = await selectQuery(sql, params)
+    const exercises = await WorkoutPlanner.getDailyWorkout(Number(userId), date)
 
     return NextResponse.json({
       success: true,
-      count: workouts.length,
-      data: workouts
+      data: exercises
     })
-
-  } catch (error) {
-    console.error('API Error [GET /workouts]:', error)
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 })
+  } catch (error: any) {
+    console.error('Workouts API Error:', error)
+    return NextResponse.json(
+      { success: false, error: error.message || 'Failed to fetch workouts' },
+      { status: 500 }
+    )
   }
 }
 
-// ==================================================================
-// POST: Log New Workout
-// ==================================================================
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const body = await request.json() as {
+      userId: number,
+      date: string,
+      exercise_id: number,
+      sets: number,
+      reps: string,
+      order_index: number
+    }
+    const { userId, date, exercise_id, sets, reps, order_index } = body
 
-    // 1. Validate Input
-    const validation = createWorkoutSchema.safeParse(body)
-
-    if (!validation.success) {
-      return NextResponse.json({
-        success: false,
-        error: validation.error.issues[0].message
-      }, { status: 400 })
+    if (!userId || !date || !exercise_id) {
+      return NextResponse.json({ success: false, error: 'Missing parameters' }, { status: 400 })
     }
 
-    const data = validation.data
+    await WorkoutPlanner.saveWorkoutPlan(userId, date, exercise_id, sets, reps, order_index)
 
-    // 2. Verify User Exists
-    const users = await selectQuery('SELECT id FROM users WHERE id = ? LIMIT 1', [data.user_id])
-    if (users.length === 0) {
-      return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
-    }
-
-    // 3. Insert Workout
-    // Note: If you add 'duration' or 'calories' columns to your DB later, add them here.
-    const sql = `
-      INSERT INTO workouts (user_id, date, exercise_name, completed)
-      VALUES (?, ?, ?, ?)
-    `
-    const params = [
-      data.user_id,
-      data.date,
-      data.exercise_name,
-      data.completed ? 1 : 0
-    ]
-
-    const changes = await executeMutation(sql, params)
-
-    if (changes > 0) {
-      // Fetch the newly created item
-      const newWorkouts = await selectQuery('SELECT * FROM workouts WHERE id = last_insert_rowid()')
-
-      return NextResponse.json({
-        success: true,
-        message: 'Workout logged successfully',
-        data: newWorkouts[0]
-      }, { status: 201 })
-    } else {
-      return NextResponse.json({ success: false, error: 'Database insert failed' }, { status: 500 })
-    }
-
-  } catch (error) {
-    console.error('API Error [POST /workouts]:', error)
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 })
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    console.error('Workouts API Error:', error)
+    return NextResponse.json(
+      { success: false, error: error.message || 'Failed to save workout' },
+      { status: 500 }
+    )
   }
 }

@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateMealPlan, calculateCalorieNeeds } from '@/lib/ai-meal-planner'
-import { selectQuery } from '@/lib/d1'
-
-export const runtime = 'edge'
+import { getDb } from '@/lib/db'
+import { MealPlanner } from '@/lib/meal-planner'
 
 /**
  * AI Meal Plan API
  * POST /api/ai/meal-plan
+ * Triggers re-generation and persistence of meal plan
  */
 export async function POST(request: NextRequest) {
     try {
@@ -17,36 +16,23 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'User ID required' }, { status: 400 })
         }
 
-        // Fetch user profile from DB
-        const users = await selectQuery('SELECT * FROM users WHERE id = ?', [Number(userId)])
-        if (users.length === 0) {
+        const db = getDb()
+        const user = await db.prepare('SELECT * FROM users WHERE id = ?').bind(Number(userId)).first() as any
+
+        if (!user) {
             return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
         }
 
-        const user = users[0] as any
-
-        // Map DB user to UserProfile for meal planner
-        const profile = {
-            goal: (user.goal || 'maintain') as any,
-            weight: user.weight_kg || 70,
-            height: user.height_cm || 170,
-            age: user.age || 25,
-            gender: (user.gender || 'male') as any,
-            activityLevel: (user.activity_level || 'moderate') as any,
-            dietaryRestrictions: user.dietary_restrictions ? JSON.parse(user.dietary_restrictions) : [],
-            preferences: user.preferences ? JSON.parse(user.preferences) : []
-        }
-
-        // Generate smart plan
-        const mealPlan = generateMealPlan(profile)
+        // Use the new MealPlanner to generate and save a 7-day plan
+        await MealPlanner.generateAndSaveWeeklyPlan(
+            Number(userId),
+            user.target_calories || 2000,
+            user.goal || 'maintain'
+        )
 
         return NextResponse.json({
             success: true,
-            data: mealPlan,
-            profile_used: {
-                goal: profile.goal,
-                daily_calories: mealPlan.totalCalories
-            }
+            message: '7-Day Neural Meal Plan generated and persisted successfully'
         })
 
     } catch (error: any) {
