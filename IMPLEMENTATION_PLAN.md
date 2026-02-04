@@ -68,27 +68,27 @@ Transform FitDay AI into a complete, intelligent fitness companion that guides u
   - Filter by muscle group and difficulty
   - Include proper form instructions and GIFs
 
-- [ ] **Smart Workout Splits**
-  - Push/Pull/Legs (5-6 days)
-  - Upper/Lower (3-4 days)
-  - Full Body (2-3 days)
-  - Circuit Training (fat loss focus)
-  - Powerlifting (strength focus)
+- [x] **Smart Workout Splits**
+  - [x] Push/Pull/Legs (5-6 days)
+  - [x] Upper/Lower (3-4 days)
+  - [x] Full Body (2-3 days)
+  - [x] Circuit Training (fat loss focus)
+  - [x] Powerlifting (strength focus)
 
-- [ ] **Progressive Overload System**
+- [ ] **Progressive Overload System** (Next Step)
   - Automatic weight/rep progression
   - Deload weeks every 4-6 weeks
   - Track personal records
 
-- [ ] **Workout Variations**
+- [ ] **Workout Variations** (Next Step)
   - Alternative exercises for same muscle groups
   - Accommodate injuries or limitations
   - Equipment substitutions
 
 #### Files to Create
-- `lib/workout-generator.ts` - Core workout generation logic
-- `lib/exercise-selector.ts` - Smart exercise selection
-- `app/api/plans/workout/generate/route.ts` - API endpoint
+- `lib/workout-scheduler.ts` - Core workout generation logic (Created)
+- `lib/exercise-db.ts` - Smart exercise selection (Created)
+- `app/api/plans/workout/generate/route.ts` - API endpoint (Created)
 - `components/WorkoutPlanViewer.tsx` - Display generated plans
 
 ### 2.2 Intelligent Meal Plan Generator

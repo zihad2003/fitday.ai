@@ -1,111 +1,265 @@
-export interface ExerciseDBItem {
+export interface Exercise {
     id: string
     name: string
-    force: string | null
-    level: string
-    mechanic: string | null
-    equipment: string | null
-    primaryMuscles: string[]
-    secondaryMuscles: string[]
-    instructions: string[]
-    category: string
-    images: string[]
+    target_muscle: 'chest' | 'back' | 'shoulders' | 'legs' | 'arms' | 'core' | 'full_body'
+    secondary_muscles: string[]
+    type: 'compound' | 'isolation' | 'cardio'
+    equipment: 'dumbbell' | 'barbell' | 'machine' | 'bodyweight' | 'cables'
+    difficulty: 'beginner' | 'intermediate' | 'advanced'
+    movement_pattern?: 'push' | 'pull' | 'squat' | 'hinge' | 'lunge' | 'carry'
+    description?: string
+    gif_url?: string // Optional placeholder for future
 }
 
-const BASE_URL = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json'
+export const EXERCISE_DATABASE: Exercise[] = [
+    // CHEST
+    {
+        id: 'bench_press',
+        name: 'Barbell Bench Press',
+        target_muscle: 'chest',
+        secondary_muscles: ['triceps', 'shoulders'],
+        type: 'compound',
+        equipment: 'barbell',
+        difficulty: 'intermediate',
+        movement_pattern: 'push'
+    },
+    {
+        id: 'push_ups',
+        name: 'Push Ups',
+        target_muscle: 'chest',
+        secondary_muscles: ['triceps', 'core'],
+        type: 'compound',
+        equipment: 'bodyweight',
+        difficulty: 'beginner',
+        movement_pattern: 'push'
+    },
+    {
+        id: 'dumbbell_flyes',
+        name: 'Dumbbell Flyes',
+        target_muscle: 'chest',
+        secondary_muscles: ['shoulders'],
+        type: 'isolation',
+        equipment: 'dumbbell',
+        difficulty: 'intermediate',
+        movement_pattern: 'push'
+    },
+    {
+        id: 'incline_dumbell_press',
+        name: 'Incline Dumbbell Press',
+        target_muscle: 'chest',
+        secondary_muscles: ['shoulders', 'triceps'],
+        type: 'compound',
+        equipment: 'dumbbell',
+        difficulty: 'intermediate',
+        movement_pattern: 'push'
+    },
 
-let cachedExercises: ExerciseDBItem[] | null = null
+    // BACK
+    {
+        id: 'pull_ups',
+        name: 'Pull Ups',
+        target_muscle: 'back',
+        secondary_muscles: ['biceps'],
+        type: 'compound',
+        equipment: 'bodyweight',
+        difficulty: 'advanced',
+        movement_pattern: 'pull'
+    },
+    {
+        id: 'barbell_row',
+        name: 'Barbell Bent Over Row',
+        target_muscle: 'back',
+        secondary_muscles: ['biceps', 'lower_back'],
+        type: 'compound',
+        equipment: 'barbell',
+        difficulty: 'intermediate',
+        movement_pattern: 'pull'
+    },
+    {
+        id: 'lat_pulldown',
+        name: 'Lat Pulldown',
+        target_muscle: 'back',
+        secondary_muscles: ['biceps'],
+        type: 'compound',
+        equipment: 'machine',
+        difficulty: 'beginner',
+        movement_pattern: 'pull'
+    },
+    {
+        id: 'seated_cable_row',
+        name: 'Seated Cable Row',
+        target_muscle: 'back',
+        secondary_muscles: ['biceps'],
+        type: 'compound',
+        equipment: 'cables',
+        difficulty: 'beginner',
+        movement_pattern: 'pull'
+    },
 
-export async function fetchAllExercises(): Promise<ExerciseDBItem[]> {
-    if (cachedExercises) return cachedExercises
+    // SHOULDERS
+    {
+        id: 'overhead_press',
+        name: 'Overhead Press',
+        target_muscle: 'shoulders',
+        secondary_muscles: ['triceps', 'core'],
+        type: 'compound',
+        equipment: 'barbell',
+        difficulty: 'intermediate',
+        movement_pattern: 'push'
+    },
+    {
+        id: 'lateral_raises',
+        name: 'Dumbbell Lateral Raises',
+        target_muscle: 'shoulders',
+        secondary_muscles: [],
+        type: 'isolation',
+        equipment: 'dumbbell',
+        difficulty: 'beginner',
+        movement_pattern: 'push'
+    },
+    {
+        id: 'face_pulls',
+        name: 'Face Pulls',
+        target_muscle: 'shoulders',
+        secondary_muscles: ['back'],
+        type: 'isolation',
+        equipment: 'cables',
+        difficulty: 'beginner',
+        movement_pattern: 'pull'
+    },
 
-    try {
-        const res = await fetch(BASE_URL)
-        if (!res.ok) throw new Error('Failed to fetch exercise DB')
-        const data = (await res.json()) as ExerciseDBItem[]
-        cachedExercises = data
-        return data
-    } catch (error) {
-        console.error('Exercise DB Error:', error)
-        return []
+    // LEGS
+    {
+        id: 'squat',
+        name: 'Barbell Squat',
+        target_muscle: 'legs',
+        secondary_muscles: ['core', 'lower_back'],
+        type: 'compound',
+        equipment: 'barbell',
+        difficulty: 'advanced',
+        movement_pattern: 'squat'
+    },
+    {
+        id: 'deadlift',
+        name: 'Deadlift',
+        target_muscle: 'legs', // Posterior chain mainly
+        secondary_muscles: ['back', 'core'],
+        type: 'compound',
+        equipment: 'barbell',
+        difficulty: 'advanced',
+        movement_pattern: 'hinge'
+    },
+    {
+        id: 'leg_press',
+        name: 'Leg Press',
+        target_muscle: 'legs',
+        secondary_muscles: [],
+        type: 'compound',
+        equipment: 'machine',
+        difficulty: 'beginner',
+        movement_pattern: 'squat'
+    },
+    {
+        id: 'lunges',
+        name: 'Walking Lunges',
+        target_muscle: 'legs',
+        secondary_muscles: ['core'],
+        type: 'compound',
+        equipment: 'dumbbell',
+        difficulty: 'intermediate',
+        movement_pattern: 'lunge'
+    },
+    {
+        id: 'leg_curls',
+        name: 'Leg Curls',
+        target_muscle: 'legs',
+        secondary_muscles: [],
+        type: 'isolation',
+        equipment: 'machine',
+        difficulty: 'beginner',
+        movement_pattern: 'hinge'
+    },
+
+    // ARMS
+    {
+        id: 'bicep_curls',
+        name: 'Dumbbell Bicep Curls',
+        target_muscle: 'arms',
+        secondary_muscles: [],
+        type: 'isolation',
+        equipment: 'dumbbell',
+        difficulty: 'beginner',
+        movement_pattern: 'pull'
+    },
+    {
+        id: 'tricep_extensions',
+        name: 'Tricep Rope Pushdowns',
+        target_muscle: 'arms',
+        secondary_muscles: [],
+        type: 'isolation',
+        equipment: 'cables',
+        difficulty: 'beginner',
+        movement_pattern: 'push'
+    },
+    {
+        id: 'skull_crushers',
+        name: 'Skull Crushers',
+        target_muscle: 'arms',
+        secondary_muscles: [],
+        type: 'isolation',
+        equipment: 'barbell',
+        difficulty: 'intermediate',
+        movement_pattern: 'push'
+    },
+
+    // CORE
+    {
+        id: 'plank',
+        name: 'Plank',
+        target_muscle: 'core',
+        secondary_muscles: ['shoulders'],
+        type: 'isolation',
+        equipment: 'bodyweight',
+        difficulty: 'beginner',
+    },
+    {
+        id: 'leg_raises',
+        name: 'Hanging Leg Raises',
+        target_muscle: 'core',
+        secondary_muscles: ['hip_flexors'],
+        type: 'isolation',
+        equipment: 'bodyweight',
+        difficulty: 'intermediate',
     }
+]
+
+// Helper functions for the Workout Generator
+
+export function getExercises(criteria: Partial<Exercise>): Exercise[] {
+    return EXERCISE_DATABASE.filter(ex => {
+        let match = true
+        if (criteria.target_muscle && ex.target_muscle !== criteria.target_muscle) match = false
+        if (criteria.type && ex.type !== criteria.type) match = false
+        if (criteria.movement_pattern && ex.movement_pattern !== criteria.movement_pattern) match = false
+        return match
+    })
 }
 
-export async function getRecommendedWorkout(goal: string): Promise<any> {
-    const exercises = await fetchAllExercises()
-    if (!exercises.length) return null
-
-    // Goal to Muscle Group Mapping
-    let primaryMuscles: string[] = []
-    let style = 'strength'
-
-    if (goal === 'lose_weight' || goal === 'lose') {
-        primaryMuscles = ['quadriceps', 'hamstrings', 'chest', 'abdominals']
-        style = 'cardio'
-    } else if (goal === 'gain_muscle' || goal === 'gain') {
-        primaryMuscles = ['chest', 'shoulders', 'biceps', 'triceps', 'lats']
-        style = 'hypertrophy'
-    } else { // maintain
-        primaryMuscles = ['quadriceps', 'chest', 'back', 'abdominals']
-        style = 'strength'
-    }
-
-    // Filter Exercises
-    const routine = []
-    for (const muscle of primaryMuscles) {
-        const candidates = exercises.filter(e =>
-            e.primaryMuscles.includes(muscle) &&
-            e.images.length > 0
-        )
-        if (candidates.length) {
-            const randomEx = candidates[Math.floor(Math.random() * candidates.length)]
-            routine.push({
-                name: randomEx.name,
-                sets: style === 'hypertrophy' ? '3-4' : '3',
-                reps: style === 'cardio' ? '15-20' : (style === 'hypertrophy' ? '8-12' : '10'),
-                rest: '60s',
-                tags: [muscle, randomEx.level],
-                gif: `https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/${randomEx.images[0]}`
-            })
-        }
-    }
-
-    // Add some random variety if short
-    while (routine.length < 5) {
-        const randomEx = exercises[Math.floor(Math.random() * exercises.length)]
-        if (randomEx.images.length > 0 && !routine.find(r => r.name === randomEx.name)) {
-            routine.push({
-                name: randomEx.name,
-                sets: '3',
-                reps: '12',
-                rest: '60s',
-                tags: [randomEx.primaryMuscles[0] || 'Full Body', randomEx.level],
-                gif: `https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/${randomEx.images[0]}`
-            })
-        }
-    }
-
-    return {
-        title: `AI Generated: ${style.charAt(0).toUpperCase() + style.slice(1)} Focus`,
-        focus: style === 'cardio' ? 'High Intensity' : 'Muscle Building',
-        duration: '45-60 Min',
-        exercises: routine.slice(0, 8) // Limit to 8 exercises
-    }
-}
-
-/**
- * Get exercises filtered by muscle group
- */
-export async function getExercisesByMuscleGroup(muscleGroup: string): Promise<ExerciseDBItem[]> {
-    const exercises = await fetchAllExercises()
-    if (!exercises.length) return []
-
-    const normalizedMuscle = muscleGroup.toLowerCase()
-
-    return exercises.filter(exercise =>
-        exercise.primaryMuscles.some(m => m.toLowerCase().includes(normalizedMuscle)) ||
-        exercise.secondaryMuscles.some(m => m.toLowerCase().includes(normalizedMuscle)) ||
-        exercise.category.toLowerCase().includes(normalizedMuscle)
+export function getCompoundExercise(muscle: string, pattern?: string): Exercise | undefined {
+    const candidates = EXERCISE_DATABASE.filter(ex =>
+        ex.target_muscle === muscle &&
+        ex.type === 'compound' &&
+        (!pattern || ex.movement_pattern === pattern)
     )
+    if (candidates.length === 0) return undefined
+    return candidates[Math.floor(Math.random() * candidates.length)]
 }
 
+export function getIsolationExercise(muscle: string): Exercise | undefined {
+    const candidates = EXERCISE_DATABASE.filter(ex =>
+        ex.target_muscle === muscle &&
+        ex.type === 'isolation'
+    )
+    if (candidates.length === 0) return undefined
+    return candidates[Math.floor(Math.random() * candidates.length)]
+}
