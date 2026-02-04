@@ -22,6 +22,7 @@ import {
     Pulse,
     LoadingDots,
 } from '@/components/animations/Transitions'
+import Icons from '@/components/icons/Icons'
 
 export default function AnimationShowcase() {
     const [count, setCount] = useState(0)
@@ -79,7 +80,7 @@ export default function AnimationShowcase() {
                                     Interactive card with depth
                                 </p>
                                 <TiltCard className="bg-gradient-to-br from-cyan-600/20 to-purple-600/20 p-6 rounded-2xl border border-white/10">
-                                    <div className="text-4xl mb-2">🎯</div>
+                                    <Icons.Target size={40} className="text-cyan-400 mb-2" strokeWidth={2} />
                                     <p className="text-sm font-bold">Hover to tilt</p>
                                 </TiltCard>
                             </div>
@@ -121,7 +122,7 @@ export default function AnimationShowcase() {
                                 </p>
                                 <Ripple className="bg-pink-600/20 p-8 rounded-2xl border border-pink-500/20 cursor-pointer hover:bg-pink-600/30 transition-colors">
                                     <div className="text-center">
-                                        <div className="text-4xl mb-2">💧</div>
+                                        <Icons.Water size={40} className="text-pink-400 mb-2 mx-auto" strokeWidth={2} />
                                         <p className="text-sm font-bold">Click Me</p>
                                     </div>
                                 </Ripple>
@@ -139,7 +140,7 @@ export default function AnimationShowcase() {
                                 </p>
                                 <GradientBorder className="p-6 rounded-2xl">
                                     <div className="text-center">
-                                        <div className="text-4xl mb-2">✨</div>
+                                        <Icons.Sparkles size={40} className="text-emerald-400 mb-2 mx-auto" strokeWidth={2} />
                                         <p className="text-sm font-bold">Premium Card</p>
                                     </div>
                                 </GradientBorder>
@@ -157,7 +158,7 @@ export default function AnimationShowcase() {
                                 </p>
                                 <div className="flex justify-center">
                                     <Floating duration={4} distance={15}>
-                                        <div className="text-6xl">🚀</div>
+                                        <Icons.Rocket size={60} className="text-orange-400" strokeWidth={2} />
                                     </Floating>
                                 </div>
                             </div>
@@ -174,49 +175,49 @@ export default function AnimationShowcase() {
                         <div className="grid md:grid-cols-4 gap-6">
                             {/* Shimmer */}
                             <div className="glass-card p-6 rounded-2xl shimmer">
-                                <div className="text-3xl mb-2">✨</div>
+                                <Icons.Sparkles size={32} className="text-purple-400 mb-2 mx-auto" strokeWidth={2} />
                                 <p className="text-sm font-bold">Shimmer</p>
                             </div>
 
                             {/* Pulse */}
                             <div className="glass-card p-6 rounded-2xl">
-                                <div className="text-3xl mb-2 animate-pulse-slow">💓</div>
+                                <Icons.Heart size={32} className="text-pink-400 mb-2 mx-auto animate-pulse-slow" strokeWidth={2} />
                                 <p className="text-sm font-bold">Pulse</p>
                             </div>
 
                             {/* Float */}
                             <div className="glass-card p-6 rounded-2xl">
-                                <div className="text-3xl mb-2 animate-float">🎈</div>
+                                <Icons.Rocket size={32} className="text-cyan-400 mb-2 mx-auto animate-float" strokeWidth={2} />
                                 <p className="text-sm font-bold">Float</p>
                             </div>
 
                             {/* Spin */}
                             <div className="glass-card p-6 rounded-2xl">
-                                <div className="text-3xl mb-2 animate-spin-slow">⚙️</div>
+                                <Icons.Target size={32} className="text-indigo-400 mb-2 mx-auto animate-spin-slow" strokeWidth={2} />
                                 <p className="text-sm font-bold">Spin</p>
                             </div>
 
                             {/* Bounce */}
                             <div className="glass-card p-6 rounded-2xl">
-                                <div className="text-3xl mb-2 animate-bounce-gentle">⚡</div>
+                                <Icons.Energy size={32} className="text-yellow-400 mb-2 mx-auto animate-bounce-gentle" strokeWidth={2} />
                                 <p className="text-sm font-bold">Bounce</p>
                             </div>
 
                             {/* Wiggle */}
                             <div className="glass-card p-6 rounded-2xl">
-                                <div className="text-3xl mb-2 animate-wiggle">🎯</div>
+                                <Icons.Target size={32} className="text-cyan-400 mb-2 mx-auto animate-wiggle" strokeWidth={2} />
                                 <p className="text-sm font-bold">Wiggle</p>
                             </div>
 
                             {/* Heartbeat */}
                             <div className="glass-card p-6 rounded-2xl">
-                                <div className="text-3xl mb-2 animate-heartbeat">❤️</div>
+                                <Icons.Heart size={32} className="text-red-400 mb-2 mx-auto animate-heartbeat" strokeWidth={2} />
                                 <p className="text-sm font-bold">Heartbeat</p>
                             </div>
 
                             {/* Glow Pulse */}
                             <div className="glass-card p-6 rounded-2xl animate-glow-pulse">
-                                <div className="text-3xl mb-2">🌟</div>
+                                <Icons.Sparkles size={32} className="text-yellow-400 mb-2 mx-auto" strokeWidth={2} />
                                 <p className="text-sm font-bold">Glow Pulse</p>
                             </div>
                         </div>
@@ -263,7 +264,7 @@ export default function AnimationShowcase() {
                         <div className="grid md:grid-cols-3 gap-6">
                             <HoverScale scale={1.05}>
                                 <div className="glass-card p-8 rounded-3xl hover-lift cursor-pointer">
-                                    <div className="text-4xl mb-4">🎨</div>
+                                    <Icons.Sparkles size={40} className="text-purple-400 mb-4" strokeWidth={2} />
                                     <h3 className="text-xl font-bold mb-2">Hover Lift</h3>
                                     <p className="text-sm text-zinc-400">
                                         Lifts on hover with shadow
@@ -272,7 +273,7 @@ export default function AnimationShowcase() {
                             </HoverScale>
 
                             <div className="glass-card p-8 rounded-3xl hover-glow cursor-pointer">
-                                <div className="text-4xl mb-4">💎</div>
+                                <Icons.Medal size={40} className="text-cyan-400 mb-4" strokeWidth={2} />
                                 <h3 className="text-xl font-bold mb-2">Hover Glow</h3>
                                 <p className="text-sm text-zinc-400">
                                     Glows on hover
@@ -280,7 +281,7 @@ export default function AnimationShowcase() {
                             </div>
 
                             <div className="glass-card p-8 rounded-3xl magnetic cursor-pointer">
-                                <div className="text-4xl mb-4">🧲</div>
+                                <Icons.Target size={40} className="text-pink-400 mb-4" strokeWidth={2} />
                                 <h3 className="text-xl font-bold mb-2">Magnetic</h3>
                                 <p className="text-sm text-zinc-400">
                                     Subtle scale on hover

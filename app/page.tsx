@@ -7,6 +7,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import { getUserSession } from '@/lib/auth'
 import BMIAnalyzer from '@/components/BMIAnalyzer'
 import { PageTransition } from '@/components/animations/Transitions'
+import Icons from '@/components/icons/Icons'
 
 // ==========================================
 // 1. UI COMPONENT: Premium Glass Card (Argus Inspired)
@@ -279,10 +280,10 @@ export default function Home() {
 
               {/* Floating Metric Cards */}
               {[
-                { icon: "💪", label: "Strength", value: "85%", color: "purple", delay: 0.3, pos: "top-0 left-0" },
-                { icon: "🏃", label: "Cardio", value: "12K", color: "cyan", delay: 0.5, pos: "top-0 right-0" },
-                { icon: "🔥", label: "Burn", value: "450", color: "pink", delay: 0.7, pos: "bottom-0 left-0" },
-                { icon: "⚡", label: "Energy", value: "92%", color: "indigo", delay: 0.9, pos: "bottom-0 right-0" }
+                { Icon: Icons.Strength, label: "Strength", value: "85%", color: "purple-400", delay: 0.3, pos: "top-0 left-0" },
+                { Icon: Icons.Running, label: "Cardio", value: "12K", color: "cyan-400", delay: 0.5, pos: "top-0 right-0" },
+                { Icon: Icons.Fire, label: "Burn", value: "450", color: "pink-400", delay: 0.7, pos: "bottom-0 left-0" },
+                { Icon: Icons.Energy, label: "Energy", value: "92%", color: "indigo-400", delay: 0.9, pos: "bottom-0 right-0" }
               ].map((item, idx) => (
                 <motion.div
                   key={idx}
@@ -304,12 +305,12 @@ export default function Home() {
                 >
                   <div className="glass-card p-4 rounded-2xl min-w-[100px] hover:scale-110 transition-transform cursor-default">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">{item.icon}</span>
+                      <item.Icon size={20} className={`text-${item.color}`} strokeWidth={2.5} />
                       <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500">
                         {item.label}
                       </span>
                     </div>
-                    <div className={`text-2xl font-black italic font-outfit text-${item.color}-400`}>
+                    <div className={`text-2xl font-black italic font-outfit text-${item.color}`}>
                       {item.value}
                     </div>
                   </div>
@@ -392,10 +393,10 @@ export default function Home() {
           <div className="absolute inset-0 bg-noise opacity-[0.02]" />
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12 relative z-10">
             {[
-              { label: "Active Biometrics", val: "10K+", icon: "🔋", color: "text-purple-500" },
-              { label: "Local Food Logs", val: "2.5M+", icon: "🍱", color: "text-cyan-500" },
-              { label: "Neural Workouts", val: "800+", icon: "🦾", color: "text-indigo-500" },
-              { label: "AI Prediction", val: "99.2%", icon: "📉", color: "text-emerald-500" }
+              { label: "Active Biometrics", val: "10K+", Icon: Icons.Activity, color: "text-purple-500" },
+              { label: "Local Food Logs", val: "2.5M+", Icon: Icons.Food, color: "text-cyan-500" },
+              { label: "Neural Workouts", val: "800+", Icon: Icons.Strength, color: "text-indigo-500" },
+              { label: "AI Prediction", val: "99.2%", Icon: Icons.TrendingUp, color: "text-emerald-500" }
             ].map((stat, i) => (
               <motion.div
                 key={i}
@@ -408,7 +409,7 @@ export default function Home() {
                 <div className="flex flex-col items-center">
                   <div className={`text-4xl font-black font-outfit italic ${stat.color} mb-3 tracking-tighter group-hover:scale-110 transition-transform`}>{stat.val}</div>
                   <div className="flex items-center gap-3">
-                    <span className="text-lg opacity-40">{stat.icon}</span>
+                    <stat.Icon size={18} className={`${stat.color} opacity-40`} strokeWidth={2.5} />
                     <div className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em]">{stat.label}</div>
                   </div>
                 </div>
@@ -445,14 +446,14 @@ export default function Home() {
 
             <GlassCard className="md:col-span-4 p-12 flex flex-col items-center justify-center text-center group" delay={0.2}>
               <div className="w-20 h-20 bg-purple-500/10 rounded-full flex items-center justify-center mb-8 border border-purple-500/20 group-hover:scale-110 transition-transform">
-                <span className="text-4xl">🧬</span>
+                <Icons.Brain size={32} className="text-purple-400" strokeWidth={2} />
               </div>
               <h3 className="text-xl font-black font-outfit uppercase italic mb-4">Smart Profiling</h3>
               <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Adjusted for your specific body type.</p>
             </GlassCard>
 
             <GlassCard className="md:col-span-4 p-12 flex flex-col justify-between" delay={0.3}>
-              <span className="text-3xl">🛡️</span>
+              <Icons.Target size={28} className="text-cyan-400" strokeWidth={2} />
               <div>
                 <h3 className="text-xl font-black font-outfit italic text-white uppercase mb-2">Fast & Secure</h3>
                 <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest leading-relaxed">Runs on global infrastructure. Zero latency responses.</p>
