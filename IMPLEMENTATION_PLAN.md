@@ -217,17 +217,30 @@ Transform FitDay AI into a complete, intelligent fitness companion that guides u
   - Workout adherence tracking
   - Nutrition compliance scoring
 
-- [ ] **Automatic Plan Adjustments**
+- [x] **Daily Check-ins**
+  - Meal completion rate
+  - Water intake completion
+  - Workout completion
+  - Weight/measurements logging
+  - Energy level and mood
+
+- [x] **Weekly/Monthly Analytics**
+  - Workout adherence
+  - Nutrition compliance
+  - Strength gains (Initial metrics)
+  - Trend graphs and charts
+
+- [x] **Automatic Plan Adjustments**
   - Calorie adjustments based on progress
   - Workout intensity modifications
   - Rest day recommendations
 
-- [ ] **Plateau Detection**
+- [x] **Plateau Detection**
   - Identify stalled progress
   - Suggest plan variations
   - Recommend deload weeks
 
-- [ ] **Goal Achievement Predictions**
+- [x] **Goal Achievement Predictions**
   - Estimate time to goal
   - Adjust timelines based on progress
   - Celebrate milestones

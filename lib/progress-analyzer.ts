@@ -67,6 +67,12 @@ interface GoalPrediction {
     on_track: boolean
     adjustment_needed: boolean
     recommended_adjustments: string[]
+    milestones: Array<{
+        date: string
+        description: string
+        predictedValue: number
+        metric: string
+    }>
 }
 
 export class ProgressAnalyzer {
@@ -348,6 +354,7 @@ export class ProgressAnalyzer {
                 on_track: false,
                 adjustment_needed: false,
                 recommended_adjustments: [],
+                milestones: [],
             }
         }
 
@@ -392,6 +399,26 @@ export class ProgressAnalyzer {
             }
         }
 
+        const milestones = []
+        if (daysToGoal > 0 && this.targetWeight) {
+            // Halfway there
+            const halfwayDate = new Date()
+            halfwayDate.setDate(halfwayDate.getDate() + Math.round(daysToGoal / 2))
+            milestones.push({
+                date: halfwayDate.toISOString().split('T')[0],
+                description: 'Halfway Point',
+                predictedValue: parseFloat(((this.currentWeight + this.targetWeight) / 2).toFixed(1)),
+                metric: 'kg'
+            })
+            // Final
+            milestones.push({
+                date: completionDate.toISOString().split('T')[0],
+                description: 'Target Achieved',
+                predictedValue: this.targetWeight,
+                metric: 'kg'
+            })
+        }
+
         return {
             estimated_days_to_goal: daysToGoal,
             estimated_completion_date: completionDate.toISOString().split('T')[0],
@@ -399,6 +426,7 @@ export class ProgressAnalyzer {
             on_track,
             adjustment_needed: !on_track,
             recommended_adjustments,
+            milestones,
         }
     }
 

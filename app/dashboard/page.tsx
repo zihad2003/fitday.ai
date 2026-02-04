@@ -12,6 +12,7 @@ import MealCard from '@/components/dashboard/MealCard'
 import WorkoutCard from '@/components/dashboard/WorkoutCard'
 import MobileNav from '@/components/dashboard/MobileNav'
 import ScheduleSettingsModal from '@/components/dashboard/ScheduleSettingsModal'
+import DailyCheckinModal from '@/components/dashboard/DailyCheckinModal'
 import { generateDailySchedule, getFullDailyPlan, ScheduleItem } from '@/lib/schedule-engine'
 import { getRecommendedWorkout } from '@/lib/exercise-db'
 import { useNotificationSystem } from '@/hooks/useNotificationSystem'
@@ -41,40 +42,6 @@ type UserProfile = {
   target_calories: number
 }
 
-type ApiResponse<T> = {
-  success: boolean
-  data: T
-  error?: string
-}
-
-// --- HEALTH CALCULATION LOGIC ---
-const calculateMacros = (calories: number, goal: string) => {
-  let ratio = { p: 0.3, c: 0.4, f: 0.3 }
-  if (goal === 'lose' || goal === 'lose_weight') ratio = { p: 0.4, c: 0.3, f: 0.3 }
-  if (goal === 'gain' || goal === 'gain_muscle') ratio = { p: 0.3, c: 0.5, f: 0.2 }
-
-  return {
-    protein: Math.round((calories * ratio.p) / 4),
-    carbs: Math.round((calories * ratio.c) / 4),
-    fat: Math.round((calories * ratio.f) / 9)
-  }
-}
-
-const calculateBMI = (weight: number, heightCm: number) => {
-  if (!weight || !heightCm) return { value: 0, status: 'Unknown', color: 'text-zinc-500', barColor: 'bg-zinc-800' }
-  const heightM = heightCm / 100
-  const bmi = parseFloat((weight / (heightM * heightM)).toFixed(1))
-  let status = 'Optimal'
-  let color = 'text-emerald-400'
-  let barColor = 'bg-emerald-500'
-
-  if (bmi < 18.5) { status = 'Underweight'; color = 'text-blue-400'; barColor = 'bg-blue-500' }
-  else if (bmi >= 25 && bmi < 29.9) { status = 'Overweight'; color = 'text-orange-400'; barColor = 'bg-orange-500' }
-  else if (bmi >= 30) { status = 'Obese'; color = 'text-red-400'; barColor = 'bg-red-500' }
-
-  return { value: bmi, status, color, barColor }
-}
-
 export default function Dashboard() {
   const router = useRouter()
   const [user, setUser] = useState<UserProfile | null>(null)
@@ -83,15 +50,41 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [schedulePrefs, setSchedulePrefs] = useState<any>(null)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isCheckinOpen, setIsCheckinOpen] = useState(false)
+  const [hasCheckedIn, setHasCheckedIn] = useState(false)
   const { requestPermission } = useNotificationSystem(dailySchedule)
 
-  // Load prefs on mount
+  // Load prefs and check-in status on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('schedulePrefs')
       if (stored) setSchedulePrefs(JSON.parse(stored))
+
+      // Check if checked in today
+      const checkinStatus = localStorage.getItem(`daily_checkin_${new Date().toDateString()}`)
+      if (checkinStatus) setHasCheckedIn(true)
     }
   }, [])
+
+  const handleSaveCheckin = async (data: any) => {
+    try {
+      const res = await fetch('/api/tracking/daily-checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (res.ok) {
+        setHasCheckedIn(true)
+        localStorage.setItem(`daily_checkin_${new Date().toDateString()}`, 'true')
+        // Update local user weight if changed
+        if (user) {
+          setUser({ ...user, weight_kg: data.weight_kg })
+        }
+      }
+    } catch (err) {
+      console.error('Check-in failed', err)
+    }
+  }
 
   useEffect(() => {
     if (user) {
@@ -122,7 +115,6 @@ export default function Dashboard() {
         }
 
         setUser(userData)
-        // Schedule is updated in separate effect dependency on user/prefs
 
         const staticPlan = getFullDailyPlan(userData as any)
 
@@ -155,9 +147,6 @@ export default function Dashboard() {
   if (loading) return <DashboardSkeleton />
   if (!user) return null
 
-  const macros = calculateMacros(user.target_calories || 2000, user.goal)
-  const bmiData = calculateBMI(user.weight_kg, user.height_cm)
-
   return (
     <PageTransition>
       <div className="min-h-screen bg-black text-white flex font-inter overflow-hidden">
@@ -172,11 +161,36 @@ export default function Dashboard() {
             <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 blur-[120px]" />
           </div>
 
-          <TopBar title="Dashboard" subtitle={`Member: ${user.name} // Status: Active`} />
+          <TopBar
+            title="Neural Dashboard"
+            subtitle={user?.name ? `${user.name.split(' ')[0]}'s biometric data` : 'Neural-Sync Active'}
+          />
 
           <StaggerContainer>
-            <div className="grid grid-cols-12 gap-6 md:gap-8 auto-rows-max relative z-10">
+            {!hasCheckedIn && (
+              <FadeIn className="mb-8">
+                <div className="bg-gradient-to-r from-purple-600/20 to-indigo-600/10 border border-purple-500/20 rounded-[2.5rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-[80px] group-hover:bg-purple-500/20 transition-all" />
+                  <div className="flex items-center gap-6 relative z-10">
+                    <div className="w-16 h-16 rounded-2xl bg-purple-600 flex items-center justify-center text-white shadow-[0_0_30px_rgba(147,51,234,0.4)]">
+                      <Icons.Sparkles size={28} />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-white uppercase italic leading-none mb-2">Morning Protocol Pending</h3>
+                      <p className="text-xs text-zinc-400 font-medium uppercase tracking-widest">Sync your physique & neural data for precise tracking.</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsCheckinOpen(true)}
+                    className="w-full md:w-auto px-10 py-4 bg-white text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-zinc-200 transition-all shadow-xl active:scale-95"
+                  >
+                    Sync Now
+                  </button>
+                </div>
+              </FadeIn>
+            )}
 
+            <div className="grid grid-cols-12 gap-6 md:gap-8 auto-rows-max relative z-10">
               {/* ROW 1: CALORIES + MEAL PLAN */}
               <StaggerItem className="col-span-12 lg:col-span-8">
                 <HoverScale scale={1.005} className="h-full">
@@ -197,6 +211,17 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </Link>
+                <Link href="/progress" className="flex-1 min-w-[200px]">
+                  <div className="glass-card p-4 flex items-center gap-4 hover:bg-white/5 transition-colors cursor-pointer group">
+                    <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+                      <Icons.Sparkles size={20} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Analytics</div>
+                      <div className="font-black font-outfit text-white">Growth Hub</div>
+                    </div>
+                  </div>
+                </Link>
                 <Link href="/dashboard/tracking/water" className="flex-1 min-w-[200px]">
                   <div className="glass-card p-4 flex items-center gap-4 hover:bg-white/5 transition-colors cursor-pointer group">
                     <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
@@ -214,7 +239,7 @@ export default function Dashboard() {
                 {detailedPlan && <MealCard meals={detailedPlan.meals} />}
               </StaggerItem>
 
-              {/* ROW 2: LIVE SCHEDULE + WORKOUT PLAN */}
+              {/* ROW 2: LIVE SCHEDULE + AI COACH */}
               <StaggerItem className="col-span-12 lg:col-span-8 min-h-[500px]">
                 <LiveSchedule schedule={dailySchedule} onOpenSettings={() => setIsSettingsOpen(true)} />
               </StaggerItem>
@@ -224,7 +249,7 @@ export default function Dashboard() {
                   {detailedPlan && <WorkoutCard workout={detailedPlan.workout} />}
                 </div>
 
-                {/* AI Predictive Insight (New Element) */}
+                {/* AI Predictive Insight */}
                 <HoverScale scale={1.02} className="h-[240px]">
                   <div className="stat-card p-0 overflow-hidden relative flex flex-col border border-purple-500/10 group h-full">
                     <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-transparent pointer-events-none" />
@@ -241,7 +266,6 @@ export default function Dashboard() {
                   </div>
                 </HoverScale>
               </StaggerItem>
-
             </div>
           </StaggerContainer>
 
@@ -261,6 +285,7 @@ export default function Dashboard() {
           </FadeIn>
         </main>
       </div>
+
       <ScheduleSettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
@@ -268,20 +293,12 @@ export default function Dashboard() {
         currentPrefs={schedulePrefs}
         onEnableNotifications={requestPermission}
       />
+
+      <DailyCheckinModal
+        isOpen={isCheckinOpen}
+        onClose={() => setIsCheckinOpen(false)}
+        onSave={handleSaveCheckin}
+      />
     </PageTransition>
   )
 }
-
-function MacroStat({ label, value, color }: { label: string, value: number, color: string }) {
-  return (
-    <div className="bg-white/5 p-5 rounded-[2rem] border border-white/5 hover:border-white/10 transition-colors group relative overflow-hidden">
-      <div className={`absolute top-0 left-0 w-1 h-full ${color} opacity-20 group-hover:opacity-100 transition-opacity`} />
-      <div className="flex items-center gap-2 mb-3">
-        <div className={`w-1.5 h-1.5 rounded-full ${color}`} />
-        <div className="text-[9px] font-black text-white/40 uppercase tracking-widest">{label}</div>
-      </div>
-      <div className="text-2xl font-black italic font-outfit leading-none tabular-nums">{value}<span className="text-xs ml-0.5 text-zinc-600">g</span></div>
-    </div>
-  );
-}
-
