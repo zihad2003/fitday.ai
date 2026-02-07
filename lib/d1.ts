@@ -37,40 +37,8 @@ export async function selectQuery(query: string, params: any[] = []) {
   const db = getDB()
 
   if (!db) {
-    console.warn("⚠️ Database binding missing. Using local SQLite file.");
-
-    // Use better-sqlite3 for local development
-    if (typeof window === 'undefined') {
-      try {
-        const Database = require('better-sqlite3');
-        const fs = require('fs');
-        const path = require('path');
-
-        const dbDir = path.join(process.cwd(), '.wrangler/state/v3/d1/miniflare-D1DatabaseObject');
-        const files = fs.readdirSync(dbDir);
-        const walFile = files.find((f: string) => f.endsWith('.sqlite-wal'));
-        let dbName = '893b318a4110c8998585437d673ac659f3ce99cdebacfaf9117b1b480495c455.sqlite';
-        if (walFile) {
-          dbName = walFile.replace('.sqlite-wal', '.sqlite');
-        } else {
-          const existingSqlite = files.find((f: string) => f.endsWith('.sqlite'));
-          if (existingSqlite) dbName = existingSqlite;
-        }
-
-        const dbPath = path.join(dbDir, dbName);
-        const localDb = new Database(dbPath, { readonly: false });
-
-        const stmt = localDb.prepare(query);
-        const results = stmt.all(...params);
-        localDb.close();
-
-        return results;
-      } catch (e) {
-        console.error('Local DB error:', e);
-        return [];
-      }
-    }
-
+    console.warn("⚠️ Database binding missing. Returning empty results.");
+    console.warn("💡 Tip: Use 'npm run pages:dev' for D1 database access in development.");
     return [];
   }
 
@@ -89,40 +57,8 @@ export async function selectQuery(query: string, params: any[] = []) {
 export async function executeMutation(query: string, params: any[] = []) {
   const db = getDB()
   if (!db) {
-    console.warn("⚠️ Database binding missing. Using local SQLite file for mutation.");
-
-    // Use better-sqlite3 for local development
-    if (typeof window === 'undefined') {
-      try {
-        const Database = require('better-sqlite3');
-        const fs = require('fs');
-        const path = require('path');
-
-        const dbDir = path.join(process.cwd(), '.wrangler/state/v3/d1/miniflare-D1DatabaseObject');
-        const files = fs.readdirSync(dbDir);
-        const walFile = files.find((f: string) => f.endsWith('.sqlite-wal'));
-        let dbName = '893b318a4110c8998585437d673ac659f3ce99cdebacfaf9117b1b480495c455.sqlite';
-        if (walFile) {
-          dbName = walFile.replace('.sqlite-wal', '.sqlite');
-        } else {
-          const existingSqlite = files.find((f: string) => f.endsWith('.sqlite'));
-          if (existingSqlite) dbName = existingSqlite;
-        }
-
-        const dbPath = path.join(dbDir, dbName);
-        const localDb = new Database(dbPath, { readonly: false });
-
-        const stmt = localDb.prepare(query);
-        const info = stmt.run(...params);
-        localDb.close();
-
-        return info.changes || 0;
-      } catch (e) {
-        console.error('Local DB mutation error:', e);
-        return 0;
-      }
-    }
-
+    console.warn("⚠️ Database binding missing. Mutation skipped.");
+    console.warn("💡 Tip: Use 'npm run pages:dev' for D1 database access in development.");
     return 0;
   }
 
