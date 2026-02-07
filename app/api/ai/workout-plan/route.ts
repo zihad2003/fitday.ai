@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateWorkoutPlan } from '@/lib/ai-workout-generator'
 import { selectQuery } from '@/lib/d1'
+import { SubscriptionService } from '@/lib/subscription'
 
 export const runtime = 'edge'
 
@@ -21,6 +22,16 @@ export async function POST(request: NextRequest) {
         const users = await selectQuery('SELECT * FROM users WHERE id = ?', [Number(userId)])
         if (users.length === 0) {
             return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
+        }
+
+        // Check subscription & consume credit
+        const { allowed, remaining } = await SubscriptionService.consumeCredit(Number(userId))
+        if (!allowed) {
+            return NextResponse.json({
+                success: false,
+                error: 'AI Credits exhausted. Please upgrade to continue.',
+                code: 'CREDIT_LIMIT_REACHED'
+            }, { status: 402 })
         }
 
         const user = users[0] as any
