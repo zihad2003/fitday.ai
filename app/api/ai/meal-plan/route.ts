@@ -17,8 +17,6 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'User ID required' }, { status: 400 })
         }
 
-        import { SubscriptionService } from '@/lib/subscription'
-
         // ...
         const db = getDb()
         const user = await db.prepare('SELECT * FROM users WHERE id = ?').bind(Number(userId)).first() as any
