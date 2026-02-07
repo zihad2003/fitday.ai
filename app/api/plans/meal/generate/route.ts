@@ -11,7 +11,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { force_regenerate } = await request.json().catch(() => ({}))
+        const body = await request.json().catch(() => ({})) as { force_regenerate?: boolean }
+        const { force_regenerate } = body
         const db = getDb()
 
         // Get user profile

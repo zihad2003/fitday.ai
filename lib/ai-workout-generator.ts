@@ -198,8 +198,8 @@ async function getMainWorkout(muscles: string[], profile: WorkoutProfile): Promi
             const filtered = dbExercises
                 .filter(ex => {
                     // Filter by fitness level
-                    if (profile.fitnessLevel === 'beginner' && ex.level === 'expert') return false
-                    if (profile.fitnessLevel === 'intermediate' && ex.level === 'expert') return false
+                    if (profile.fitnessLevel === 'beginner' && ex.difficulty === 'advanced') return false
+                    if (profile.fitnessLevel === 'intermediate' && ex.difficulty === 'advanced') return false
 
                     // Filter by equipment if specified
                     if (profile.equipment.length > 0 && ex.equipment) {
@@ -236,8 +236,8 @@ function convertToExercise(dbEx: ExerciseDBItem, profile: WorkoutProfile): Exerc
         sets,
         reps,
         rest,
-        gif: dbEx.images?.[0] ? `https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/${dbEx.images[0]}` : undefined,
-        difficulty: dbEx.level,
+        gif: dbEx.gif_url,
+        difficulty: dbEx.difficulty,
         notes: dbEx.instructions?.[0],
     }
 }

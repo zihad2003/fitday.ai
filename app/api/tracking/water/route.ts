@@ -10,21 +10,22 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'Missing parameters' }, { status: 400 })
         }
 
-        // Calculate the increment if we want to log every sip, 
-        // OR simpler: Delete today's logs and insert the new total as a single entry for "today's total so far"
-        // Since we don't know the previous total here without querying, and this is a "sync" from frontend state:
+        const db = getDb()
 
-        // Strategy: We will treat `water_logs` effectively as "Total for the day" by removing prior entries for this user/date combination.
-        // Ideally we'd modify the schema to have a unique constraint, but we work with what we have.
+        // Check if progress entry exists for today
+        const existing = await db.prepare('SELECT id FROM user_progress WHERE user_id = ? AND date = ?').bind(userId, date).first()
 
-        // 1. Delete existing logs for today
-        await db.prepare('DELETE FROM water_logs WHERE user_id = ? AND date = ?').bind(userId, date).run()
-
-        // 2. Insert new total
-        const waterMl = Math.round(water_liters * 1000)
-        await db.prepare('INSERT INTO water_logs (user_id, date, amount_ml) VALUES (?, ?, ?)')
-            .bind(userId, date, waterMl)
-            .run()
+        if (existing) {
+            // Update existing
+            await db.prepare('UPDATE user_progress SET water_liters = ? WHERE id = ?')
+                .bind(water_liters, existing.id)
+                .run()
+        } else {
+            // Insert new
+            await db.prepare('INSERT INTO user_progress (user_id, date, water_liters) VALUES (?, ?, ?)')
+                .bind(userId, date, water_liters)
+                .run()
+        }
 
         return NextResponse.json({ success: true })
     } catch (error: any) {

@@ -9,19 +9,17 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { weight_kg } = await request.json()
+        const { weight_kg } = await request.json() as { weight_kg: number }
         const db = getDb()
 
-        // Update today's weight
-        const query = `
-      INSERT INTO daily_tracking (user_id, date, weight_kg)
-      VALUES (?, date('now'), ?)
-      ON CONFLICT(user_id, date) DO UPDATE SET
-        weight_kg = excluded.weight_kg,
-        updated_at = CURRENT_TIMESTAMP
-    `
+        // 1. Update user_progress for today
+        const existing = await db.prepare("SELECT id FROM user_progress WHERE user_id = ? AND date = date('now')").bind(session.userId).first()
 
-        await db.prepare(query).bind(session.userId, weight_kg).run()
+        if (existing) {
+            await db.prepare('UPDATE user_progress SET weight_kg = ? WHERE id = ?').bind(weight_kg, existing.id).run()
+        } else {
+            await db.prepare("INSERT INTO user_progress (user_id, date, weight_kg) VALUES (?, date('now'), ?)").bind(session.userId, weight_kg).run()
+        }
 
         // Also update user's current weight
         await db

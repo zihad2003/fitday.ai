@@ -7,13 +7,12 @@ export async function POST(request: NextRequest) {
         const db = getDb()
         const today = new Date().toISOString().split('T')[0]
 
-        // Upsert daily tracking to ensure the record exists for the day
-        await db.prepare(`
-            INSERT INTO daily_tracking (user_id, date, updated_at)
-            VALUES (?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(user_id, date) DO UPDATE SET
-                updated_at = CURRENT_TIMESTAMP
-        `).bind(userId, today).run()
+        // Ensure a daily progress record exists
+        const existing = await db.prepare("SELECT id FROM user_progress WHERE user_id = ? AND date = ?").bind(userId, today).first()
+
+        if (!existing) {
+            await db.prepare("INSERT INTO user_progress (user_id, date) VALUES (?, ?)").bind(userId, today).run()
+        }
 
         return NextResponse.json({ success: true })
     } catch (error: any) {

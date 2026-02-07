@@ -288,3 +288,27 @@ export async function getRecommendedWorkout(goal: string): Promise<any> {
         }))
     }
 }
+
+// Support for AI Workout Generator
+export type ExerciseDBItem = Exercise;
+
+export async function getExercisesByMuscleGroup(muscle: string): Promise<Exercise[]> {
+    // Map broader muscle groups if needed
+    // The Exercise.target_muscle is 'chest' | 'back' | 'shoulders' | 'legs' | 'arms' | 'core' | 'full_body'
+    // ai-workout-generator passes strings like 'glutes', 'calves' which might be subset
+
+    // Normalize muscle string
+    let target: any = muscle.toLowerCase();
+
+    // Simple mapping for safety
+    if (target === 'glutes' || target === 'calves' || target === 'quads' || target === 'hamstrings') target = 'legs';
+    if (target === 'biceps' || target === 'triceps') target = 'arms';
+    if (target === 'abs') target = 'core';
+
+
+    return EXERCISE_DATABASE.filter(ex => ex.target_muscle === target);
+}
+
+export async function fetchAllExercises() {
+    return EXERCISE_DATABASE;
+}

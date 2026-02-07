@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
         bmr = ?,
         tdee = ?,
         activity_level = ?,
-        onboarding_completed = ?,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `
@@ -53,7 +52,6 @@ export async function POST(request: NextRequest) {
             data.bmr,
             data.tdee,
             data.activity_level,
-            true,
             session.userId
         ).run()
 
@@ -74,21 +72,13 @@ export async function POST(request: NextRequest) {
             'gym'
         )
 
-        // Create initial daily tracking entry
-        const trackingQuery = `
-      INSERT INTO daily_tracking (
-        user_id,
-        date,
-        weight_kg
-      ) VALUES (?, date('now'), ?)
-      ON CONFLICT(user_id, date) DO UPDATE SET
-        weight_kg = excluded.weight_kg
-    `
+        // Create initial daily tracking entry (user_progress)
+        // Check if exists first (unlikely for new user but safe)
+        const existProgress = await db.prepare("SELECT id FROM user_progress WHERE user_id = ? AND date = date('now')").bind(session.userId).first()
 
-        await db.prepare(trackingQuery).bind(
-            session.userId,
-            data.weight_kg
-        ).run()
+        if (!existProgress) {
+            await db.prepare("INSERT INTO user_progress (user_id, date, weight_kg) VALUES (?, date('now'), ?)").bind(session.userId, data.weight_kg).run()
+        }
 
         return NextResponse.json({
             success: true,

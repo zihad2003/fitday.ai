@@ -21,21 +21,17 @@ export async function GET(request: NextRequest) {
         // 2. Fetch last 30 days of daily data
         const { results } = await db.prepare(`
             SELECT 
-                dt.date,
-                dt.weight_kg,
-                dt.mood_rating,
-                dt.energy_level,
-                dt.sleep_hours,
-                dt.pain_points,
-                COALESCE(SUM(m.calories), 0) as calories_consumed,
-                COUNT(CASE WHEN w.completed = 1 THEN 1 END) as workouts_completed,
-                dt.water_liters * 1000 as water_ml
-            FROM daily_tracking dt
-            LEFT JOIN meals m ON dt.user_id = m.user_id AND dt.date = m.date
-            LEFT JOIN workouts w ON dt.user_id = w.user_id AND dt.date = w.date
-            WHERE dt.user_id = ? AND dt.date >= date('now', '-30 days')
-            GROUP BY dt.date
-            ORDER BY dt.date ASC
+                up.date,
+                up.weight_kg,
+                up.water_liters * 1000 as water_ml,
+                up.sleep_hours,
+                COALESCE(dns.total_calories, 0) as calories_consumed,
+                COALESCE(dws.completed_workouts, 0) as workouts_completed
+            FROM user_progress up
+            LEFT JOIN daily_nutrition_summary dns ON up.user_id = dns.user_id AND up.date = dns.date
+            LEFT JOIN daily_workout_summary dws ON up.user_id = dws.user_id AND up.date = dws.date
+            WHERE up.user_id = ? AND up.date >= date('now', '-30 days')
+            ORDER BY up.date ASC
         `).bind(session.userId).all()
 
         // 3. Transform to DailyData format
@@ -46,12 +42,12 @@ export async function GET(request: NextRequest) {
             workouts_completed: r.workouts_completed || 0,
             water_ml: r.water_ml || 0,
             sleep_hours: r.sleep_hours || 0,
-            mood_rating: r.mood_rating || 0,
-            energy_level: r.energy_level || 0,
+            mood_rating: 0, // Mock for now
+            energy_level: 0, // Mock for now
             recovery_level: 3, // Mock for now
             workout_intensity: 3, // Mock for now
             equipment: user.available_equipment || 'gym',
-            pain_points: typeof r.pain_points === 'string' ? JSON.parse(r.pain_points) : (r.pain_points || [])
+            pain_points: []
         }))
 
         // 4. Run Analysis

@@ -31,34 +31,42 @@ export async function GET(request: NextRequest) {
         // Calculate macro targets based on goal
         const macros = calculateMacros(user.target_calories, user.fitness_goal)
 
-        // Get today's tracking data
-        const dailyData = await db
+        // Get today's tracking data from VIEW and user_progress
+        const nutritionSummary = await db
             .prepare(`
         SELECT 
-          calories_consumed,
-          protein_consumed,
-          carbs_consumed,
-          fats_consumed,
-          water_ml,
-          meals_logged
-        FROM daily_tracking
+          total_calories,
+          total_protein,
+          total_carbs,
+          total_fat,
+          total_meals
+        FROM daily_nutrition_summary
+        WHERE user_id = ? AND date = date('now')
+      `)
+            .bind(session.userId)
+            .first()
+
+        const progressData = await db
+            .prepare(`
+        SELECT water_liters
+        FROM user_progress
         WHERE user_id = ? AND date = date('now')
       `)
             .bind(session.userId)
             .first()
 
         const data = {
-            calories_consumed: dailyData?.calories_consumed || 0,
+            calories_consumed: nutritionSummary?.total_calories || 0,
             calories_target: user.target_calories || 2000,
-            protein_consumed: dailyData?.protein_consumed || 0,
+            protein_consumed: nutritionSummary?.total_protein || 0,
             protein_target: macros.protein,
-            carbs_consumed: dailyData?.carbs_consumed || 0,
+            carbs_consumed: nutritionSummary?.total_carbs || 0,
             carbs_target: macros.carbs,
-            fats_consumed: dailyData?.fats_consumed || 0,
+            fats_consumed: nutritionSummary?.total_fat || 0,
             fats_target: macros.fats,
-            water_ml: dailyData?.water_ml || 0,
+            water_ml: (progressData?.water_liters || 0) * 1000,
             water_target: user.daily_water_goal_ml || 2000,
-            meals_logged: dailyData?.meals_logged || 0,
+            meals_logged: nutritionSummary?.total_meals || 0,
             meals_planned: 4, // Default to 4 meals
         }
 

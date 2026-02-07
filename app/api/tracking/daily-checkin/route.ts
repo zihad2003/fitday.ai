@@ -17,35 +17,23 @@ export async function POST(request: NextRequest) {
             sleep_quality?: string,
             stress_level?: number
         }
-        const { weight_kg, mood, energy, sleep_hours, sleep_quality, stress_level } = body
+        const { weight_kg, sleep_hours } = body
         const db = getDb()
 
-        // Insert or update daily check-in
-        // Map input to progress_logs
-        // We will store mood, energy, sleep in 'notes' as JSON because schema doesn't have columns for them
-        const additionalMetrics = {
-            mood_rating: mood,
-            energy_level: energy,
-            sleep_hours: sleep_hours,
-            sleep_quality: sleep_quality,
-            stress_level: stress_level
-        }
-        const notesJson = JSON.stringify(additionalMetrics)
-
         // Check if log exists for today
-        const existingLog = await db.prepare('SELECT id FROM progress_logs WHERE user_id = ? AND log_date = date("now")').bind(session.userId).first()
+        const existingLog = await db.prepare("SELECT id FROM user_progress WHERE user_id = ? AND date = date('now')").bind(session.userId).first()
 
         if (existingLog) {
             await db.prepare(`
-                UPDATE progress_logs 
-                SET weight = COALESCE(?, weight), notes = ? 
+                UPDATE user_progress 
+                SET weight_kg = COALESCE(?, weight_kg), sleep_hours = COALESCE(?, sleep_hours)
                 WHERE id = ?
-             `).bind(weight_kg || null, notesJson, existingLog.id).run()
+             `).bind(weight_kg || null, sleep_hours || null, existingLog.id).run()
         } else {
             await db.prepare(`
-                INSERT INTO progress_logs (user_id, log_date, weight, notes)
+                INSERT INTO user_progress (user_id, date, weight_kg, sleep_hours)
                 VALUES (?, date('now'), ?, ?)
-             `).bind(session.userId, weight_kg || null, notesJson).run()
+             `).bind(session.userId, weight_kg || null, sleep_hours || null).run()
         }
 
         // Update user's current weight if provided
@@ -85,28 +73,22 @@ export async function GET(request: NextRequest) {
         const db = getDb()
 
         // Check if user has completed today's check-in
-        // Check if user has completed today's check-in
         const result = await db
             .prepare(`
         SELECT 
-          weight,
-          notes
-        FROM progress_logs 
-        WHERE user_id = ? AND log_date = date('now')
+          weight_kg,
+          sleep_hours
+        FROM user_progress 
+        WHERE user_id = ? AND date = date('now')
       `)
             .bind(session.userId)
             .first()
 
         let formattedResult = null
         if (result) {
-            let notesData = {}
-            try {
-                notesData = result.notes ? JSON.parse(result.notes) : {}
-            } catch (e) { }
-
             formattedResult = {
-                weight_kg: result.weight,
-                ...notesData
+                weight_kg: result.weight_kg,
+                sleep_hours: result.sleep_hours
             }
         }
 
