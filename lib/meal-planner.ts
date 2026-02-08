@@ -3,7 +3,7 @@
  * Integrates with D1 Database for persistent meal scheduling
  */
 
-import { getDb } from './db'
+import { query, mutate } from './database'
 
 export interface FoodItem {
     id: number
@@ -22,22 +22,24 @@ export class MealPlanner {
      * Save a generated meal plan to the database
      */
     static async saveMealPlan(userId: number, date: string, mealType: string, foodId: number, quantity: number) {
-        const db = getDb()
-        await db.prepare(`
-      INSERT INTO meal_plans (user_id, date, meal_type, food_id, quantity)
-      VALUES (?, ?, ?, ?, ?)
-    `).bind(userId, date, mealType, foodId, quantity).run()
+        await mutate(`
+            INSERT INTO meal_plans (user_id, date, meal_type, food_id, quantity)
+            VALUES (?, ?, ?, ?, ?)
+        `, [userId, date, mealType, foodId, quantity])
     }
 
     /**
      * Automatically generate and persist a meal plan based on user goals
      */
     static async generateAndSaveWeeklyPlan(userId: number, targetCalories: number, goal: string) {
-        const db = getDb()
-
         // 1. Fetch available foods
-        const { results } = await db.prepare("SELECT * FROM food_items").all()
-        const foods = results as unknown as FoodItem[]
+        const res = await query("SELECT * FROM food_items")
+        const foods = (res.data || []) as unknown as FoodItem[]
+
+        if (!foods || foods.length === 0) {
+            console.warn("No food items found in database.")
+            return
+        }
 
         // Categorize foods for smarter selection
         const categorized = {
@@ -48,10 +50,10 @@ export class MealPlanner {
         }
 
         // 2. Clear existing plan for the next 7 days
-        await db.prepare(`
-      DELETE FROM meal_plans 
-      WHERE user_id = ? AND date >= date('now')
-    `).bind(userId).run()
+        await mutate(`
+            DELETE FROM meal_plans 
+            WHERE user_id = ? AND date >= date('now')
+        `, [userId])
 
         const dates = Array.from({ length: 7 }).map((_, i) => {
             const d = new Date()

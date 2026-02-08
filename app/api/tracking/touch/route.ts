@@ -1,17 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { getCurrentUser } from '@/lib/session-manager'
+import { query, mutate } from '@/lib/database'
+
+export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
     try {
-        const { userId, type } = await request.json() as { userId: number, type: string }
-        const db = getDb()
+        const user = await getCurrentUser() as any
+        if (!user?.id) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        const userId = user.id
+
+        const { type } = await request.json() as { type: string }
         const today = new Date().toISOString().split('T')[0]
 
         // Ensure a daily progress record exists
-        const existing = await db.prepare("SELECT id FROM user_progress WHERE user_id = ? AND date = ?").bind(userId, today).first()
+        const existingRes = await query("SELECT id FROM user_progress WHERE user_id = ? AND date = ?", [userId, today])
+        const existing = existingRes.data?.[0]
 
         if (!existing) {
-            await db.prepare("INSERT INTO user_progress (user_id, date) VALUES (?, ?)").bind(userId, today).run()
+            await mutate("INSERT INTO user_progress (user_id, date) VALUES (?, ?)", [userId, today])
         }
 
         return NextResponse.json({ success: true })

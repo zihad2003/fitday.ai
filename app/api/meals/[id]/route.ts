@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { executeMutation } from '@/lib/d1'
 import { z } from 'zod'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 // --- FIX 1: Use Standard Zod Boolean (No Arguments) ---
 // This guarantees compatibility and removes the red line.

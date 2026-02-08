@@ -3,7 +3,7 @@
  * Integrates with D1 Database for persistent workout scheduling
  */
 
-import { getDb } from './db'
+import { query, mutate } from './database'
 
 export interface ExerciseLibraryItem {
     id: number
@@ -21,23 +21,19 @@ export class WorkoutPlanner {
      * Maps to the 'workout_plans' table which stores planned exercises for a specific date.
      */
     static async saveWorkoutPlan(userId: number, date: string, exerciseId: number, sets: number, reps: string, orderIndex: number) {
-        const db = getDb()
-
         // Insert directly into workout_plans
-        await db.prepare(`
+        await mutate(`
             INSERT INTO workout_plans (user_id, date, exercise_id, sets, reps, order_index, is_generated)
             VALUES (?, ?, ?, ?, ?, ?, 1)
-        `).bind(userId, date, exerciseId, sets, reps, orderIndex).run()
+        `, [userId, date, exerciseId, sets, reps, orderIndex])
     }
 
     /**
      * Fetch a user's workout plan for a specific date.
      */
     static async getDailyWorkout(userId: number, date: string) {
-        const db = getDb()
-
         // Join workout_plans with exercise_library
-        const { results } = await db.prepare(`
+        const res = await query(`
             SELECT 
                 wp.id,
                 wp.sets,
@@ -55,29 +51,23 @@ export class WorkoutPlanner {
             JOIN exercise_library e ON wp.exercise_id = e.id
             WHERE wp.user_id = ? AND wp.date = ?
             ORDER BY wp.order_index ASC
-        `).bind(userId, date).all()
+        `, [userId, date])
 
-        return results || []
+        return res.data || []
     }
 
     /**
      * Automatically generate and persist a workout plan based on user goals for the upcoming week.
-     * Since we don't have a template system in the schema, we generate for the next 7 days.
      */
     static async generateAndSaveWeeklyPlan(userId: number, goal: string, activityLevel: string, equipment: string) {
-        const db = getDb()
-
         // 1. Fetch available exercises
-        const { results } = await db.prepare("SELECT * FROM exercise_library").all()
-        const allExercises = results as unknown as ExerciseLibraryItem[]
+        const res = await query("SELECT * FROM exercise_library")
+        const allExercises = (res.data || []) as unknown as ExerciseLibraryItem[]
 
         if (!allExercises || allExercises.length === 0) {
             console.warn("No exercises found in library.");
             return;
         }
-
-        // 2. Clear existing future plans (optional, to avoid duplicates)
-        // await db.prepare('DELETE FROM workout_plans WHERE user_id = ? AND date >= ?').bind(userId, new Date().toISOString().split('T')[0]).run()
 
         // 3. Generate for next 7 days
         const today = new Date();

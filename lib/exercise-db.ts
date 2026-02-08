@@ -266,7 +266,7 @@ export function getIsolationExercise(muscle: string): Exercise | undefined {
 }
 
 export async function getRecommendedWorkout(goal: string): Promise<any> {
-    const isStrength = goal.includes('strength') || goal === 'gain_muscle'
+    const isStrength = (goal || '').includes('strength') || goal === 'gain_muscle'
 
     // Pick 3-4 exercises
     const main = getCompoundExercise(isStrength ? 'legs' : 'full_body', 'squat') || EXERCISE_DATABASE[0]

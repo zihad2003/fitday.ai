@@ -8,12 +8,31 @@ import { Analytics } from '@/lib/analytics'
 
 interface QuickActionsProps {
     userId: number
+    onOpenMealLog?: () => void
+    onOpenCheckin?: () => void
 }
 
-export default function QuickActions({ userId }: QuickActionsProps) {
+export default function QuickActions({ userId, onOpenMealLog, onOpenCheckin }: QuickActionsProps) {
     const [loading, setLoading] = useState<string | null>(null)
 
     const handleQuickLog = async (type: 'water' | 'workout' | 'meal' | 'weight') => {
+        if (type === 'meal' && onOpenMealLog) {
+            onOpenMealLog()
+            return
+        }
+
+        if (type === 'weight' && onOpenCheckin) {
+            onOpenCheckin()
+            return
+        }
+
+        if (type === 'workout') {
+            const el = document.getElementById('workout-timeline')
+            if (el) el.scrollIntoView({ behavior: 'smooth' })
+            else showToast('Initiate Training Protocol from Timeline')
+            return
+        }
+
         setLoading(type)
         Analytics.trackFeatureUsage('quick_actions', 'initiate', { type })
 
@@ -31,18 +50,6 @@ export default function QuickActions({ userId }: QuickActionsProps) {
                     Analytics.trackFeatureUsage('quick_actions', 'sync_success', { type: 'water', amount: 250 })
                 }
             }
-
-            if (type === 'workout' || type === 'meal' || type === 'weight') {
-                await fetch('/api/tracking/touch', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId, type })
-                })
-                const labels = { workout: 'Training Protocol Staged', meal: 'Fuel Consumption Logged', weight: 'Biometric Drift Synchronized' }
-                showToast(labels[type as keyof typeof labels] || 'Neural Sync Complete')
-                Analytics.trackFeatureUsage('quick_actions', 'sync_success', { type })
-            }
-
         } catch (err) {
             showToast('Synchronization Failed', 'error')
             Analytics.trackFeatureUsage('quick_actions', 'sync_error', { type, error: String(err) })

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { selectQuery, executeMutation } from '@/lib/d1'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 // ==================================================================
 // GET: Fetch Exercise Library

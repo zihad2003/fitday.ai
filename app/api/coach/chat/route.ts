@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ChatService } from '@/lib/chat-service';
-import { getUserSession } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/session-manager';
 import { SubscriptionService } from '@/lib/subscription';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
     try {
-        const session = await getUserSession();
-        if (!session?.userId) {
+        const user = await getCurrentUser() as any;
+        if (!user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const userId = parseInt(session.userId);
+        const userId = user.id;
 
         const body = (await req.json()) as { question: string };
         const { question } = body;

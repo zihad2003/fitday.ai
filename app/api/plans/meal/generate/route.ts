@@ -1,60 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserSession } from '@/lib/auth'
-import { getDb } from '@/lib/db'
+import { query, mutate } from '@/lib/database'
+import { getCurrentUser } from '@/lib/session-manager'
 import { generateMealSchedule } from '@/lib/meal-timing-scheduler'
 import { getFoodSuggestions } from '@/lib/smart-food-suggester'
 
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
     try {
-        const session = await getUserSession()
-        if (!session?.userId) {
+        const user = await getCurrentUser()
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
         const body = await request.json().catch(() => ({})) as { force_regenerate?: boolean }
         const { force_regenerate } = body
-        const db = getDb()
-
-        // Get user profile
-        const user = await db
-            .prepare(`
-        SELECT 
-          fitness_goal,
-          target_calories,
-          dietary_preference,
-          food_allergies,
-          wake_up_time,
-          sleep_time,
-          preferred_workout_time,
-          workout_days_per_week
-        FROM users 
-        WHERE id = ?
-      `)
-            .bind(session.userId)
-            .first()
-
-        if (!user) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 })
-        }
 
         // Parse dietary restrictions and allergies
         const dietaryRestrictions = user.dietary_preference ? [user.dietary_preference] : []
         let allergies: string[] = []
-        try {
-            allergies = JSON.parse(user.food_allergies || '[]')
-        } catch (e) {
-            allergies = []
-        }
+        // food_allergies is not in schema yet, but we'll fallback
 
         // Generate Meal Schedule
         const schedule = generateMealSchedule(
             {
-                wake_up_time: user.wake_up_time || '07:00',
+                wake_up_time: user.wake_time || '07:00',
                 sleep_time: user.sleep_time || '23:00',
                 preferred_workout_time: user.preferred_workout_time || '17:00',
             },
-            user.target_calories || 2000,
-            user.fitness_goal,
+            user.daily_calorie_goal || 2000,
+            user.primary_goal || 'maintenance',
             (user.workout_days_per_week || 3) > 0
         )
 
@@ -80,34 +55,33 @@ export async function POST(request: NextRequest) {
         // Save plan to database
         // Ensure we delete old active plans first if regenerating
         if (force_regenerate) {
-            await db.prepare("UPDATE personalized_plans SET status = 'archived' WHERE user_id = ? AND plan_type = 'nutrition' AND status = 'active'")
-                .bind(session.userId)
-                .run();
+            await mutate("UPDATE personalized_plans SET status = 'archived' WHERE user_id = ? AND plan_type = 'nutrition' AND status = 'active'", [user.id])
         }
 
         // Check if an active plan exists
-        const existingPlan = await db.prepare("SELECT id FROM personalized_plans WHERE user_id = ? AND plan_type = 'nutrition' AND status = 'active'").bind(session.userId).first();
+        const existingPlanRes = await query("SELECT id FROM personalized_plans WHERE user_id = ? AND plan_type = 'nutrition' AND status = 'active'", [user.id])
+        const existingPlan = existingPlanRes.data?.[0]
 
         if (!existingPlan) {
             const planQuery = `
-          INSERT INTO personalized_plans (
-            user_id,
-            plan_type,
-            plan_name,
-            description,
-            duration_weeks,
-            difficulty_level,
-            plan_data,
-            status,
-            start_date
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', date('now'))
-        `
+                INSERT INTO personalized_plans (
+                    user_id,
+                    plan_type,
+                    plan_name,
+                    description,
+                    duration_weeks,
+                    difficulty_level,
+                    plan_data,
+                    status,
+                    start_date
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', date('now'))
+            `
 
-            await db.prepare(planQuery).bind(
-                session.userId,
+            await mutate(planQuery, [
+                user.id,
                 'nutrition',
                 'Intelligent Nutrition Plan',
-                `Personalized meal plan for ${user.fitness_goal}`,
+                `Personalized meal plan for ${user.primary_goal}`,
                 4, // Default 4 weeks
                 'intermediate',
                 JSON.stringify({
@@ -118,7 +92,7 @@ export async function POST(request: NextRequest) {
                     },
                     daily_plan: fullPlan
                 })
-            ).run()
+            ])
         }
 
         return NextResponse.json({

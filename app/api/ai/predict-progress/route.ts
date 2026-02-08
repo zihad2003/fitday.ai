@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { predictProgress } from '@/lib/ai-progress-predictor'
 import { selectQuery } from '@/lib/d1'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 /**
  * AI Progress Prediction API

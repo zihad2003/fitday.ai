@@ -1,8 +1,8 @@
 // Service Worker for FitDayAI PWA
-// Version: 2.0.0
+// Version: 2.1.0 - Fixed fetch error handling
 // Advanced caching strategies with offline support
 
-const CACHE_VERSION = 'fitday-v2.0.0'
+const CACHE_VERSION = 'fitday-v2.1.0'
 const STATIC_CACHE = `${CACHE_VERSION}-static`
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`
 const IMAGE_CACHE = `${CACHE_VERSION}-images`
@@ -72,38 +72,76 @@ self.addEventListener('activate', (event) => {
 // Fetch event - implement caching strategies
 self.addEventListener('fetch', (event) => {
   const { request } = event
-  const url = new URL(request.url)
 
-  // Skip non-GET requests
-  if (request.method !== 'GET') {
-    return
+  try {
+    const url = new URL(request.url)
+
+    // Skip non-GET requests
+    if (request.method !== 'GET') {
+      return
+    }
+
+    // Skip chrome extensions and other protocols
+    if (!url.protocol.startsWith('http')) {
+      return
+    }
+
+    // Skip browser-extension and chrome-extension URLs
+    if (url.protocol === 'chrome-extension:' || url.protocol === 'moz-extension:') {
+      return
+    }
+
+    // API requests - Network First with cache fallback
+    if (url.pathname.startsWith('/api/')) {
+      event.respondWith(
+        networkFirstStrategy(request, API_CACHE).catch(err => {
+          console.error('[SW] API request failed:', err)
+          return new Response(JSON.stringify({ error: 'Network error' }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          })
+        })
+      )
+      return
+    }
+
+    // Images - Cache First with network fallback
+    if (request.destination === 'image' || url.pathname.match(/\.(jpg|jpeg|png|gif|svg|webp)$/)) {
+      event.respondWith(
+        cacheFirstStrategy(request, IMAGE_CACHE).catch(err => {
+          console.error('[SW] Image request failed:', err)
+          return new Response(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect fill="#1e293b" width="200" height="200"/><text fill="#64748b" x="50%" y="50%" text-anchor="middle" dy=".3em">Error</text></svg>',
+            { headers: { 'Content-Type': 'image/svg+xml' } }
+          )
+        })
+      )
+      return
+    }
+
+    // Static assets - Cache First
+    if (STATIC_ASSETS.includes(url.pathname) || url.pathname.match(/\.(js|css|woff2?)$/)) {
+      event.respondWith(
+        cacheFirstStrategy(request, STATIC_CACHE).catch(err => {
+          console.error('[SW] Static asset request failed:', err)
+          return fetch(request)
+        })
+      )
+      return
+    }
+
+    // Dynamic content - Stale While Revalidate
+    event.respondWith(
+      staleWhileRevalidateStrategy(request, DYNAMIC_CACHE).catch(err => {
+        console.error('[SW] Dynamic content request failed:', err)
+        return fetch(request)
+      })
+    )
+  } catch (error) {
+    console.error('[SW] Fetch event error:', error)
+    // Let the request pass through to the network
+    event.respondWith(fetch(request))
   }
-
-  // Skip chrome extensions and other protocols
-  if (!url.protocol.startsWith('http')) {
-    return
-  }
-
-  // API requests - Network First with cache fallback
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(networkFirstStrategy(request, API_CACHE))
-    return
-  }
-
-  // Images - Cache First with network fallback
-  if (request.destination === 'image' || url.pathname.match(/\.(jpg|jpeg|png|gif|svg|webp)$/)) {
-    event.respondWith(cacheFirstStrategy(request, IMAGE_CACHE))
-    return
-  }
-
-  // Static assets - Cache First
-  if (STATIC_ASSETS.includes(url.pathname) || url.pathname.match(/\.(js|css|woff2?)$/)) {
-    event.respondWith(cacheFirstStrategy(request, STATIC_CACHE))
-    return
-  }
-
-  // Dynamic content - Stale While Revalidate
-  event.respondWith(staleWhileRevalidateStrategy(request, DYNAMIC_CACHE))
 })
 
 // Network First Strategy (for API calls)
@@ -200,7 +238,19 @@ async function staleWhileRevalidateStrategy(request, cacheName) {
     return networkResponse
   }).catch(() => cachedResponse)
 
-  return cachedResponse || fetchPromise
+  // Always return a valid Response object
+  const response = cachedResponse || await fetchPromise
+
+  // If still no response, return a basic error response
+  if (!response) {
+    return new Response('Service Worker: Resource not available', {
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: { 'Content-Type': 'text/plain' }
+    })
+  }
+
+  return response
 }
 
 // Helper: Get cache timestamp

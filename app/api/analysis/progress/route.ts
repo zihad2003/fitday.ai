@@ -1,25 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserSession } from '@/lib/auth'
-import { getDb } from '@/lib/db'
+import { getCurrentUser } from '@/lib/session-manager'
+import { query } from '@/lib/database'
 import { analyzeUserProgress } from '@/lib/progress-analyzer'
+
+export const runtime = 'nodejs'
 
 export async function GET(request: NextRequest) {
     try {
-        const session = await getUserSession()
-        if (!session?.userId) {
+        const userSession = await getCurrentUser() as any
+        if (!userSession?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
-
-        const db = getDb()
+        const userId = userSession.id
 
         // 1. Fetch user profile
-        const user = await db.prepare("SELECT * FROM users WHERE id = ?").bind(session.userId).first() as any
+        const userRes = await query("SELECT * FROM users WHERE id = ?", [userId])
+        const user = userRes.data?.[0]
+
         if (!user) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 })
         }
 
         // 2. Fetch last 30 days of daily data
-        const { results } = await db.prepare(`
+        const progressRes = await query(`
             SELECT 
                 up.date,
                 up.weight_kg,
@@ -32,7 +35,9 @@ export async function GET(request: NextRequest) {
             LEFT JOIN daily_workout_summary dws ON up.user_id = dws.user_id AND up.date = dws.date
             WHERE up.user_id = ? AND up.date >= date('now', '-30 days')
             ORDER BY up.date ASC
-        `).bind(session.userId).all()
+        `, [userId])
+
+        const results = progressRes.data || []
 
         // 3. Transform to DailyData format
         const dailyData = results.map((r: any) => ({
@@ -42,10 +47,10 @@ export async function GET(request: NextRequest) {
             workouts_completed: r.workouts_completed || 0,
             water_ml: r.water_ml || 0,
             sleep_hours: r.sleep_hours || 0,
-            mood_rating: 0, // Mock for now
-            energy_level: 0, // Mock for now
-            recovery_level: 3, // Mock for now
-            workout_intensity: 3, // Mock for now
+            mood_rating: 0,
+            energy_level: 0,
+            recovery_level: 3,
+            workout_intensity: 3,
             equipment: user.available_equipment || 'gym',
             pain_points: []
         }))
@@ -53,16 +58,21 @@ export async function GET(request: NextRequest) {
         // 4. Run Analysis
         const analysis = analyzeUserProgress(
             dailyData,
-            user.goal,
-            user.weight_kg,
-            user.start_weight_kg || user.weight_kg, // Use current as start if not set
-            user.workout_days_per_week || 4,
-            user.target_weight_kg
+            user.primary_goal || 'maintain',
+            user.weight || 70,
+            user.start_weight || user.weight || 70,
+            user.workout_days_per_week || 3,
+            user.target_weight || 70
         )
 
         // 5. Get Gamification data
-        const { GamificationService } = await import('@/lib/gamification')
-        const gamification = await GamificationService.getProgressSummary(parseInt(session.userId))
+        let gamification = null
+        try {
+            const { GamificationService } = await import('@/lib/gamification')
+            gamification = await GamificationService.getProgressSummary(userId)
+        } catch (e) {
+            console.warn('Gamification service failed', e)
+        }
 
         return NextResponse.json({
             success: true,

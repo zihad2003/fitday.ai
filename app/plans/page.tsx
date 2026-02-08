@@ -21,30 +21,33 @@ export default function GrowthHub() {
             try {
                 // Fetch user data for context
                 const meRes = await fetch('/api/auth/me')
-                const meJson = await meRes.json()
+                const meJson = await meRes.json() as any
 
                 if (meJson.success) {
-                    const user = meJson.data
+                    const user = meJson.user || {}
+                    const goal = user.primary_goal || user.fitness_goal || 'maintain'
+                    const calories = user.daily_calorie_goal || user.target_calories || 2000
+
                     setPlanData({
-                        weeklySplit: user.fitness_goal === 'build_muscle'
+                        weeklySplit: goal === 'build_muscle' || goal === 'muscle_building'
                             ? ['Push', 'Pull', 'Legs', 'Rest', 'Upper', 'Lower', 'Rest']
                             : ['Full Body', 'Rest', 'Full Body', 'Rest', 'Full Body', 'Cardio', 'Rest'],
                         dailyMacros: {
-                            calories: user.target_calories,
-                            protein: Math.round(user.target_calories * 0.3 / 4),
-                            carbs: Math.round(user.target_calories * 0.4 / 4),
-                            fats: Math.round(user.target_calories * 0.3 / 9),
+                            calories: calories,
+                            protein: Math.round(calories * 0.3 / 4),
+                            carbs: Math.round(calories * 0.4 / 4),
+                            fats: Math.round(calories * 0.3 / 9),
                         },
                         mealSchedule: [
-                            { time: user.wake_up_time || '07:00', type: 'Breakfast', menu: 'Oatmeal with Blueberries & Whey' },
+                            { time: user.wake_time || user.wake_up_time || '07:00', type: 'Breakfast', menu: 'Oatmeal with Blueberries & Whey' },
                             { time: '13:00', type: 'Lunch', menu: 'Grilled Chicken & Quinoa Salad' },
                             { time: '16:00', type: 'Snack', menu: 'Greek Yogurt & Almonds' },
-                            { time: user.sleep_time ? `${parseInt(user.sleep_time) - 3}:00` : '20:00', type: 'Dinner', menu: 'Salmon with Steamed Broccoli' },
+                            { time: user.sleep_time ? `${parseInt(user.sleep_time) - 3 || 20}:00` : '20:00', type: 'Dinner', menu: 'Salmon with Steamed Broccoli' },
                         ],
                         trainingDetails: {
                             sessionsPerWeek: user.workout_days_per_week || 4,
                             avgDuration: user.workout_duration_preference || 60,
-                            focus: user.fitness_goal?.replace('_', ' ') || 'General Fitness'
+                            focus: goal.replace('_', ' ') || 'General Fitness'
                         }
                     })
                 }
@@ -57,7 +60,7 @@ export default function GrowthHub() {
         fetchPlan()
     }, [])
 
-    if (loading) return (
+    if (loading || !planData) return (
         <div className="min-h-screen bg-black flex items-center justify-center">
             <div className={`w-12 h-12 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin`} />
         </div>
@@ -147,8 +150,8 @@ export default function GrowthHub() {
                                     <div className="grid grid-cols-7 gap-4">
                                         {planData.weeklySplit.map((day: string, i: number) => (
                                             <div key={i} className={`p-4 rounded-2xl border flex flex-col items-center gap-3 transition-all ${day === 'Rest'
-                                                    ? 'bg-black border-white/5 opacity-40'
-                                                    : 'bg-white/5 border-purple-500/20 shadow-[0_0_20px_#9333ea10]'
+                                                ? 'bg-black border-white/5 opacity-40'
+                                                : 'bg-white/5 border-purple-500/20 shadow-[0_0_20px_#9333ea10]'
                                                 }`}>
                                                 <span className="text-[10px] font-black text-zinc-600 uppercase">D-{i + 1}</span>
                                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${day === 'Rest' ? 'text-zinc-800' : 'text-purple-500'}`}>

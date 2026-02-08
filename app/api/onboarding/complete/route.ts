@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserSession } from '@/lib/auth'
-import { getDb } from '@/lib/db'
-import { generateWorkoutPlan } from '@/lib/workout-generator'
+import { mutate, query } from '@/lib/database'
+import { getCurrentUser } from '@/lib/session-manager'
+import { MealPlanner } from '@/lib/meal-planner'
+import { WorkoutPlanner } from '@/lib/workout-planner'
+
+export const runtime = 'nodejs'
 
 interface OnboardingRequestData {
     age: number
@@ -18,66 +21,58 @@ interface OnboardingRequestData {
 
 export async function POST(request: NextRequest) {
     try {
-        const session = await getUserSession()
-        if (!session?.userId) {
+        const user = await getCurrentUser()
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
         const data = await request.json() as OnboardingRequestData
-        const db = getDb()
 
         // Update user profile with onboarding data
         const updateQuery = `
-      UPDATE users SET
-        age = ?,
-        gender = ?,
-        height_cm = ?,
-        weight_kg = ?,
-        goal = ?,
-        target_calories = ?,
-        bmr = ?,
-        tdee = ?,
-        activity_level = ?,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `
+            UPDATE users SET
+                age = ?,
+                gender = ?,
+                height = ?,
+                weight = ?,
+                primary_goal = ?,
+                daily_calorie_goal = ?,
+                activity_level = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `
 
-        await db.prepare(updateQuery).bind(
+        await mutate(updateQuery, [
             data.age,
             data.gender,
             data.height_cm,
             data.weight_kg,
             data.goal,
             data.target_calories,
-            data.bmr,
-            data.tdee,
             data.activity_level,
-            session.userId
-        ).run()
+            user.id
+        ])
 
         // Generate and save the persistent meal plan using the new engine
-        const { MealPlanner } = await import('@/lib/meal-planner')
         await MealPlanner.generateAndSaveWeeklyPlan(
-            parseInt(session.userId),
+            user.id!,
             data.target_calories,
             data.goal
         )
 
         // Generate and save the persistent workout plan using the new engine
-        const { WorkoutPlanner } = await import('@/lib/workout-planner')
         await WorkoutPlanner.generateAndSaveWeeklyPlan(
-            parseInt(session.userId),
+            user.id!,
             data.goal,
             data.activity_level,
             'gym'
         )
 
         // Create initial daily tracking entry (user_progress)
-        // Check if exists first (unlikely for new user but safe)
-        const existProgress = await db.prepare("SELECT id FROM user_progress WHERE user_id = ? AND date = date('now')").bind(session.userId).first()
+        const existProgress = await query("SELECT id FROM user_progress WHERE user_id = ? AND date = date('now')", [user.id])
 
-        if (!existProgress) {
-            await db.prepare("INSERT INTO user_progress (user_id, date, weight_kg) VALUES (?, date('now'), ?)").bind(session.userId, data.weight_kg).run()
+        if (!existProgress.data?.length) {
+            await mutate("INSERT INTO user_progress (user_id, date, weight) VALUES (?, date('now'), ?)", [user.id, data.weight_kg])
         }
 
         return NextResponse.json({

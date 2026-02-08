@@ -1,25 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { query } from '@/lib/database'
+import { getCurrentUser } from '@/lib/session-manager'
+
+export const runtime = 'nodejs'
 
 export async function GET(request: NextRequest) {
     try {
-        const userId = request.nextUrl.searchParams.get('userId')
-        if (!userId) {
-            return NextResponse.json({ success: false, error: 'User ID required' }, { status: 400 })
+        const user = await getCurrentUser()
+        if (!user) {
+            return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 })
         }
 
-        const db = getDb()
-        const history = await db.prepare(`
+        const historyRes = await query(`
             SELECT w.*, e.name as exercise_name, e.muscle_group, e.gif_url
             FROM workouts w
             JOIN exercise_library e ON w.exercise_id = e.id
             WHERE w.user_id = ? AND w.completed = 1
             ORDER BY w.date DESC, w.created_at DESC
             LIMIT 50
-        `).bind(userId).all()
+        `, [user.id])
 
-        return NextResponse.json({ success: true, data: history.results })
+        return NextResponse.json({ success: true, data: historyRes.data || [] })
     } catch (error: any) {
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+        console.error('Workout History Error:', error)
+        return NextResponse.json({ success: false, error: 'Failed to fetch history' }, { status: 500 })
     }
 }

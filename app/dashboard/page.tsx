@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getUserSession } from '@/lib/auth'
+import { User } from '@/lib/types'
 import AICoach from '@/components/dashboard/AICoach'
 import Sidebar from '@/components/dashboard/Sidebar'
 import TopBar from '@/components/dashboard/TopBar'
@@ -22,6 +23,7 @@ import Icons from '@/components/icons/Icons'
 import WorkoutTimeline from '@/components/dashboard/WorkoutTimeline'
 import WaterTracker from '@/components/dashboard/WaterTracker'
 import QuickActions from '@/components/dashboard/QuickActions'
+import MealLogModal from '@/components/dashboard/MealLogModal'
 import ToastContainer from '@/components/animations/Toast'
 import {
   PageTransition,
@@ -34,29 +36,17 @@ import {
 import { DashboardSkeleton } from '@/components/animations/SkeletonLoaders'
 import { motion } from 'framer-motion'
 
-// --- TYPE DEFINITIONS ---
-type UserProfile = {
-  id: number
-  name: string
-  weight_kg: number
-  height_cm: number
-  age: number
-  gender: string
-  goal: 'lose_weight' | 'gain_muscle' | 'maintain' | string
-  activity_level: string
-  target_calories: number
-  daily_water_goal_ml?: number
-}
-
 export default function Dashboard() {
   const router = useRouter()
-  const [user, setUser] = useState<UserProfile | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [dailySchedule, setDailySchedule] = useState<ScheduleItem[]>([])
   const [detailedPlan, setDetailedPlan] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [schedulePrefs, setSchedulePrefs] = useState<any>(null)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isCheckinOpen, setIsCheckinOpen] = useState(false)
+  const [isLogOpen, setIsLogOpen] = useState(false)
+  const [selectedMealType, setSelectedMealType] = useState('breakfast')
   const [hasCheckedIn, setHasCheckedIn] = useState(false)
   const [adaptations, setAdaptations] = useState<any[]>([])
 
@@ -75,7 +65,7 @@ export default function Dashboard() {
         return
       }
 
-      let userData = sessionJson.data
+      let userData = sessionJson.user
 
       const res = await fetch(`/api/users/${userData.id}`)
       if (res.ok) {
@@ -145,7 +135,7 @@ export default function Dashboard() {
         setHasCheckedIn(true)
         localStorage.setItem(`daily_checkin_${new Date().toDateString()}`, 'true')
         if (user) {
-          setUser({ ...user, weight_kg: data.weight_kg })
+          setUser({ ...user, weight: data.weight_kg })
         }
         // Refresh adaptations after check-in
         fetchAdaptations()
@@ -179,6 +169,11 @@ export default function Dashboard() {
   const handleSavePrefs = (newPrefs: any) => {
     setSchedulePrefs(newPrefs)
     localStorage.setItem('schedulePrefs', JSON.stringify(newPrefs))
+  }
+
+  const handleOpenMealLog = (type: string = 'breakfast') => {
+    setSelectedMealType(type)
+    setIsLogOpen(true)
   }
 
   useEffect(() => {
@@ -240,25 +235,32 @@ export default function Dashboard() {
 
                 <StaggerItem>
                   <HoverScale scale={1.005} className="h-full">
-                    <NutritionDashboard userId={user.id} />
+                    <NutritionDashboard userId={user.id || 0} />
                   </HoverScale>
                 </StaggerItem>
 
                 <StaggerItem>
-                  <QuickActions userId={user.id} />
+                  <QuickActions
+                    userId={user.id || 0}
+                    onOpenMealLog={() => handleOpenMealLog('snack')}
+                    onOpenCheckin={() => setIsCheckinOpen(true)}
+                  />
                 </StaggerItem>
 
                 <StaggerItem>
-                  <WorkoutTimeline userId={user.id} />
+                  <WorkoutTimeline userId={user.id || 0} />
                 </StaggerItem>
 
                 <StaggerItem>
-                  <WaterTracker userId={user.id} targetMl={user.daily_water_goal_ml || 2500} />
+                  <WaterTracker userId={user.id || 0} targetMl={user.daily_water_goal || 2000} />
                 </StaggerItem>
               </div>
 
               {/* RIGHT COLUMN: ADAPTATIONS & QUICK STATS */}
               <div className="col-span-12 lg:col-span-4 flex flex-col gap-8 md:gap-10">
+                <StaggerItem>
+                  <AICoach />
+                </StaggerItem>
 
                 {/* AI ADAPTATIONS SECTION */}
                 <StaggerItem>
@@ -346,6 +348,13 @@ export default function Dashboard() {
         onClose={() => setIsCheckinOpen(false)}
         onSave={handleSaveCheckin}
       />
-    </PageTransition>
+
+      <MealLogModal
+        isOpen={isLogOpen}
+        onClose={() => setIsLogOpen(false)}
+        onSuccess={() => fetchUserData()} // Refresh data after log
+        defaultType={selectedMealType}
+      />
+    </PageTransition >
   )
 }

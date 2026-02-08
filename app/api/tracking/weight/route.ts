@@ -1,31 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserSession } from '@/lib/auth'
-import { getDb } from '@/lib/db'
+import { getCurrentUser } from '@/lib/session-manager'
+import { query, mutate } from '@/lib/database'
+
+export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
     try {
-        const session = await getUserSession()
-        if (!session?.userId) {
+        const user = await getCurrentUser() as any
+        if (!user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
+        const userId = user.id
 
         const { weight_kg } = await request.json() as { weight_kg: number }
-        const db = getDb()
 
         // 1. Update user_progress for today
-        const existing = await db.prepare("SELECT id FROM user_progress WHERE user_id = ? AND date = date('now')").bind(session.userId).first()
+        const existingRes = await query("SELECT id FROM user_progress WHERE user_id = ? AND date = date('now')", [userId])
+        const existing = existingRes.data?.[0]
 
         if (existing) {
-            await db.prepare('UPDATE user_progress SET weight_kg = ? WHERE id = ?').bind(weight_kg, existing.id).run()
+            await mutate('UPDATE user_progress SET weight_kg = ? WHERE id = ?', [weight_kg, existing.id])
         } else {
-            await db.prepare("INSERT INTO user_progress (user_id, date, weight_kg) VALUES (?, date('now'), ?)").bind(session.userId, weight_kg).run()
+            await mutate("INSERT INTO user_progress (user_id, date, weight_kg) VALUES (?, date('now'), ?)", [userId, weight_kg])
         }
 
-        // Also update user's current weight
-        await db
-            .prepare('UPDATE users SET weight_kg = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-            .bind(weight_kg, session.userId)
-            .run()
+        // Also update user's current weight in 'users' table (uses 'weight')
+        await mutate('UPDATE users SET weight = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [weight_kg, userId])
 
         return NextResponse.json({
             success: true,

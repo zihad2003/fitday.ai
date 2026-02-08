@@ -1,14 +1,30 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/session'
+// app/api/auth/me/route.ts - Get Current User API
 
-export const runtime = 'edge'
+import { NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/session-manager'
 
-export async function GET(request: NextRequest) {
-    const session = await getSession()
+export const runtime = 'nodejs'
 
-    if (!session || !session.user) {
-        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+export async function GET() {
+    try {
+        const user = await getCurrentUser()
+
+        if (!user) {
+            return NextResponse.json(
+                { success: false, error: 'Not authenticated' },
+                { status: 401 }
+            )
+        }
+
+        return NextResponse.json({
+            success: true,
+            user
+        })
+    } catch (error) {
+        console.error('❌ [Me] Error:', error)
+        return NextResponse.json(
+            { success: false, error: 'Failed to get user' },
+            { status: 500 }
+        )
     }
-
-    return NextResponse.json({ success: true, data: session.user })
 }

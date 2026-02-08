@@ -25,6 +25,9 @@ export default function WorkoutTimeline({ userId, date = new Date().toISOString(
                 const json = await res.json() as { success: boolean, data: any[] }
                 if (json.success) {
                     setExercises(json.data)
+                    // Sync completed state
+                    const completed = new Set(json.data.filter(ex => ex.completed).map(ex => ex.id))
+                    setCompletedExercises(completed)
                 }
             } catch (err) {
                 console.error("Failed to fetch workout plan", err)
@@ -35,29 +38,58 @@ export default function WorkoutTimeline({ userId, date = new Date().toISOString(
         fetchWorkout()
     }, [userId, date])
 
-    const toggleComplete = (id: number) => {
+    const toggleComplete = async (id: number) => {
         const exercise = exercises.find(ex => ex.id === id)
+        const isCurrentlyDone = completedExercises.has(id)
+        const nextState = !isCurrentlyDone
+
+        // 1. Optimistic UI update
         setCompletedExercises(prev => {
             const next = new Set(prev)
-            if (next.has(id)) {
+            if (isCurrentlyDone) {
                 next.delete(id)
-                Analytics.trackFeatureUsage('workout_timeline', 'unmark_exercise', { exercise_name: exercise?.exercise_name })
             } else {
                 next.add(id)
-                Analytics.trackFeatureUsage('workout_timeline', 'complete_exercise', {
-                    exercise_name: exercise?.exercise_name,
-                    muscle_group: exercise?.muscle_group
-                })
             }
-
-            // Track whole session conversion if all are done
-            if (next.size === exercises.length && exercises.length > 0) {
-                Analytics.trackConversion('workout_session_completed', 100)
-                celebrate('Neural Adaptation Complete', 'Training protocol terminated with high intensity. Physical evolution confirmed.', 'milestone')
-            }
-
             return next
         })
+
+        // 2. Persist to DB
+        try {
+            const res = await fetch('/api/workouts', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, completed: nextState })
+            })
+
+            if (res.ok) {
+                if (nextState) {
+                    Analytics.trackFeatureUsage('workout_timeline', 'complete_exercise', {
+                        exercise_name: exercise?.exercise_name,
+                        muscle_group: exercise?.muscle_group
+                    })
+
+                    // Track whole session completion
+                    const totalCompleted = completedExercises.size + (nextState ? 1 : -1)
+                    if (totalCompleted === exercises.length && exercises.length > 0) {
+                        Analytics.trackConversion('workout_session_completed', 100)
+                        celebrate('Neural Adaptation Complete', 'Training protocol terminated with high intensity. Physical evolution confirmed.', 'milestone')
+                    }
+                } else {
+                    Analytics.trackFeatureUsage('workout_timeline', 'unmark_exercise', { exercise_name: exercise?.exercise_name })
+                }
+            } else {
+                // Rollback if failed
+                setCompletedExercises(prev => {
+                    const next = new Set(prev)
+                    if (nextState) next.delete(id)
+                    else next.add(id)
+                    return next
+                })
+            }
+        } catch (err) {
+            console.error("Failed to sync workout completion", err)
+        }
     }
 
     if (loading) return <div className="animate-pulse bg-zinc-900 h-64 rounded-[2.5rem]" />
@@ -69,7 +101,7 @@ export default function WorkoutTimeline({ userId, date = new Date().toISOString(
     )
 
     return (
-        <div className="bg-zinc-950 border border-white/5 rounded-[2.5rem] p-0 relative overflow-hidden shadow-2xl">
+        <div id="workout-timeline" className="bg-zinc-950 border border-white/5 rounded-[2.5rem] p-0 relative overflow-hidden shadow-2xl">
             <div className="p-8 border-b border-white/5 flex justify-between items-center bg-zinc-900/30">
                 <div>
                     <h3 className="text-xl font-black font-outfit uppercase italic text-white flex items-center gap-3">

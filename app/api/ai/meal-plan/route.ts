@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { query } from '@/lib/database'
 import { MealPlanner } from '@/lib/meal-planner'
 import { SubscriptionService } from '@/lib/subscription'
+import { getCurrentUser } from '@/lib/session-manager'
+
+export const runtime = 'nodejs'
 
 /**
  * AI Meal Plan API
@@ -10,23 +13,13 @@ import { SubscriptionService } from '@/lib/subscription'
  */
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json() as { userId: string | number }
-        const { userId } = body
-
-        if (!userId) {
-            return NextResponse.json({ success: false, error: 'User ID required' }, { status: 400 })
-        }
-
-        // ...
-        const db = getDb()
-        const user = await db.prepare('SELECT * FROM users WHERE id = ?').bind(Number(userId)).first() as any
-
+        const user = await getCurrentUser()
         if (!user) {
-            return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
         }
 
         // Check credits
-        const { allowed } = await SubscriptionService.consumeCredit(Number(userId))
+        const { allowed } = await SubscriptionService.consumeCredit(user.id!)
         if (!allowed) {
             return NextResponse.json({
                 success: false,
@@ -37,9 +30,9 @@ export async function POST(request: NextRequest) {
 
         // Use the new MealPlanner to generate and save a 7-day plan
         await MealPlanner.generateAndSaveWeeklyPlan(
-            Number(userId),
-            user.target_calories || 2000,
-            user.goal || 'maintain'
+            user.id!,
+            user.daily_calorie_goal || 2000,
+            user.primary_goal || 'maintain'
         )
 
         return NextResponse.json({

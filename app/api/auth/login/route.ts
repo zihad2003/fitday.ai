@@ -1,49 +1,67 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { selectQuery } from '@/lib/d1'
-import { verifyPassword } from '@/lib/auth'
-import { createSession } from '@/lib/session'
+// app/api/auth/login/route.ts - Clean Login API
 
-export const runtime = 'edge';
+import { NextRequest, NextResponse } from 'next/server'
+import { getUserByEmail } from '@/lib/database'
+import { verifyPassword, sanitizeUser } from '@/lib/auth-utils'
+import { createSession } from '@/lib/session-manager'
+
+export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
   try {
+    // Parse request body
     const body = await request.json()
-    const { email, password } = body as any
+    const { email, password } = body
 
+    // Validate input
     if (!email || !password) {
-      return NextResponse.json({ success: false, error: 'Email and password required' }, { status: 400 })
+      return NextResponse.json(
+        { success: false, error: 'Email and password are required' },
+        { status: 400 }
+      )
     }
 
-    // 1. Fetch User (Include password field)
-    const users = await selectQuery('SELECT * FROM users WHERE email = ?', [email])
+    console.log('[Login] Attempting login for:', email)
 
-    if (users === null) {
-      return NextResponse.json({ success: false, error: 'Database Connection Error. Please verify D1 bindings.' }, { status: 503 })
+    // Get user from database
+    const user = await getUserByEmail(email)
+
+    if (!user) {
+      console.log('[Login] User not found:', email)
+      return NextResponse.json(
+        { success: false, error: 'Invalid email or password' },
+        { status: 401 }
+      )
     }
 
-    if (users.length === 0) {
-      console.log(`[Login] No user found for email: ${email}`);
-      return NextResponse.json({ success: false, error: 'Invalid credentials' }, { status: 401 })
+    // Verify password
+    const isValidPassword = await verifyPassword(password, user.password_hash)
+
+    if (!isValidPassword) {
+      console.log('[Login] Invalid password for:', email)
+      return NextResponse.json(
+        { success: false, error: 'Invalid email or password' },
+        { status: 401 }
+      )
     }
 
-    const user = users[0] as any
-    const storedPassword = user.password // Expected format "salt:hash"
-
-    // 2. Verify Password
-    const isValid = await verifyPassword(password, storedPassword);
-
-    if (!isValid) {
-      return NextResponse.json({ success: false, error: 'Invalid credentials' }, { status: 401 })
-    }
-
-    // 3. Create Session (HttpOnly Cookie)
-    const { password: _, ...safeUser } = user
+    // Create session
+    const safeUser = sanitizeUser(user)
     await createSession(safeUser)
 
-    return NextResponse.json({ success: true, message: 'Login successful' })
+    console.log('✅ [Login] Success for:', email)
 
-  } catch (error) {
-    console.error('Login Error:', error)
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 })
+    return NextResponse.json({
+      success: true,
+      message: 'Login successful',
+      user: safeUser
+    })
+
+  } catch (error: any) {
+    console.error('❌ [Login] Error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Login failed. Please try again.' },
+      { status: 500 }
+    )
   }
 }

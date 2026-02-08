@@ -3,7 +3,7 @@ import { generateWorkoutPlan } from '@/lib/ai-workout-generator'
 import { selectQuery } from '@/lib/d1'
 import { SubscriptionService } from '@/lib/subscription'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 /**
  * AI Workout Plan API

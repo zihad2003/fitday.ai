@@ -1,4 +1,4 @@
-import { getDb } from './db'
+import { query, mutate } from './database'
 
 export type SubscriptionPlan = 'free' | 'premium'
 
@@ -8,13 +8,12 @@ export interface UserSubscription {
     subscription_end_date: string | null
 }
 
-const PREMIUM_COST_BDT = 299 // 299 Taka ~ $2.50
 const PREMIUM_CREDITS = 999999 // Unlimited effectively
 
 export const SubscriptionService = {
     async getUserSubscription(userId: number): Promise<UserSubscription> {
-        const db = getDb()
-        const user = await db.prepare('SELECT plan_type, ai_credits, subscription_end_date FROM users WHERE id = ?').bind(userId).first()
+        const res = await query('SELECT plan_type, ai_credits, subscription_end_date FROM users WHERE id = ?', [userId])
+        const user = res.data?.[0] as any
 
         if (!user) {
             return { plan_type: 'free', ai_credits: 0, subscription_end_date: null }
@@ -28,7 +27,6 @@ export const SubscriptionService = {
     },
 
     async consumeCredit(userId: number): Promise<{ allowed: boolean, remaining: number }> {
-        const db = getDb()
         const sub = await this.getUserSubscription(userId)
 
         if (sub.plan_type === 'premium') {
@@ -36,7 +34,7 @@ export const SubscriptionService = {
         }
 
         if (sub.ai_credits > 0) {
-            await db.prepare('UPDATE users SET ai_credits = ai_credits - 1 WHERE id = ?').bind(userId).run()
+            await mutate('UPDATE users SET ai_credits = ai_credits - 1 WHERE id = ?', [userId])
             return { allowed: true, remaining: sub.ai_credits - 1 }
         }
 
@@ -44,15 +42,14 @@ export const SubscriptionService = {
     },
 
     async upgradeToPremium(userId: number) {
-        const db = getDb()
         // Set plan to premium and give unlimited credits
         // In a real app, verify payment here
-        await db.prepare(`
+        await mutate(`
             UPDATE users 
             SET plan_type = 'premium', 
                 ai_credits = 1000,
                 subscription_end_date = date('now', '+1 month') 
             WHERE id = ?
-        `).bind(userId).run()
+        `, [userId])
     }
 }

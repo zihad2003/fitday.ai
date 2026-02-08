@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { selectQuery, executeMutation } from '@/lib/d1'
 import { z } from 'zod'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 // --- 1. Validation Schema ---
 // .partial() allows updating just "completed" without sending the whole object

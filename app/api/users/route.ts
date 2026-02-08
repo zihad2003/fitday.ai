@@ -4,7 +4,7 @@ import { selectQuery, executeMutation } from '@/lib/d1'
 import { calculateBMR, calculateTDEE, calculateMacros } from '@/lib/nutrition'
 import { hashPassword, generateSalt } from '@/lib/auth'
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {

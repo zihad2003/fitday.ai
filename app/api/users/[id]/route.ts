@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { selectQuery, executeMutation } from '@/lib/d1'
+import { query, mutate } from '@/lib/database'
+import { User } from '@/lib/types'
 import { calculateBMR, calculateTDEE, calculateMacros } from '@/lib/nutrition'
 import { z } from 'zod'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 // --- 1. Validation Schema (Partial Update) ---
 // .partial() allows the frontend to send just "weight" without sending everything else
@@ -39,7 +40,8 @@ export async function GET(
       return NextResponse.json({ success: false, error: 'Invalid user ID' }, { status: 400 })
     }
 
-    const users = await selectQuery('SELECT * FROM users WHERE id = ?', [userId])
+    const usersRes = await query<User>('SELECT * FROM users WHERE id = ?', [userId])
+    const users = usersRes.data || []
 
     if (users.length === 0) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
@@ -85,7 +87,8 @@ export async function PUT(
     const updates = validation.data
 
     // B. Fetch Current Data (Required for merging)
-    const existingUsers = await selectQuery('SELECT * FROM users WHERE id = ?', [userId])
+    const existingUsersRes = await query<User>('SELECT * FROM users WHERE id = ?', [userId])
+    const existingUsers = existingUsersRes.data || []
     if (existingUsers.length === 0) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
     }
@@ -108,7 +111,7 @@ export async function PUT(
     const daily_water_goal = updates.daily_water_goal ?? currentUser.daily_water_goal ?? 8
 
     // D. Intelligence: Recalculate Nutrition
-    const bmr = calculateBMR(gender as any, weight, height, age)
+    const bmr = calculateBMR(gender as any, weight || 70, height || 170, age || 25)
     const tdee = calculateTDEE(bmr, activity_level)
     const macros = calculateMacros(tdee, primary_goal)
     const daily_calorie_goal = macros.targetCalories
@@ -130,14 +133,16 @@ export async function PUT(
       primary_goal, activity_level, dietary_preference,
       workout_days_per_week, preferred_workout_time,
       wake_time, sleep_time, daily_water_goal,
-      daily_calorie_goal, macros.proteinGrams, macros.carbsGrams, macros.fatGrams,
+      daily_calorie_goal, macros.proteinGrams, macros.carbGrams, macros.fatGrams,
       userId
     ]
 
-    const changes = await executeMutation(sql, paramsList)
+    const mutation = await mutate(sql, paramsList)
+    const changes = mutation.changes || 0
 
     if (changes > 0) {
-      const updatedUsers = await selectQuery('SELECT * FROM users WHERE id = ?', [userId])
+      const updatedUsersRes = await query<User>('SELECT * FROM users WHERE id = ?', [userId])
+      const updatedUsers = updatedUsersRes.data || []
       const { password_hash, ...newResponseData } = updatedUsers[0]
 
       return NextResponse.json({
@@ -170,7 +175,8 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: 'Invalid ID' }, { status: 400 })
     }
 
-    const changes = await executeMutation('DELETE FROM users WHERE id = ?', [userId])
+    const mutation = await mutate('DELETE FROM users WHERE id = ?', [userId])
+    const changes = mutation.changes || 0
 
     if (changes > 0) {
       return NextResponse.json({ success: true, message: 'User account deleted' })

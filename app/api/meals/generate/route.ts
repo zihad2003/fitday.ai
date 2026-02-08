@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { selectQuery, executeMutation } from '@/lib/d1'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 export async function POST(req: Request) {
   try {

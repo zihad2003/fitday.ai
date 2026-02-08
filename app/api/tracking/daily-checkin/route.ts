@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserSession } from '@/lib/auth'
-import { getDb } from '@/lib/db'
+import { getCurrentUser } from '@/lib/session-manager'
+import { query, mutate } from '@/lib/database'
+
+export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
     try {
-        const session = await getUserSession()
-        if (!session?.userId) {
+        const user = await getCurrentUser() as any
+        if (!user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
+        const userId = user.id
 
         const body = await request.json() as {
             weight_kg?: number,
@@ -18,39 +21,40 @@ export async function POST(request: NextRequest) {
             stress_level?: number
         }
         const { weight_kg, sleep_hours } = body
-        const db = getDb()
 
         // Check if log exists for today
-        const existingLog = await db.prepare("SELECT id FROM user_progress WHERE user_id = ? AND date = date('now')").bind(session.userId).first()
+        const existingRes = await query("SELECT id FROM user_progress WHERE user_id = ? AND date = date('now')", [userId])
+        const existingLog = existingRes.data?.[0]
 
         if (existingLog) {
-            await db.prepare(`
+            await mutate(`
                 UPDATE user_progress 
                 SET weight_kg = COALESCE(?, weight_kg), sleep_hours = COALESCE(?, sleep_hours)
                 WHERE id = ?
-             `).bind(weight_kg || null, sleep_hours || null, existingLog.id).run()
+             `, [weight_kg || null, sleep_hours || null, existingLog.id])
         } else {
-            await db.prepare(`
+            await mutate(`
                 INSERT INTO user_progress (user_id, date, weight_kg, sleep_hours)
                 VALUES (?, date('now'), ?, ?)
-             `).bind(session.userId, weight_kg || null, sleep_hours || null).run()
+             `, [userId, weight_kg || null, sleep_hours || null])
         }
 
-        // Update user's current weight if provided
+        // Update user's current weight if provided (Schema uses 'weight')
         if (weight_kg) {
-            await db
-                .prepare('UPDATE users SET weight_kg = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-                .bind(weight_kg, session.userId)
-                .run()
+            await mutate('UPDATE users SET weight = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [weight_kg, userId])
         }
 
-        // Trigger Gamification Engine: Update Streak and check achievements
-        const { GamificationService } = await import('@/lib/gamification')
-        const streak = await GamificationService.updateStreak(parseInt(session.userId))
-
-        // Check for specific achievements
-        if (weight_kg) await GamificationService.checkAchievements(parseInt(session.userId), 'weight_sync', 1)
-        if (sleep_hours) await GamificationService.checkAchievements(parseInt(session.userId), 'sleep_sync', 1)
+        // Trigger Gamification Engine
+        let streak = 0
+        try {
+            const { GamificationService } = await import('@/lib/gamification')
+            const streakInfo = await GamificationService.updateStreak(userId) as any
+            streak = streakInfo.current || 0
+            if (weight_kg) await GamificationService.checkAchievements(userId, 'weight_sync', 1)
+            if (sleep_hours) await GamificationService.checkAchievements(userId, 'sleep_sync', 1)
+        } catch (e) {
+            console.warn('Gamification sync failed', e)
+        }
 
         return NextResponse.json({
             success: true,
@@ -65,37 +69,20 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
     try {
-        const session = await getUserSession()
-        if (!session?.userId) {
+        const user = await getCurrentUser() as any
+        if (!user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
-
-        const db = getDb()
+        const userId = user.id
 
         // Check if user has completed today's check-in
-        const result = await db
-            .prepare(`
-        SELECT 
-          weight_kg,
-          sleep_hours
-        FROM user_progress 
-        WHERE user_id = ? AND date = date('now')
-      `)
-            .bind(session.userId)
-            .first()
+        const resultRes = await query(`
+            SELECT weight_kg, sleep_hours
+            FROM user_progress 
+            WHERE user_id = ? AND date = date('now')
+        `, [userId])
 
-        let formattedResult = null
-        if (result) {
-            formattedResult = {
-                weight_kg: result.weight_kg,
-                sleep_hours: result.sleep_hours
-            }
-        }
-
-        return NextResponse.json({
-            completed: !!result,
-            data: formattedResult,
-        })
+        const result = resultRes.data?.[0]
 
         return NextResponse.json({
             completed: !!result,

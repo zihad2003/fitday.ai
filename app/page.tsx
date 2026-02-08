@@ -161,10 +161,11 @@ export default function Home() {
                 ease: "easeInOut"
               }}
               className="absolute w-full h-full bg-gradient-to-br from-purple-600/30 via-cyan-500/20 to-indigo-600/30 rounded-full blur-[140px]"
+              suppressHydrationWarning
             />
 
             {/* Main Fitness Visualization */}
-            <div className="relative w-[85%] h-[85%] flex items-center justify-center">
+            <div className="relative w-[85%] h-[85%] flex items-center justify-center" suppressHydrationWarning>
 
               {/* Activity Rings (Apple Watch Style) */}
               <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 400">

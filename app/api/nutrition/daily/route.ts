@@ -1,59 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserSession } from '@/lib/auth'
-import { getDb } from '@/lib/db'
+import { getCurrentUser } from '@/lib/session-manager'
+import { query } from '@/lib/database'
+
+export const runtime = 'nodejs'
 
 export async function GET(request: NextRequest) {
     try {
-        const session = await getUserSession()
-        if (!session?.userId) {
+        const userSession = await getCurrentUser() as any
+        if (!userSession?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
-
-        const db = getDb()
+        const userId = userSession.id
 
         // Get user targets
-        const user = await db
-            .prepare(`
-        SELECT 
-          target_calories,
-          fitness_goal,
-          daily_water_goal_ml
-        FROM users 
-        WHERE id = ?
-      `)
-            .bind(session.userId)
-            .first()
+        const userRes = await query(`
+            SELECT 
+                daily_calorie_goal as target_calories,
+                primary_goal as fitness_goal,
+                2000 as daily_water_goal_ml
+            FROM users 
+            WHERE id = ?
+        `, [userId])
+
+        const user = userRes.data?.[0]
 
         if (!user) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 })
         }
 
         // Calculate macro targets based on goal
-        const macros = calculateMacros(user.target_calories, user.fitness_goal)
+        const macros = calculateMacros(user.target_calories || 2000, user.fitness_goal || 'maintain')
 
-        // Get today's tracking data from VIEW and user_progress
-        const nutritionSummary = await db
-            .prepare(`
-        SELECT 
-          total_calories,
-          total_protein,
-          total_carbs,
-          total_fat,
-          total_meals
-        FROM daily_nutrition_summary
-        WHERE user_id = ? AND date = date('now')
-      `)
-            .bind(session.userId)
-            .first()
+        // Get today's tracking data
+        const nutritionSummaryRes = await query(`
+            SELECT 
+                total_calories,
+                total_protein,
+                total_carbs,
+                total_fat,
+                total_meals
+            FROM daily_nutrition_summary
+            WHERE user_id = ? AND date = date('now')
+        `, [userId])
 
-        const progressData = await db
-            .prepare(`
-        SELECT water_liters
-        FROM user_progress
-        WHERE user_id = ? AND date = date('now')
-      `)
-            .bind(session.userId)
-            .first()
+        const nutritionSummary = nutritionSummaryRes.data?.[0]
+
+        const progressDataRes = await query(`
+            SELECT water_liters
+            FROM user_progress
+            WHERE user_id = ? AND date = date('now')
+        `, [userId])
+
+        const progressData = progressDataRes.data?.[0]
 
         const data = {
             calories_consumed: nutritionSummary?.total_calories || 0,
@@ -67,7 +65,7 @@ export async function GET(request: NextRequest) {
             water_ml: (progressData?.water_liters || 0) * 1000,
             water_target: user.daily_water_goal_ml || 2000,
             meals_logged: nutritionSummary?.total_meals || 0,
-            meals_planned: 4, // Default to 4 meals
+            meals_planned: 4,
         }
 
         return NextResponse.json({
@@ -88,17 +86,20 @@ function calculateMacros(calories: number, goal: string) {
     let proteinPercent, carbsPercent, fatsPercent
 
     switch (goal) {
+        case 'gain_muscle':
         case 'build_muscle':
             proteinPercent = 0.30
             carbsPercent = 0.45
             fatsPercent = 0.25
             break
         case 'lose_weight':
+        case 'fat_loss':
             proteinPercent = 0.35
             carbsPercent = 0.35
             fatsPercent = 0.30
             break
         case 'increase_strength':
+        case 'strength':
             proteinPercent = 0.30
             carbsPercent = 0.50
             fatsPercent = 0.20

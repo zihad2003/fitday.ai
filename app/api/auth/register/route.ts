@@ -1,106 +1,117 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { selectQuery, executeMutation } from '@/lib/d1'
+import { getUserByEmail, createUser } from '@/lib/database'
+import { createPasswordHash, sanitizeUser } from '@/lib/auth-utils'
+import { createSession } from '@/lib/session-manager'
+import { User } from '@/lib/types'
 import { calculateBMR, calculateTDEE, calculateMacros } from '@/lib/nutrition'
-import { hashPassword, generateSalt } from '@/lib/auth'
-import { createSession } from '@/lib/session'
 
-export const runtime = 'edge';
+export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json()
-        const { email, password, name, gender, age, height, weight, goal, activity_level = 'sedentary', experience_level = 'beginner' } = body as any
+        // Parse request body
+        const body = await request.json() as any
+        const {
+            email,
+            password,
+            name,
+            age,
+            gender,
+            height,
+            weight,
+            goal,
+            activity_level
+        } = body
 
-        if (!email || !password || !name || !age || !height || !weight || !goal) {
-            return NextResponse.json({ success: false, error: 'All fields are required' }, { status: 400 })
+        // Validate required fields
+        if (!email || !password || !name) {
+            return NextResponse.json(
+                { success: false, error: 'Email, password, and name are required' },
+                { status: 400 }
+            )
         }
 
-        // 1. Check Duplicates
-        let existingUsers;
-        try {
-            existingUsers = await selectQuery('SELECT id FROM users WHERE email = ?', [email])
-        } catch (dbError) {
-            console.error('Database query error:', dbError)
-            return NextResponse.json({ success: false, error: 'Database connection error' }, { status: 500 })
+        console.log('[Register] Attempting registration for:', email)
+
+        // Check if user already exists
+        const existingUser = await getUserByEmail(email)
+
+        if (existingUser) {
+            console.log('[Register] Email already exists:', email)
+            return NextResponse.json(
+                { success: false, error: 'Email already registered' },
+                { status: 409 }
+            )
         }
 
-        if (!existingUsers) {
-            return NextResponse.json({ success: false, error: 'Database Connection Error' }, { status: 503 })
-        }
+        // Hash password
+        const password_hash = await createPasswordHash(password)
 
-        if (existingUsers.length > 0) {
-            return NextResponse.json({ success: false, error: 'Email already exists' }, { status: 409 })
-        }
-
-        // 2. Compute Nutrition Profile
-        let targetCalories = 2000;
-        try {
+        // Calculate nutrition if profile data provided
+        let daily_calorie_goal, daily_protein_goal, daily_carbs_goal, daily_fats_goal
+        if (age && gender && height && weight && activity_level && goal) {
             const bmr = calculateBMR(gender, weight, height, age)
             const tdee = calculateTDEE(bmr, activity_level)
             const macros = calculateMacros(tdee, goal)
-            targetCalories = macros.targetCalories
-        } catch (e) {
-            console.warn("Nutrition calc failed, using defaults")
+            daily_calorie_goal = macros.targetCalories
+            daily_protein_goal = macros.proteinGrams
+            daily_carbs_goal = macros.carbGrams
+            daily_fats_goal = macros.fatGrams
         }
 
-        // 3. Security: Hash Password
-        // Storing as "salt:hash" in the password column
-        const salt = generateSalt();
-        const hashedPassword = await hashPassword(password, salt);
-        const storedPassword = `${salt}:${hashedPassword}`;
-
-        // 4. Save to DB
-        const sql = `
-      INSERT INTO users (email, password, salt, name, gender, age, height_cm, weight_kg, activity_level, experience_level, goal, target_calories)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
-        const params = [
+        // Create user
+        const result = await createUser({
             email,
-            storedPassword,
-            salt, // Fix: Explicitly store salt
+            password_hash,
             name,
+            age: parseInt(age) || undefined,
             gender,
-            age,
-            height,
-            weight,
+            height: parseFloat(height) || undefined,
+            weight: parseFloat(weight) || undefined,
+            primary_goal: goal,
             activity_level,
-            experience_level,
-            goal,
-            targetCalories
-        ]
+            daily_calorie_goal,
+            daily_protein_goal,
+            daily_carbs_goal,
+            daily_fats_goal
+        })
 
-        let changes;
-        try {
-            changes = await executeMutation(sql, params)
-        } catch (dbError) {
-            console.error('Database insertion error:', dbError)
-            return NextResponse.json({ success: false, error: 'Failed to create user record' }, { status: 500 })
+        if (!result.success) {
+            console.error('[Register] Failed to create user:', result.error)
+            return NextResponse.json(
+                { success: false, error: 'Registration failed. Please try again.' },
+                { status: 500 }
+            )
         }
 
-        if (changes > 0) {
-            // Fetch user to return ID (important for session)
-            let userResult;
-            try {
-                userResult = await selectQuery('SELECT * FROM users WHERE email = ?', [email])
-                if (userResult && userResult.length > 0) {
-                    const { password, salt: _, ...safeUser } = userResult[0] // Exclude salt too
+        // Get the created user
+        const newUser = await getUserByEmail(email)
 
-                    // 5. Create Session (HttpOnly)
-                    await createSession(safeUser)
-
-                    return NextResponse.json({ success: true, data: safeUser }, { status: 201 })
-                }
-                return NextResponse.json({ success: true, message: 'User created' }, { status: 201 })
-            } catch (fetchError) {
-                console.error('Fetch user error:', fetchError)
-                return NextResponse.json({ success: true, message: 'User created successfully' }, { status: 201 })
-            }
-        } else {
-            return NextResponse.json({ success: false, error: 'Failed to create user in database' }, { status: 500 })
+        if (!newUser) {
+            console.error('[Register] User created but not found')
+            return NextResponse.json(
+                { success: false, error: 'Registration failed. Please try again.' },
+                { status: 500 }
+            )
         }
+
+        // Create session
+        const safeUser = sanitizeUser(newUser)
+        await createSession(safeUser)
+
+        console.log('✅ [Register] Success for:', email)
+
+        return NextResponse.json({
+            success: true,
+            message: 'Registration successful',
+            user: safeUser
+        }, { status: 201 })
 
     } catch (error: any) {
-        console.error('Registration Error:', error)
-        return NextResponse.json({ success: false, error: error.message || 'Internal Server Error' }, { status: 500 })
+        console.error('❌ [Register] Error:', error)
+        return NextResponse.json(
+            { success: false, error: 'Registration failed. Please try again.' },
+            { status: 500 }
+        )
     }
 }

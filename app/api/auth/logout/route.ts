@@ -1,9 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { destroySession } from '@/lib/session'
+// app/api/auth/logout/route.ts - Clean Logout API
 
-export const runtime = 'edge'
+import { NextResponse } from 'next/server'
+import { destroySession } from '@/lib/session-manager'
 
-export async function POST(request: NextRequest) {
-    await destroySession()
-    return NextResponse.json({ success: true, message: 'Logged out' })
+export const runtime = 'nodejs'
+
+export async function POST() {
+    try {
+        await destroySession()
+
+        return NextResponse.json({
+            success: true,
+            message: 'Logged out successfully'
+        })
+    } catch (error) {
+        console.error('❌ [Logout] Error:', error)
+        return NextResponse.json(
+            { success: false, error: 'Logout failed' },
+            { status: 500 }
+        )
+    }
 }

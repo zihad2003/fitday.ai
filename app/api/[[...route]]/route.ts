@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { handle } from 'hono/vercel'
 import { cors } from 'hono/cors'
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 // 1. STRONG TYPING: Define exactly what your environment looks like
 // This prevents "undefined" crashes and gives you autocomplete.

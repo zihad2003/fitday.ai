@@ -1,44 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserSession } from '@/lib/auth'
-import { getDb } from '@/lib/db'
+import { getCurrentUser } from '@/lib/session-manager'
+import { query, mutate } from '@/lib/database'
+
+export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
     try {
-        const session = await getUserSession()
-        if (!session?.userId) {
+        const user = await getCurrentUser() as any
+        if (!user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
+        const userId = user.id
 
-        const db = getDb()
+        // Log a completed workout record
+        const today = new Date().toISOString().split('T')[0]
 
-        // Increment workouts completed for today
-        // NOTE: Schema does not support generic 'workouts_completed' count in user_progress.
-        // We would need to insert into 'workouts' table properly with exercise details.
-        // For now, we mock success to prevent UI crash.
+        await mutate(`
+            INSERT INTO workouts (user_id, date, exercise_name, completed)
+            VALUES (?, ?, ?, ?)
+        `, [userId, today, 'Quick Session', 1])
 
-        /* 
-        const query = `
-      INSERT INTO daily_tracking (user_id, date, workouts_completed)
-      VALUES (?, date('now'), 1)
-      ON CONFLICT(user_id, date) DO UPDATE SET
-        workouts_completed = workouts_completed + 1,
-        updated_at = CURRENT_TIMESTAMP
-    `
-        await db.prepare(query).bind(session.userId).run()
-        */
+        // Get updated count for the day
+        const countRes = await query(`
+            SELECT COUNT(*) as count FROM workouts 
+            WHERE user_id = ? AND date = ? AND completed = 1
+        `, [userId, today])
 
-        // Get updated count
-        /*
-        const result = await db
-            .prepare('SELECT workouts_completed FROM daily_tracking WHERE user_id = ? AND date = date("now")')
-            .bind(session.userId)
-            .first()
-        */
-        const result = { workouts_completed: 1 };
+        const count = countRes.data?.[0]?.count || 1
 
         return NextResponse.json({
             success: true,
-            workouts_completed: result?.workouts_completed || 1,
+            workouts_completed: count,
             message: 'Great job! Workout logged! 💪',
         })
     } catch (error) {

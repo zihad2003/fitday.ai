@@ -3,24 +3,11 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Icons from '@/components/icons/Icons'
+import { DailyNutrition } from '@/lib/types'
+import MealLogModal from '@/components/dashboard/MealLogModal'
 
 interface NutritionDashboardProps {
     userId: number
-}
-
-interface DailyNutrition {
-    calories_consumed: number
-    calories_target: number
-    protein_consumed: number
-    protein_target: number
-    carbs_consumed: number
-    carbs_target: number
-    fats_consumed: number
-    fats_target: number
-    water_ml: number
-    water_target: number
-    meals_logged: number
-    meals_planned: number
 }
 
 export default function NutritionDashboard({ userId }: NutritionDashboardProps) {
@@ -39,6 +26,8 @@ export default function NutritionDashboard({ userId }: NutritionDashboardProps) 
         meals_planned: 4,
     })
     const [loading, setLoading] = useState(true)
+    const [isLogOpen, setIsLogOpen] = useState(false)
+    const [selectedMealType, setSelectedMealType] = useState('breakfast')
 
     useEffect(() => {
         loadNutritionData()
@@ -49,7 +38,7 @@ export default function NutritionDashboard({ userId }: NutritionDashboardProps) 
         try {
             const response = await fetch('/api/nutrition/daily')
             if (response.ok) {
-                const result = await response.json()
+                const result = await response.json() as { success: boolean, data: DailyNutrition }
                 setData(result.data)
             }
         } catch (error) {
@@ -57,6 +46,11 @@ export default function NutritionDashboard({ userId }: NutritionDashboardProps) 
         } finally {
             setLoading(false)
         }
+    }
+
+    const openLog = (type: string) => {
+        setSelectedMealType(type)
+        setIsLogOpen(true)
     }
 
     if (loading) {
@@ -198,10 +192,10 @@ export default function NutritionDashboard({ userId }: NutritionDashboardProps) 
             <div className="glass-card p-6 rounded-2xl">
                 <h3 className="text-lg font-black mb-4">Meal Completion</h3>
                 <div className="space-y-3">
-                    <MealStatus meal="Breakfast" completed={data.meals_logged >= 1} time="8:00 AM" calories={550} />
-                    <MealStatus meal="Lunch" completed={data.meals_logged >= 2} time="1:00 PM" calories={770} />
-                    <MealStatus meal="Snack" completed={data.meals_logged >= 3} time="4:00 PM" calories={330} />
-                    <MealStatus meal="Dinner" completed={data.meals_logged >= 4} time="8:00 PM" calories={550} />
+                    <MealStatus meal="Breakfast" completed={data.meals_logged >= 1} time="8:00 AM" calories={550} onLog={() => openLog('breakfast')} />
+                    <MealStatus meal="Lunch" completed={data.meals_logged >= 2} time="1:00 PM" calories={770} onLog={() => openLog('lunch')} />
+                    <MealStatus meal="Snack" completed={data.meals_logged >= 3} time="4:00 PM" calories={330} onLog={() => openLog('snack')} />
+                    <MealStatus meal="Dinner" completed={data.meals_logged >= 4} time="8:00 PM" calories={550} onLog={() => openLog('dinner')} />
                 </div>
             </div>
 
@@ -238,6 +232,13 @@ export default function NutritionDashboard({ userId }: NutritionDashboardProps) 
                     )}
                 </div>
             </div>
+
+            <MealLogModal
+                isOpen={isLogOpen}
+                onClose={() => setIsLogOpen(false)}
+                onSuccess={loadNutritionData}
+                defaultType={selectedMealType}
+            />
         </div>
     )
 }
@@ -296,7 +297,7 @@ function QuickStat({ label, value, percent, icon }: any) {
     )
 }
 
-function MealStatus({ meal, completed, time, calories }: any) {
+function MealStatus({ meal, completed, time, calories, onLog }: any) {
     return (
         <div className={`flex items-center justify-between p-3 rounded-xl transition-all ${completed ? 'bg-emerald-600/10 border border-emerald-500/30' : 'bg-zinc-900/50'
             }`}>
@@ -315,7 +316,10 @@ function MealStatus({ meal, completed, time, calories }: any) {
                 </div>
             </div>
             {!completed && (
-                <button className="px-3 py-1 bg-purple-600 hover:bg-purple-500 rounded-lg text-xs font-bold transition-colors">
+                <button
+                    onClick={onLog}
+                    className="px-3 py-1 bg-purple-600 hover:bg-purple-500 rounded-lg text-xs font-bold transition-colors"
+                >
                     Log
                 </button>
             )}

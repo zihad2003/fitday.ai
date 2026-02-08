@@ -57,7 +57,7 @@ export default function Register() {
         weight: Number(formData.weight)
       }
 
-      const res = await fetch('/api/users', {
+      const res = await fetch('/api/auth/register', {  // FIXED: Use correct endpoint
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
